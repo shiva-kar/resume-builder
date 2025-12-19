@@ -1,6 +1,8 @@
 ﻿/** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'export',
+  basePath: '/resume-builder',
+  assetPrefix: '/resume-builder/',
   images: {
     unoptimized: true,
   },

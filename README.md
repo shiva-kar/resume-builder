@@ -1,6 +1,13 @@
 # Resume Builder - Professional Portfolio Creator
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-blue?style=for-the-badge&logo=github)](https://shiva-kar.github.io/resume-builder/)
+[![Next.js](https://img.shields.io/badge/Next.js-14-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
+
 A sophisticated, SaaS-level resume and portfolio builder built with Next.js 14, featuring real-time PDF preview, drag-and-drop section reordering, and multiple professional templates.
+
+🔗 **[Live Demo](https://shiva-kar.github.io/resume-builder/)** | 📖 **[Documentation](#usage)**
 
 ## Features
 
@@ -135,7 +142,35 @@ Edit `src/components/pdf/ResumePDF.tsx` and add new template styles in the `crea
 # For production AI integration
 NEXT_PUBLIC_OPENAI_API_KEY=your-api-key
 ```
+### Screenshots
+<img width="1754" height="1117" alt="Screenshot 2025-12-19 145310" src="https://github.com/user-attachments/assets/c7725e36-2abc-4679-bf64-9e190f2c7f20" />
+<img width="1249" height="661" alt="Screenshot 2025-12-19 145318" src="https://github.com/user-attachments/assets/f6e08b36-35fe-44a2-8ddf-ed1f59a8465b" />
+<img width="1844" height="1096" alt="Screenshot 2025-12-19 145356" src="https://github.com/user-attachments/assets/dfa81931-fa07-472f-b88c-61771ba27655" />
+<img width="1910" height="1271" alt="Screenshot 2025-12-19 145407" src="https://github.com/user-attachments/assets/891a8e93-2f60-4d62-a84b-86bde0e7bfdc" />
+<img width="1129" height="703" alt="Screenshot 2025-12-19 145412" src="https://github.com/user-attachments/assets/87223103-e208-417d-b599-48048b9f1c1f" />
+<img width="1456" height="847" alt="Screenshot 2025-12-19 145428" src="https://github.com/user-attachments/assets/dc722149-615e-49bb-b45f-761db882760b" />
+<img width="2173" height="1359" alt="Screenshot 2025-12-19 145450" src="https://github.com/user-attachments/assets/7951504d-83fa-44f7-99ad-94efa93e8d54" />
 
 ## License
 
 MIT License
+
+Copyright (c) 2025 Shiva Kar
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
