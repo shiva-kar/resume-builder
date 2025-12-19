@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [2.5.0] - 2024-12-19
+
+### Added
+- **SVG Icons in PDF Export**: Replaced text labels (Email:, Phone:, etc.) with actual SVG icons in exported PDF using @react-pdf/renderer's Svg and Path components
+- **Professional Icon Set**: Added 7 custom SVG icon components for PDF:
+  - EmailIcon (envelope)
+  - PhoneIcon (phone)
+  - LocationIcon (map pin)
+  - LinkedInIcon (LinkedIn logo)
+  - GitHubIcon (GitHub logo)
+  - GlobeIcon (globe for websites)
+  - LinkIcon (chain link for additional links)
+
+### Changed
+- PDF contact section now displays icons inline with clickable links for a cleaner, more professional appearance
+- Icon size scales dynamically with font size settings for visual consistency
+
+---
 ## [2.4.0] - 2024-12-19
 
 ### Fixed

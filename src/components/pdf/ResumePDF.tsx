@@ -9,6 +9,8 @@ import {
   Link,
   StyleSheet,
   pdf,
+  Svg,
+  Path,
 } from '@react-pdf/renderer';
 import {
   ResumeData,
@@ -37,29 +39,121 @@ const TYPO_SIZE_MAP = {
 };
 
 // ============================================================================
-// ICON LABELS - Text-based icons for PDF (SVG not supported)
+// SVG ICONS - Lucide icon paths for PDF export
 // ============================================================================
 
-const ICON_LABELS = {
-  email: 'Email:',
-  phone: 'Phone:',
-  location: 'Location:',
-  linkedin: 'LinkedIn:',
-  github: 'GitHub:',
-  website: 'Web:',
-  link: 'Link:',
-};
+interface IconProps {
+  size?: number;
+  color?: string;
+}
+
+const EmailIcon: React.FC<IconProps> = ({ size = 10, color = '#6b7280' }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24">
+    <Path
+      d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
+      stroke={color}
+      strokeWidth={2}
+      fill="none"
+    />
+    <Path d="M22 6l-10 7L2 6" stroke={color} strokeWidth={2} fill="none" />
+  </Svg>
+);
+
+const PhoneIcon: React.FC<IconProps> = ({ size = 10, color = '#6b7280' }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24">
+    <Path
+      d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"
+      stroke={color}
+      strokeWidth={2}
+      fill="none"
+    />
+  </Svg>
+);
+
+const LocationIcon: React.FC<IconProps> = ({ size = 10, color = '#6b7280' }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24">
+    <Path
+      d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"
+      stroke={color}
+      strokeWidth={2}
+      fill="none"
+    />
+    <Path
+      d="M12 10a3 3 0 100-6 3 3 0 000 6z"
+      stroke={color}
+      strokeWidth={2}
+      fill="none"
+    />
+  </Svg>
+);
+
+const LinkedInIcon: React.FC<IconProps> = ({ size = 10, color = '#6b7280' }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24">
+    <Path
+      d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"
+      stroke={color}
+      strokeWidth={2}
+      fill="none"
+    />
+    <Path d="M2 9h4v12H2z" stroke={color} strokeWidth={2} fill="none" />
+    <Path
+      d="M4 6a2 2 0 100-4 2 2 0 000 4z"
+      stroke={color}
+      strokeWidth={2}
+      fill="none"
+    />
+  </Svg>
+);
+
+const GitHubIcon: React.FC<IconProps> = ({ size = 10, color = '#6b7280' }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24">
+    <Path
+      d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22"
+      stroke={color}
+      strokeWidth={2}
+      fill="none"
+    />
+  </Svg>
+);
+
+const GlobeIcon: React.FC<IconProps> = ({ size = 10, color = '#6b7280' }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24">
+    <Path
+      d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"
+      stroke={color}
+      strokeWidth={2}
+      fill="none"
+    />
+    <Path d="M2 12h20" stroke={color} strokeWidth={2} fill="none" />
+    <Path
+      d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"
+      stroke={color}
+      strokeWidth={2}
+      fill="none"
+    />
+  </Svg>
+);
+
+const LinkIcon: React.FC<IconProps> = ({ size = 10, color = '#6b7280' }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24">
+    <Path
+      d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"
+      stroke={color}
+      strokeWidth={2}
+      fill="none"
+    />
+    <Path
+      d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"
+      stroke={color}
+      strokeWidth={2}
+      fill="none"
+    />
+  </Svg>
+);
 
 // ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
-
-// Check if string is a URL
-const isUrl = (str: string): boolean => {
-  return str.startsWith('http://') || str.startsWith('https://') ||
-         str.includes('.com') || str.includes('.org') || str.includes('.net') ||
-         str.includes('.io') || str.includes('.dev');
-};
 
 // Format URL for display (remove http/https prefix)
 const formatUrlDisplay = (url: string): string => {
@@ -128,6 +222,9 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ data }) => {
     itemDate: Math.round(8 * scale),
   };
 
+  const iconSize = Math.round(fontSize.contact * 1.2);
+  const iconColor = '#6b7280';
+
   const styles = StyleSheet.create({
     page: {
       fontFamily,
@@ -157,18 +254,13 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ data }) => {
     contactRow: {
       flexDirection: 'row',
       flexWrap: 'wrap',
-      gap: 12,
+      gap: 14,
       justifyContent: isMinimal ? 'center' : 'flex-start',
     },
     contactItemWrapper: {
       flexDirection: 'row',
       alignItems: 'center',
-    },
-    contactLabel: {
-      fontSize: fontSize.contact,
-      color: '#6b7280',
-      fontFamily: fontFamilyBold,
-      marginRight: 3,
+      gap: 4,
     },
     contactItem: {
       fontSize: fontSize.contact,
@@ -182,7 +274,7 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ data }) => {
     linksRow: {
       flexDirection: 'row',
       flexWrap: 'wrap',
-      gap: 10,
+      gap: 12,
       marginTop: 6,
       justifyContent: isMinimal ? 'center' : 'flex-start',
     },
@@ -284,11 +376,11 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ data }) => {
             <Text style={styles.summary}>{personalInfo.summary}</Text>
           )}
 
-          {/* Contact Info - with labels and clickable links */}
+          {/* Contact Info - with SVG icons and clickable links */}
           <View style={styles.contactRow}>
             {personalInfo.email && (
               <View style={styles.contactItemWrapper}>
-                <Text style={styles.contactLabel}>{ICON_LABELS.email}</Text>
+                <EmailIcon size={iconSize} color={iconColor} />
                 <Link src={`mailto:${personalInfo.email}`} style={styles.contactLink}>
                   {personalInfo.email}
                 </Link>
@@ -296,7 +388,7 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ data }) => {
             )}
             {personalInfo.phone && (
               <View style={styles.contactItemWrapper}>
-                <Text style={styles.contactLabel}>{ICON_LABELS.phone}</Text>
+                <PhoneIcon size={iconSize} color={iconColor} />
                 <Link src={`tel:${personalInfo.phone.replace(/\s/g, '')}`} style={styles.contactLink}>
                   {personalInfo.phone}
                 </Link>
@@ -304,13 +396,13 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ data }) => {
             )}
             {personalInfo.location && (
               <View style={styles.contactItemWrapper}>
-                <Text style={styles.contactLabel}>{ICON_LABELS.location}</Text>
+                <LocationIcon size={iconSize} color={iconColor} />
                 <Text style={styles.contactItem}>{personalInfo.location}</Text>
               </View>
             )}
             {personalInfo.linkedin && (
               <View style={styles.contactItemWrapper}>
-                <Text style={styles.contactLabel}>{ICON_LABELS.linkedin}</Text>
+                <LinkedInIcon size={iconSize} color={iconColor} />
                 <Link src={ensureProtocol(personalInfo.linkedin)} style={styles.contactLink}>
                   {formatUrlDisplay(personalInfo.linkedin)}
                 </Link>
@@ -318,7 +410,7 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ data }) => {
             )}
             {personalInfo.github && (
               <View style={styles.contactItemWrapper}>
-                <Text style={styles.contactLabel}>{ICON_LABELS.github}</Text>
+                <GitHubIcon size={iconSize} color={iconColor} />
                 <Link src={ensureProtocol(personalInfo.github)} style={styles.contactLink}>
                   {formatUrlDisplay(personalInfo.github)}
                 </Link>
@@ -326,7 +418,7 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ data }) => {
             )}
             {personalInfo.website && (
               <View style={styles.contactItemWrapper}>
-                <Text style={styles.contactLabel}>{ICON_LABELS.website}</Text>
+                <GlobeIcon size={iconSize} color={iconColor} />
                 <Link src={ensureProtocol(personalInfo.website)} style={styles.contactLink}>
                   {formatUrlDisplay(personalInfo.website)}
                 </Link>
@@ -339,7 +431,7 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ data }) => {
             <View style={styles.linksRow}>
               {personalInfo.links.map((link) => (
                 <View key={link.id} style={styles.contactItemWrapper}>
-                  <Text style={styles.contactLabel}>{ICON_LABELS.link}</Text>
+                  <LinkIcon size={iconSize} color={iconColor} />
                   <Link src={ensureProtocol(link.url) || '#'} style={styles.link}>
                     {link.label || formatUrlDisplay(link.url) || 'Link'}
                   </Link>
