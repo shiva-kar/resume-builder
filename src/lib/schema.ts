@@ -31,6 +31,112 @@ export const detectLinkIcon = (url: string): LinkIconType => {
 };
 
 // ============================================================================
+// SKILL LEVELS
+// ============================================================================
+
+export const SKILL_LEVELS = ['Beginner', 'Intermediate', 'Advanced', 'Expert'] as const;
+export type SkillLevel = typeof SKILL_LEVELS[number];
+
+export interface SkillWithLevel {
+  name: string;
+  level: SkillLevel;
+}
+
+// ============================================================================
+// ACCENT COLOR PRESETS
+// ============================================================================
+
+export const ACCENT_COLORS = [
+  { color: '#000000', name: 'Black' },
+  { color: '#2563eb', name: 'Blue' },
+  { color: '#dc2626', name: 'Red' },
+  { color: '#16a34a', name: 'Green' },
+  { color: '#9333ea', name: 'Purple' },
+  { color: '#ea580c', name: 'Orange' },
+  { color: '#0891b2', name: 'Cyan' },
+  { color: '#be185d', name: 'Pink' },
+] as const;
+
+// ============================================================================
+// CUSTOM FIELD TYPES - For custom sections
+// ============================================================================
+
+export const CUSTOM_FIELD_TYPES = ['text', 'textarea', 'date', 'dateRange', 'link', 'tags'] as const;
+export type CustomFieldType = typeof CUSTOM_FIELD_TYPES[number];
+
+export interface CustomFieldDefinition {
+  id: string;
+  type: CustomFieldType;
+  label: string;
+  placeholder?: string;
+  required?: boolean;
+}
+
+export interface CustomFieldValue {
+  fieldId: string;
+  value: string | string[]; // string[] for tags type
+}
+
+// Default field templates for quick setup
+export const CUSTOM_FIELD_TEMPLATES = {
+  basic: [
+    { id: 'title', type: 'text' as const, label: 'Title', required: true },
+    { id: 'description', type: 'textarea' as const, label: 'Description' },
+  ],
+  project: [
+    { id: 'title', type: 'text' as const, label: 'Project Name', required: true },
+    { id: 'link', type: 'link' as const, label: 'Project URL' },
+    { id: 'date', type: 'dateRange' as const, label: 'Duration' },
+    { id: 'tags', type: 'tags' as const, label: 'Technologies' },
+    { id: 'description', type: 'textarea' as const, label: 'Description' },
+  ],
+  certification: [
+    { id: 'title', type: 'text' as const, label: 'Certification Name', required: true },
+    { id: 'issuer', type: 'text' as const, label: 'Issuing Organization' },
+    { id: 'date', type: 'date' as const, label: 'Date Obtained' },
+    { id: 'link', type: 'link' as const, label: 'Credential URL' },
+  ],
+  publication: [
+    { id: 'title', type: 'text' as const, label: 'Title', required: true },
+    { id: 'publisher', type: 'text' as const, label: 'Publisher/Journal' },
+    { id: 'date', type: 'date' as const, label: 'Publication Date' },
+    { id: 'link', type: 'link' as const, label: 'Link' },
+    { id: 'description', type: 'textarea' as const, label: 'Abstract/Summary' },
+  ],
+  award: [
+    { id: 'title', type: 'text' as const, label: 'Award Name', required: true },
+    { id: 'issuer', type: 'text' as const, label: 'Issuing Organization' },
+    { id: 'date', type: 'date' as const, label: 'Date Received' },
+    { id: 'description', type: 'textarea' as const, label: 'Description' },
+  ],
+  volunteer: [
+    { id: 'role', type: 'text' as const, label: 'Role', required: true },
+    { id: 'org', type: 'text' as const, label: 'Organization' },
+    { id: 'date', type: 'dateRange' as const, label: 'Duration' },
+    { id: 'description', type: 'textarea' as const, label: 'Description' },
+  ],
+} as const;
+
+// ============================================================================
+// TYPOGRAPHY SIZE OPTIONS
+// ============================================================================
+
+export const TYPOGRAPHY_SIZES = ['sm', 'md', 'lg', 'xl'] as const;
+export type TypographySize = typeof TYPOGRAPHY_SIZES[number];
+
+export interface TypographySettings {
+  name: TypographySize;
+  headers: TypographySize;
+  body: TypographySize;
+}
+
+export const DEFAULT_TYPOGRAPHY: TypographySettings = {
+  name: 'lg',
+  headers: 'md',
+  body: 'sm',
+};
+
+// ============================================================================
 // ZOD SCHEMAS - Validation Layer
 // ============================================================================
 
@@ -41,32 +147,53 @@ export const LinkSchema = z.object({
   icon: z.string().optional(),
 });
 
+export const SkillWithLevelSchema = z.object({
+  name: z.string(),
+  level: z.enum(['Beginner', 'Intermediate', 'Advanced', 'Expert']),
+});
+
 export const PersonalInfoSchema = z.object({
   fullName: z.string(),
   email: z.string().email().or(z.literal('')),
   phone: z.string(),
   location: z.string(),
-  links: z.array(LinkSchema),
+  summary: z.string(), // Job title / headline
+  website: z.string(), // Dedicated website field
+  linkedin: z.string(), // Dedicated linkedin field
+  github: z.string(), // Dedicated github field
+  links: z.array(LinkSchema), // Additional custom links
+});
+
+export const CustomFieldDefinitionSchema = z.object({
+  id: z.string(),
+  type: z.enum(['text', 'textarea', 'date', 'dateRange', 'link', 'tags']),
+  label: z.string(),
+  placeholder: z.string().optional(),
+  required: z.boolean().optional(),
+});
+
+export const CustomFieldValueSchema = z.object({
+  fieldId: z.string(),
+  value: z.union([z.string(), z.array(z.string())]),
 });
 
 export const SectionItemSchema = z.object({
   id: z.string(),
-  // Experience fields
   position: z.string().optional(),
   company: z.string().optional(),
-  // Education fields
   institution: z.string().optional(),
   degree: z.string().optional(),
-  // Common fields
   startDate: z.string().optional(),
   endDate: z.string().optional(),
   current: z.boolean().optional(),
+  location: z.string().optional(),
   description: z.string().optional(),
-  // Custom section fields
   title: z.string().optional(),
   subtitle: z.string().optional(),
-  // Skills fields
   skills: z.array(z.string()).optional(),
+  skillsWithLevels: z.array(SkillWithLevelSchema).optional(),
+  // Custom field values for custom sections
+  customFields: z.array(CustomFieldValueSchema).optional(),
 });
 
 export const SectionTypeFontSizeSchema = z.object({
@@ -82,13 +209,23 @@ export const SectionSchema = z.object({
   isVisible: z.boolean(),
   items: z.array(SectionItemSchema),
   fontSize: SectionTypeFontSizeSchema.optional(),
+  // Custom field definitions - only for custom sections
+  fieldDefinitions: z.array(CustomFieldDefinitionSchema).optional(),
+});
+
+export const TypographySettingsSchema = z.object({
+  name: z.enum(['sm', 'md', 'lg', 'xl']),
+  headers: z.enum(['sm', 'md', 'lg', 'xl']),
+  body: z.enum(['sm', 'md', 'lg', 'xl']),
 });
 
 export const ThemeSchema = z.object({
   template: z.enum(['harvard', 'tech', 'minimal']),
   color: z.string(),
   fontSize: z.enum(['small', 'medium', 'large']),
-  pageSize: z.enum(['A4', 'LETTER', 'LEGAL']),
+  pageSize: z.enum(['A4', 'LETTER', 'LEGAL', 'EXECUTIVE', 'B5', 'A5']),
+  typography: TypographySettingsSchema.optional(),
+  autoAdjust: z.boolean().optional(), // Auto-adjust page size/font if content overflows
 });
 
 export const ResumeDataSchema = z.object({
@@ -113,16 +250,24 @@ export type PageSize = Theme['pageSize'];
 export type FontSizeLevel = Theme['fontSize'];
 export type TemplateType = Theme['template'];
 export type TextSize = SectionTypeFontSize['heading'];
+export type CustomFieldDef = z.infer<typeof CustomFieldDefinitionSchema>;
+export type CustomFieldVal = z.infer<typeof CustomFieldValueSchema>;
 
 // ============================================================================
 // PAGE SIZE DIMENSIONS (in points for PDF)
 // ============================================================================
 
 export const PAGE_SIZES = {
-  A4: { width: 595.28, height: 841.89, label: 'A4 (210 × 297 mm)' },
-  LETTER: { width: 612, height: 792, label: 'Letter (8.5 × 11 in)' },
-  LEGAL: { width: 612, height: 1008, label: 'Legal (8.5 × 14 in)' },
+  A4: { width: 595.28, height: 841.89, label: 'A4 (210 x 297 mm)' },
+  LETTER: { width: 612, height: 792, label: 'US Letter (8.5 x 11 in)' },
+  LEGAL: { width: 612, height: 1008, label: 'US Legal (8.5 x 14 in)' },
+  EXECUTIVE: { width: 522, height: 756, label: 'Executive (7.25 x 10.5 in)' },
+  B5: { width: 498.9, height: 708.66, label: 'B5 (176 x 250 mm)' },
+  A5: { width: 419.53, height: 595.28, label: 'A5 (148 x 210 mm)' },
 } as const;
+
+// Ordered by height for auto-adjustment (smallest to largest)
+export const PAGE_SIZES_BY_HEIGHT = ['A5', 'EXECUTIVE', 'B5', 'LETTER', 'A4', 'LEGAL'] as const;
 
 // ============================================================================
 // FONT SIZE MAPPINGS (in points for PDF)
@@ -142,6 +287,13 @@ export const GLOBAL_FONT_SCALES = {
   large: 1.15,
 } as const;
 
+export const TYPOGRAPHY_SIZE_MAP = {
+  sm: { name: 'text-xl', headers: 'text-sm', body: 'text-[10px]' },
+  md: { name: 'text-2xl', headers: 'text-base', body: 'text-[11px]' },
+  lg: { name: 'text-4xl', headers: 'text-lg', body: 'text-[12px]' },
+  xl: { name: 'text-5xl', headers: 'text-xl', body: 'text-[14px]' },
+};
+
 // ============================================================================
 // DEFAULT VALUES - Empty/Placeholder State
 // ============================================================================
@@ -158,6 +310,10 @@ export const createEmptyState = (): ResumeData => ({
     email: '',
     phone: '',
     location: '',
+    summary: '',
+    website: '',
+    linkedin: '',
+    github: '',
     links: [],
   },
   sections: [
@@ -182,14 +338,15 @@ export const createEmptyState = (): ResumeData => ({
       type: 'skills',
       title: 'Skills',
       isVisible: true,
-      items: [{ id: 'skills-item-default', skills: [] }],
+      items: [{ id: 'skills-item-default', skills: [], skillsWithLevels: [] }],
       fontSize: { ...DEFAULT_SECTION_FONT_SIZE },
     },
   ],
   theme: {
     template: 'tech',
-    color: '#3b82f6',
+    color: '#2563eb',
     fontSize: 'medium',
     pageSize: 'A4',
+    typography: { ...DEFAULT_TYPOGRAPHY },
   },
 });

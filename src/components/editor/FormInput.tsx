@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { List } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface FormInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -43,12 +44,13 @@ interface FormTextareaProps
   label?: string;
   error?: string;
   autoResize?: boolean;
+  showBulletHelper?: boolean;
 }
 
 export const FormTextarea = React.forwardRef<
   HTMLTextAreaElement,
   FormTextareaProps
->(({ label, error, autoResize = true, className, onChange, ...props }, ref) => {
+>(({ label, error, autoResize = true, showBulletHelper = true, className, onChange, value, ...props }, ref) => {
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (autoResize) {
       e.target.style.height = 'auto';
@@ -57,15 +59,41 @@ export const FormTextarea = React.forwardRef<
     onChange?.(e);
   };
 
+  const addBullet = () => {
+    const currentValue = (value as string) || '';
+    const newValue = currentValue + (currentValue.length > 0 && !currentValue.endsWith('\n') ? '\n ' : ' ');
+    const syntheticEvent = {
+      target: { value: newValue },
+    } as React.ChangeEvent<HTMLTextAreaElement>;
+    onChange?.(syntheticEvent);
+  };
+
   return (
     <div className="space-y-1.5">
-      {label && (
-        <label className="text-sm font-medium text-muted-foreground">
-          {label}
-        </label>
-      )}
+      <div className="flex justify-between items-center">
+        {label && (
+          <label className="text-sm font-medium text-muted-foreground">
+            {label}
+          </label>
+        )}
+        {showBulletHelper && (
+          <button
+            type="button"
+            onClick={addBullet}
+            className={cn(
+              'text-xs flex items-center gap-1',
+              'text-muted-foreground hover:text-foreground',
+              'transition-colors font-medium'
+            )}
+          >
+            <List className="w-3 h-3" />
+            Add Bullet
+          </button>
+        )}
+      </div>
       <textarea
         ref={ref}
+        value={value}
         className={cn(
           'w-full px-3 py-2 border border-border rounded-lg',
           'bg-background text-foreground',

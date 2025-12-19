@@ -13,18 +13,14 @@ import {
 import {
   ResumeData,
   PAGE_SIZES,
-  PDF_FONT_SIZES,
   GLOBAL_FONT_SCALES,
-  TextSize,
-  DEFAULT_SECTION_FONT_SIZE,
+  DEFAULT_TYPOGRAPHY,
 } from '@/lib/schema';
 
 // ============================================================================
 // FONT CONFIGURATION
 // ============================================================================
 
-// Using built-in PDF fonts (no external loading required)
-// Helvetica = Sans-serif (Modern), Times-Roman = Serif (Classic)
 const FONTS = {
   sansSerif: 'Helvetica',
   sansSerifBold: 'Helvetica-Bold',
@@ -32,134 +28,36 @@ const FONTS = {
   serifBold: 'Times-Bold',
 };
 
-// ============================================================================
-// STYLE GENERATORS
-// ============================================================================
-
-const getScaledFontSize = (
-  baseSize: TextSize,
-  globalScale: 'small' | 'medium' | 'large'
-): number => {
-  const base = PDF_FONT_SIZES[baseSize];
-  const scale = GLOBAL_FONT_SCALES[globalScale];
-  return Math.round(base * scale);
+// Typography size scale for PDF
+const TYPO_SIZE_MAP = {
+  sm: { name: 20, headers: 10, body: 9 },
+  md: { name: 24, headers: 12, body: 10 },
+  lg: { name: 28, headers: 14, body: 11 },
+  xl: { name: 32, headers: 16, body: 12 },
 };
 
-const createStyles = (data: ResumeData) => {
-  const { theme } = data;
-  const isHarvard = theme.template === 'harvard';
-  const isMinimal = theme.template === 'minimal';
-  const fontFamily = isHarvard ? FONTS.serif : FONTS.sansSerif;
-  const fontFamilyBold = isHarvard ? FONTS.serifBold : FONTS.sansSerifBold;
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
 
-  return StyleSheet.create({
-    page: {
-      fontFamily,
-      padding: 40,
-      fontSize: getScaledFontSize('sm', theme.fontSize),
-      color: '#1f2937',
-      backgroundColor: '#ffffff',
-    },
-    // Header styles
-    header: {
-      marginBottom: 20,
-      paddingBottom: 15,
-      borderBottomWidth: 2,
-      borderBottomColor: theme.color,
-      textAlign: isMinimal ? 'center' : 'left',
-    },
-    name: {
-      fontSize: getScaledFontSize('xl', theme.fontSize) + 8,
-      fontFamily: fontFamilyBold,
-      color: theme.color,
-      marginBottom: 8,
-    },
-    contactRow: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: 15,
-      justifyContent: isMinimal ? 'center' : 'flex-start',
-    },
-    contactItem: {
-      fontSize: getScaledFontSize('sm', theme.fontSize),
-      color: '#4b5563',
-    },
-    linksRow: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: 10,
-      marginTop: 8,
-      justifyContent: isMinimal ? 'center' : 'flex-start',
-    },
-    link: {
-      fontSize: getScaledFontSize('xs', theme.fontSize),
-      color: theme.color,
-    },
-    // Section styles
-    section: {
-      marginBottom: 15,
-    },
-    sectionTitle: {
-      fontSize: getScaledFontSize('lg', theme.fontSize),
-      fontFamily: fontFamilyBold,
-      color: theme.color,
-      marginBottom: 10,
-      textTransform: 'uppercase',
-      letterSpacing: 1,
-      borderBottomWidth: isHarvard ? 1 : 0,
-      borderBottomColor: '#d1d5db',
-      paddingBottom: isHarvard ? 3 : 0,
-    },
-    // Item styles
-    item: {
-      marginBottom: 12,
-    },
-    itemHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'flex-start',
-      marginBottom: 4,
-    },
-    itemTitle: {
-      fontSize: getScaledFontSize('base', theme.fontSize),
-      fontFamily: fontFamilyBold,
-      color: '#1f2937',
-    },
-    itemSubtitle: {
-      fontSize: getScaledFontSize('sm', theme.fontSize),
-      color: '#6b7280',
-      fontStyle: 'italic',
-    },
-    itemDate: {
-      fontSize: getScaledFontSize('xs', theme.fontSize),
-      color: '#9ca3af',
-    },
-    itemDescription: {
-      fontSize: getScaledFontSize('sm', theme.fontSize),
-      color: '#4b5563',
-      lineHeight: 1.5,
-      marginTop: 4,
-    },
-    // Skills styles
-    skillsContainer: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: 6,
-    },
-    skillTag: {
-      fontSize: getScaledFontSize('xs', theme.fontSize),
-      backgroundColor: `${theme.color}20`,
-      color: theme.color,
-      paddingVertical: 3,
-      paddingHorizontal: 8,
-      borderRadius: 12,
-    },
-    // Placeholder text style
-    placeholder: {
-      color: '#9ca3af',
-      fontStyle: 'italic',
-    },
-  });
+// Check if string is a URL
+const isUrl = (str: string): boolean => {
+  return str.startsWith('http://') || str.startsWith('https://') || 
+         str.includes('.com') || str.includes('.org') || str.includes('.net') ||
+         str.includes('.io') || str.includes('.dev');
+};
+
+// Format URL for display (remove http/https prefix)
+const formatUrlDisplay = (url: string): string => {
+  return url.replace(/^https?:\/\//, '').replace(/\/$/, '');
+};
+
+// Ensure URL has protocol
+const ensureProtocol = (url: string): string => {
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  return `https://${url}`;
 };
 
 // ============================================================================
@@ -172,7 +70,7 @@ const formatDate = (
   current?: boolean
 ): string => {
   if (!start) return '';
-  
+
   const formatMonth = (dateStr: string) => {
     const [year, month] = dateStr.split('-');
     if (!year || !month) return dateStr;
@@ -182,8 +80,39 @@ const formatDate = (
 
   const startFormatted = formatMonth(start);
   const endFormatted = current ? 'Present' : end ? formatMonth(end) : '';
-  
+
   return endFormatted ? `${startFormatted} - ${endFormatted}` : startFormatted;
+};
+
+// ============================================================================
+// CONTACT ITEM COMPONENT
+// ============================================================================
+
+interface ContactItemProps {
+  value: string;
+  style: any;
+  linkStyle: any;
+  isEmail?: boolean;
+}
+
+const ContactItem: React.FC<ContactItemProps> = ({ value, style, linkStyle, isEmail }) => {
+  if (isEmail) {
+    return (
+      <Link src={`mailto:${value}`} style={linkStyle}>
+        {value}
+      </Link>
+    );
+  }
+  
+  if (isUrl(value)) {
+    return (
+      <Link src={ensureProtocol(value)} style={linkStyle}>
+        {formatUrlDisplay(value)}
+      </Link>
+    );
+  }
+  
+  return <Text style={style}>{value}</Text>;
 };
 
 // ============================================================================
@@ -195,17 +124,160 @@ interface ResumePDFProps {
 }
 
 export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ data }) => {
-  const styles = createStyles(data);
   const { personalInfo, sections, theme } = data;
   const pageSize = PAGE_SIZES[theme.pageSize];
+  const isHarvard = theme.template === 'harvard';
+  const isMinimal = theme.template === 'minimal';
+  const fontFamily = isHarvard ? FONTS.serif : FONTS.sansSerif;
+  const fontFamilyBold = isHarvard ? FONTS.serifBold : FONTS.sansSerifBold;
+  const typography = theme.typography || DEFAULT_TYPOGRAPHY;
+  const scale = GLOBAL_FONT_SCALES[theme.fontSize];
 
-  const getSectionFontSize = (
-    section: typeof sections[0],
-    type: 'heading' | 'subheading' | 'body'
-  ) => {
-    const fontSize = section.fontSize || DEFAULT_SECTION_FONT_SIZE;
-    return getScaledFontSize(fontSize[type], theme.fontSize);
+  // Consistent font sizes - properly scaled
+  const fontSize = {
+    name: Math.round(TYPO_SIZE_MAP[typography.name].name * scale),
+    summary: Math.round(TYPO_SIZE_MAP[typography.headers].headers * scale),
+    contact: Math.round(TYPO_SIZE_MAP[typography.body].body * scale),
+    sectionHeading: Math.round(14 * scale),
+    itemTitle: Math.round(12 * scale),
+    itemSubtitle: Math.round(10 * scale),
+    itemBody: Math.round(9 * scale),
+    itemDate: Math.round(8 * scale),
   };
+
+  const styles = StyleSheet.create({
+    page: {
+      fontFamily,
+      padding: 40,
+      fontSize: fontSize.itemBody,
+      color: '#1f2937',
+      backgroundColor: '#ffffff',
+    },
+    header: {
+      marginBottom: 16,
+      paddingBottom: 12,
+      borderBottomWidth: 2,
+      borderBottomColor: theme.color,
+      textAlign: isMinimal ? 'center' : 'left',
+    },
+    name: {
+      fontSize: fontSize.name,
+      fontFamily: fontFamilyBold,
+      color: theme.color,
+      marginBottom: 4,
+    },
+    summary: {
+      fontSize: fontSize.summary,
+      color: '#6b7280',
+      marginBottom: 8,
+    },
+    contactRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 12,
+      justifyContent: isMinimal ? 'center' : 'flex-start',
+    },
+    contactItem: {
+      fontSize: fontSize.contact,
+      color: '#4b5563',
+    },
+    contactLink: {
+      fontSize: fontSize.contact,
+      color: theme.color,
+      textDecoration: 'none',
+    },
+    linksRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 10,
+      marginTop: 6,
+      justifyContent: isMinimal ? 'center' : 'flex-start',
+    },
+    link: {
+      fontSize: fontSize.itemDate,
+      color: theme.color,
+      textDecoration: 'none',
+    },
+    section: {
+      marginBottom: 12,
+    },
+    sectionTitle: {
+      fontSize: fontSize.sectionHeading,
+      fontFamily: fontFamilyBold,
+      color: theme.color,
+      marginBottom: 8,
+      textTransform: 'uppercase',
+      letterSpacing: 1,
+      borderBottomWidth: isHarvard ? 1 : 0,
+      borderBottomColor: '#d1d5db',
+      paddingBottom: isHarvard ? 2 : 0,
+    },
+    item: {
+      marginBottom: 10,
+    },
+    itemHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      marginBottom: 2,
+    },
+    itemTitle: {
+      fontSize: fontSize.itemTitle,
+      fontFamily: fontFamilyBold,
+      color: '#1f2937',
+    },
+    itemSubtitle: {
+      fontSize: fontSize.itemSubtitle,
+      color: '#6b7280',
+    },
+    itemLocation: {
+      fontSize: fontSize.itemDate,
+      color: '#9ca3af',
+      marginTop: 1,
+    },
+    itemDate: {
+      fontSize: fontSize.itemDate,
+      color: '#9ca3af',
+    },
+    itemDescription: {
+      fontSize: fontSize.itemBody,
+      color: '#4b5563',
+      lineHeight: 1.4,
+      marginTop: 3,
+    },
+    skillsContainer: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 5,
+    },
+    skillTag: {
+      fontSize: fontSize.itemDate,
+      backgroundColor: `${theme.color}20`,
+      color: theme.color,
+      paddingVertical: 2,
+      paddingHorizontal: 6,
+      borderRadius: 10,
+    },
+    skillWithLevel: {
+      fontSize: fontSize.itemDate,
+      backgroundColor: '#f3f4f6',
+      color: '#374151',
+      paddingVertical: 2,
+      paddingHorizontal: 6,
+      borderRadius: 3,
+      flexDirection: 'row',
+    },
+    skillLevelText: {
+      fontSize: 6,
+      color: '#9ca3af',
+      marginLeft: 3,
+      textTransform: 'uppercase',
+    },
+    placeholder: {
+      color: '#9ca3af',
+      fontStyle: 'italic',
+    },
+  });
 
   return (
     <Document>
@@ -215,31 +287,48 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ data }) => {
           <Text style={styles.name}>
             {personalInfo.fullName || 'Full Name'}
           </Text>
+          {personalInfo.summary && (
+            <Text style={styles.summary}>{personalInfo.summary}</Text>
+          )}
+          
+          {/* Contact Info - with clickable links */}
           <View style={styles.contactRow}>
             {personalInfo.email && (
-              <Text style={styles.contactItem}>{personalInfo.email}</Text>
-            )}
-            {!personalInfo.email && (
-              <Text style={[styles.contactItem, styles.placeholder]}>email@example.com</Text>
+              <Link src={`mailto:${personalInfo.email}`} style={styles.contactLink}>
+                {personalInfo.email}
+              </Link>
             )}
             {personalInfo.phone && (
-              <Text style={styles.contactItem}>{personalInfo.phone}</Text>
-            )}
-            {!personalInfo.phone && (
-              <Text style={[styles.contactItem, styles.placeholder]}>Phone Number</Text>
+              <Link src={`tel:${personalInfo.phone.replace(/\s/g, '')}`} style={styles.contactLink}>
+                {personalInfo.phone}
+              </Link>
             )}
             {personalInfo.location && (
               <Text style={styles.contactItem}>{personalInfo.location}</Text>
             )}
-            {!personalInfo.location && (
-              <Text style={[styles.contactItem, styles.placeholder]}>City, Country</Text>
+            {personalInfo.linkedin && (
+              <Link src={ensureProtocol(personalInfo.linkedin)} style={styles.contactLink}>
+                {formatUrlDisplay(personalInfo.linkedin)}
+              </Link>
+            )}
+            {personalInfo.github && (
+              <Link src={ensureProtocol(personalInfo.github)} style={styles.contactLink}>
+                {formatUrlDisplay(personalInfo.github)}
+              </Link>
+            )}
+            {personalInfo.website && (
+              <Link src={ensureProtocol(personalInfo.website)} style={styles.contactLink}>
+                {formatUrlDisplay(personalInfo.website)}
+              </Link>
             )}
           </View>
+          
+          {/* Additional Links */}
           {personalInfo.links.length > 0 && (
             <View style={styles.linksRow}>
               {personalInfo.links.map((link) => (
-                <Link key={link.id} src={link.url || '#'} style={styles.link}>
-                  {link.label || link.url || 'Link'}
+                <Link key={link.id} src={ensureProtocol(link.url) || '#'} style={styles.link}>
+                  {link.label || formatUrlDisplay(link.url) || 'Link'}
                 </Link>
               ))}
             </View>
@@ -251,40 +340,125 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ data }) => {
           .filter((section) => section.isVisible)
           .map((section) => (
             <View key={section.id} style={styles.section}>
-              <Text
-                style={[
-                  styles.sectionTitle,
-                  { fontSize: getSectionFontSize(section, 'heading') },
-                ]}
-              >
+              <Text style={styles.sectionTitle}>
                 {section.title}
               </Text>
 
               {section.type === 'skills' ? (
                 <View style={styles.skillsContainer}>
-                  {section.items[0]?.skills?.length ? (
-                    section.items[0].skills.map((skill, idx) => (
-                      <Text key={idx} style={styles.skillTag}>
-                        {skill}
-                      </Text>
-                    ))
-                  ) : (
+                  {/* Skills with levels */}
+                  {section.items[0]?.skillsWithLevels?.map((skill, idx) => (
+                    <View key={`swl-${idx}`} style={styles.skillWithLevel}>
+                      <Text>{skill.name}</Text>
+                      <Text style={styles.skillLevelText}>{skill.level}</Text>
+                    </View>
+                  ))}
+                  {/* Simple skills */}
+                  {section.items[0]?.skills?.map((skill, idx) => (
+                    <Text key={`s-${idx}`} style={styles.skillTag}>
+                      {skill}
+                    </Text>
+                  ))}
+                  {/* Empty state */}
+                  {!section.items[0]?.skills?.length && !section.items[0]?.skillsWithLevels?.length && (
                     <Text style={[styles.skillTag, styles.placeholder]}>
                       Add your skills
                     </Text>
                   )}
                 </View>
+              ) : section.type === 'custom' && section.fieldDefinitions?.length ? (
+                // Custom sections with custom field definitions
+                section.items.length > 0 ? (
+                  section.items.map((item) => {
+                    const getFieldValue = (fieldId: string) => {
+                      const field = (item.customFields || []).find((cf) => cf.fieldId === fieldId);
+                      return field?.value;
+                    };
+                    const fieldDefs = section.fieldDefinitions || [];
+                    const titleField = fieldDefs.find((f) => f.type === 'text');
+                    const dateField = fieldDefs.find((f) => f.type === 'date' || f.type === 'dateRange');
+                    const linkField = fieldDefs.find((f) => f.type === 'link');
+                    const tagsField = fieldDefs.find((f) => f.type === 'tags');
+                    const textareaField = fieldDefs.find((f) => f.type === 'textarea');
+
+                    const title = titleField ? getFieldValue(titleField.id) : '';
+                    const linkValue = linkField ? (getFieldValue(linkField.id) as string) : '';
+                    const tagsValue = tagsField ? (getFieldValue(tagsField.id) as string[]) : [];
+                    const description = textareaField ? (getFieldValue(textareaField.id) as string) : '';
+
+                    // Handle date range or single date
+                    let dateDisplay = '';
+                    if (dateField) {
+                      const dateValue = getFieldValue(dateField.id) as string;
+                      if (dateField.type === 'dateRange' && dateValue) {
+                        const [start, end] = dateValue.split('|');
+                        dateDisplay = formatDate(start, end);
+                      } else if (dateValue) {
+                        dateDisplay = formatDate(dateValue);
+                      }
+                    }
+
+                    return (
+                      <View key={item.id} style={styles.item}>
+                        <View style={styles.itemHeader}>
+                          <View style={{ flex: 1 }}>
+                            {linkValue ? (
+                              <Link src={ensureProtocol(linkValue)} style={[styles.itemTitle, { color: theme.color }]}>
+                                {title || 'Title'}
+                              </Link>
+                            ) : (
+                              <Text style={styles.itemTitle}>
+                                {title || 'Title'}
+                              </Text>
+                            )}
+                            {/* Other text fields */}
+                            {fieldDefs
+                              .filter((f) => f.type === 'text' && f !== titleField)
+                              .map((f) => {
+                                const val = getFieldValue(f.id) as string;
+                                return val ? (
+                                  <Text key={f.id} style={styles.itemSubtitle}>
+                                    {val}
+                                  </Text>
+                                ) : null;
+                              })}
+                          </View>
+                          {dateDisplay && (
+                            <Text style={styles.itemDate}>
+                              {dateDisplay}
+                            </Text>
+                          )}
+                        </View>
+                        {/* Tags/Bubbles */}
+                        {tagsValue && tagsValue.length > 0 && (
+                          <View style={[styles.skillsContainer, { marginTop: 4 }]}>
+                            {tagsValue.map((tag, idx) => (
+                              <Text key={idx} style={styles.skillTag}>
+                                {tag}
+                              </Text>
+                            ))}
+                          </View>
+                        )}
+                        {/* Description */}
+                        {description && (
+                          <Text style={styles.itemDescription}>
+                            {description}
+                          </Text>
+                        )}
+                      </View>
+                    );
+                  })
+                ) : (
+                  <Text style={[styles.itemDescription, styles.placeholder]}>
+                    Add items to this section
+                  </Text>
+                )
               ) : section.items.length > 0 ? (
                 section.items.map((item) => (
                   <View key={item.id} style={styles.item}>
                     <View style={styles.itemHeader}>
                       <View style={{ flex: 1 }}>
-                        <Text
-                          style={[
-                            styles.itemTitle,
-                            { fontSize: getSectionFontSize(section, 'subheading') },
-                          ]}
-                        >
+                        <Text style={styles.itemTitle}>
                           {section.type === 'experience'
                             ? item.position || 'Position Title'
                             : section.type === 'education'
@@ -298,6 +472,9 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ data }) => {
                             ? item.institution || 'Institution Name'
                             : item.subtitle || ''}
                         </Text>
+                        {item.location && (
+                          <Text style={styles.itemLocation}>{item.location}</Text>
+                        )}
                       </View>
                       {(item.startDate || section.type === 'experience' || section.type === 'education') && (
                         <Text style={styles.itemDate}>
@@ -309,7 +486,6 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ data }) => {
                       <Text
                         style={[
                           styles.itemDescription,
-                          { fontSize: getSectionFontSize(section, 'body') },
                           ...(item.description ? [] : [styles.placeholder]),
                         ]}
                       >

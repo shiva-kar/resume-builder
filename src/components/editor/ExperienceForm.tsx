@@ -1,12 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Trash2, Sparkles, Plus, Loader2 } from 'lucide-react';
-import { Section, SectionItem } from '@/lib/schema';
+import React from 'react';
+import { Trash2, Plus } from 'lucide-react';
+import { Section } from '@/lib/schema';
 import { useResumeStore } from '@/lib/store';
 import { FormInput, FormTextarea, FormCheckbox } from './FormInput';
-import { enhanceWithAI } from '@/lib/ai';
-import { cn } from '@/lib/utils';
 
 interface ExperienceFormProps {
   section: Section;
@@ -14,30 +12,13 @@ interface ExperienceFormProps {
 
 export const ExperienceForm: React.FC<ExperienceFormProps> = ({ section }) => {
   const { addSectionItem, removeSectionItem, updateSectionItem } = useResumeStore();
-  const [enhancingId, setEnhancingId] = useState<string | null>(null);
-
-  const handleEnhance = async (item: SectionItem) => {
-    if (!item.description) return;
-    setEnhancingId(item.id);
-    try {
-      const result = await enhanceWithAI({
-        text: item.description,
-        type: 'experience',
-      });
-      updateSectionItem(section.id, item.id, { description: result.enhanced });
-    } catch (error) {
-      console.error('AI enhancement failed:', error);
-    } finally {
-      setEnhancingId(null);
-    }
-  };
 
   return (
     <div className="space-y-4">
       {section.items.map((item) => (
         <div
           key={item.id}
-          className="border-l-2 border-primary/30 pl-4 space-y-3 py-2"
+          className="border-l-2 border-blue-500/30 pl-4 space-y-3 py-2"
         >
           <div className="flex justify-between items-start">
             <div className="flex-1 space-y-3">
@@ -61,6 +42,17 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ section }) => {
                   }
                 />
               </div>
+
+              {/* Location Field */}
+              <FormInput
+                placeholder="Location (e.g. New York, NY or Remote)"
+                value={item.location || ''}
+                onChange={(e) =>
+                  updateSectionItem(section.id, item.id, {
+                    location: e.target.value,
+                  })
+                }
+              />
 
               <div className="flex gap-3 items-center flex-wrap">
                 <FormInput
@@ -99,43 +91,17 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ section }) => {
                 />
               </div>
 
-              <div className="relative">
-                <FormTextarea
-                  placeholder="Description of your role, responsibilities, and achievements..."
-                  value={item.description || ''}
-                  onChange={(e) =>
-                    updateSectionItem(section.id, item.id, {
-                      description: e.target.value,
-                    })
-                  }
-                  rows={3}
-                />
-                <button
-                  onClick={() => handleEnhance(item)}
-                  disabled={enhancingId === item.id || !item.description}
-                  className={cn(
-                    'absolute top-2 right-2 px-3 py-1.5 rounded-lg',
-                    'bg-gradient-to-r from-violet-500 to-indigo-500',
-                    'text-white text-xs font-medium',
-                    'flex items-center gap-1.5 transition-all',
-                    'hover:from-violet-600 hover:to-indigo-600',
-                    'disabled:opacity-50 disabled:cursor-not-allowed',
-                    'shadow-sm hover:shadow-md'
-                  )}
-                >
-                  {enhancingId === item.id ? (
-                    <>
-                      <Loader2 className="w-3 h-3 animate-spin" />
-                      <span>Enhancing...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-3 h-3" />
-                      <span>AI Enhance</span>
-                    </>
-                  )}
-                </button>
-              </div>
+              <FormTextarea
+                placeholder="Description of your role, responsibilities, and achievements..."
+                value={item.description || ''}
+                onChange={(e) =>
+                  updateSectionItem(section.id, item.id, {
+                    description: e.target.value,
+                  })
+                }
+                rows={3}
+                showBulletHelper
+              />
             </div>
 
             <button
@@ -150,7 +116,7 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ section }) => {
 
       <button
         onClick={() => addSectionItem(section.id)}
-        className="text-sm text-primary hover:text-primary/80 flex items-center gap-2 transition-colors"
+        className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-2 transition-colors"
       >
         <Plus className="w-4 h-4" />
         Add Experience
