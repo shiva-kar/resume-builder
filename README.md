@@ -143,8 +143,27 @@ NEXT_PUBLIC_OPENAI_API_KEY=your-api-key
 <img width="1129" height="703" alt="Screenshot 2025-12-19 145412" src="https://github.com/user-attachments/assets/87223103-e208-417d-b599-48048b9f1c1f" />
 <img width="1456" height="847" alt="Screenshot 2025-12-19 145428" src="https://github.com/user-attachments/assets/dc722149-615e-49bb-b45f-761db882760b" />
 <img width="2173" height="1359" alt="Screenshot 2025-12-19 145450" src="https://github.com/user-attachments/assets/7951504d-83fa-44f7-99ad-94efa93e8d54" />
+
 ## License
 
-
-
 MIT License
+
+Copyright (c) 2025 Shiva Kar
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
