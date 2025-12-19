@@ -1,6 +1,13 @@
 # Resume Builder - Professional Portfolio Creator
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-blue?style=for-the-badge&logo=github)](https://shiva-kar.github.io/resume-builder/)
+[![Next.js](https://img.shields.io/badge/Next.js-14-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
+
 A sophisticated, SaaS-level resume and portfolio builder built with Next.js 14, featuring real-time PDF preview, drag-and-drop section reordering, and multiple professional templates.
+
+🔗 **[Live Demo](https://shiva-kar.github.io/resume-builder/)** | 📖 **[Documentation](#usage)**
 
 ## Features
 

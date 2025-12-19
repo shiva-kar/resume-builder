@@ -11,7 +11,8 @@
     "start": "next start",
     "lint": "next lint",
     "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && electron .\"",
-    "electron:build": "npm run build && electron-builder --win --publish never"
+    "electron:build": "npm run build && electron-builder --win --publish never",
+    "deploy": "next build && echo. > out/.nojekyll && gh-pages -d out --dotfiles"
   },
   "build": {
     "appId": "com.resumebuilder.app",
@@ -70,6 +71,7 @@
     "electron-serve": "^2.1.1",
     "eslint": "^8.56.0",
     "eslint-config-next": "14.0.4",
+    "gh-pages": "^6.3.0",
     "postcss": "^8.4.32",
     "tailwindcss": "^3.4.0",
     "typescript": "^5.3.3",
