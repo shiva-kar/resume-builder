@@ -1,9 +1,39 @@
-# Resume Builder - Changelog
+﻿# Resume Builder - Changelog
 
 All notable changes to this project will be documented in this file.
 
 ---
 
+## [2.5.0] - 2024-12-19
+
+### Added
+- **SVG Icons in PDF Export**: Replaced text labels (Email:, Phone:, etc.) with actual SVG icons in exported PDF using @react-pdf/renderer's Svg and Path components
+- **Professional Icon Set**: Added 7 custom SVG icon components for PDF:
+  - EmailIcon (envelope)
+  - PhoneIcon (phone)
+  - LocationIcon (map pin)
+  - LinkedInIcon (LinkedIn logo)
+  - GitHubIcon (GitHub logo)
+  - GlobeIcon (globe for websites)
+  - LinkIcon (chain link for additional links)
+
+### Changed
+- PDF contact section now displays icons inline with clickable links for a cleaner, more professional appearance
+- Icon size scales dynamically with font size settings for visual consistency
+
+---
+## [2.4.0] - 2024-12-19
+
+### Fixed
+- **PDF Contact Labels**: Added text-based labels (Email:, Phone:, LinkedIn:, GitHub:, Web:, Location:, Link:) before contact info in exported PDF since @react-pdf/renderer doesn't support SVG icons
+- **PDF Clickable Links**: All contact links (email, phone, LinkedIn, GitHub, website) are now clickable in the exported PDF with proper protocols (mailto:, tel:, https://)
+- **Custom Section Dropdown Positioning**: Fixed "Use Template" dropdown going off-screen by implementing smart positioning that opens upward when near the bottom of the viewport
+
+### Changed
+- Contact section in PDF now displays with bold labels before each item for better readability
+- Additional links in PDF now also show "Link:" prefix for consistency
+
+---
 ## [2.3.0] - 2024-12-19
 
 ### Added
@@ -139,3 +169,4 @@ Feel free to submit issues and enhancement requests!
 ## License
 
 MIT License - feel free to use this project for personal or commercial purposes.
+
