@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import {
@@ -37,12 +37,26 @@ const TYPO_SIZE_MAP = {
 };
 
 // ============================================================================
+// ICON LABELS - Text-based icons for PDF (SVG not supported)
+// ============================================================================
+
+const ICON_LABELS = {
+  email: 'Email:',
+  phone: 'Phone:',
+  location: 'Location:',
+  linkedin: 'LinkedIn:',
+  github: 'GitHub:',
+  website: 'Web:',
+  link: 'Link:',
+};
+
+// ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
 
 // Check if string is a URL
 const isUrl = (str: string): boolean => {
-  return str.startsWith('http://') || str.startsWith('https://') || 
+  return str.startsWith('http://') || str.startsWith('https://') ||
          str.includes('.com') || str.includes('.org') || str.includes('.net') ||
          str.includes('.io') || str.includes('.dev');
 };
@@ -82,37 +96,6 @@ const formatDate = (
   const endFormatted = current ? 'Present' : end ? formatMonth(end) : '';
 
   return endFormatted ? `${startFormatted} - ${endFormatted}` : startFormatted;
-};
-
-// ============================================================================
-// CONTACT ITEM COMPONENT
-// ============================================================================
-
-interface ContactItemProps {
-  value: string;
-  style: any;
-  linkStyle: any;
-  isEmail?: boolean;
-}
-
-const ContactItem: React.FC<ContactItemProps> = ({ value, style, linkStyle, isEmail }) => {
-  if (isEmail) {
-    return (
-      <Link src={`mailto:${value}`} style={linkStyle}>
-        {value}
-      </Link>
-    );
-  }
-  
-  if (isUrl(value)) {
-    return (
-      <Link src={ensureProtocol(value)} style={linkStyle}>
-        {formatUrlDisplay(value)}
-      </Link>
-    );
-  }
-  
-  return <Text style={style}>{value}</Text>;
 };
 
 // ============================================================================
@@ -176,6 +159,16 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ data }) => {
       flexWrap: 'wrap',
       gap: 12,
       justifyContent: isMinimal ? 'center' : 'flex-start',
+    },
+    contactItemWrapper: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    contactLabel: {
+      fontSize: fontSize.contact,
+      color: '#6b7280',
+      fontFamily: fontFamilyBold,
+      marginRight: 3,
     },
     contactItem: {
       fontSize: fontSize.contact,
@@ -290,46 +283,67 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ data }) => {
           {personalInfo.summary && (
             <Text style={styles.summary}>{personalInfo.summary}</Text>
           )}
-          
-          {/* Contact Info - with clickable links */}
+
+          {/* Contact Info - with labels and clickable links */}
           <View style={styles.contactRow}>
             {personalInfo.email && (
-              <Link src={`mailto:${personalInfo.email}`} style={styles.contactLink}>
-                {personalInfo.email}
-              </Link>
+              <View style={styles.contactItemWrapper}>
+                <Text style={styles.contactLabel}>{ICON_LABELS.email}</Text>
+                <Link src={`mailto:${personalInfo.email}`} style={styles.contactLink}>
+                  {personalInfo.email}
+                </Link>
+              </View>
             )}
             {personalInfo.phone && (
-              <Link src={`tel:${personalInfo.phone.replace(/\s/g, '')}`} style={styles.contactLink}>
-                {personalInfo.phone}
-              </Link>
+              <View style={styles.contactItemWrapper}>
+                <Text style={styles.contactLabel}>{ICON_LABELS.phone}</Text>
+                <Link src={`tel:${personalInfo.phone.replace(/\s/g, '')}`} style={styles.contactLink}>
+                  {personalInfo.phone}
+                </Link>
+              </View>
             )}
             {personalInfo.location && (
-              <Text style={styles.contactItem}>{personalInfo.location}</Text>
+              <View style={styles.contactItemWrapper}>
+                <Text style={styles.contactLabel}>{ICON_LABELS.location}</Text>
+                <Text style={styles.contactItem}>{personalInfo.location}</Text>
+              </View>
             )}
             {personalInfo.linkedin && (
-              <Link src={ensureProtocol(personalInfo.linkedin)} style={styles.contactLink}>
-                {formatUrlDisplay(personalInfo.linkedin)}
-              </Link>
+              <View style={styles.contactItemWrapper}>
+                <Text style={styles.contactLabel}>{ICON_LABELS.linkedin}</Text>
+                <Link src={ensureProtocol(personalInfo.linkedin)} style={styles.contactLink}>
+                  {formatUrlDisplay(personalInfo.linkedin)}
+                </Link>
+              </View>
             )}
             {personalInfo.github && (
-              <Link src={ensureProtocol(personalInfo.github)} style={styles.contactLink}>
-                {formatUrlDisplay(personalInfo.github)}
-              </Link>
+              <View style={styles.contactItemWrapper}>
+                <Text style={styles.contactLabel}>{ICON_LABELS.github}</Text>
+                <Link src={ensureProtocol(personalInfo.github)} style={styles.contactLink}>
+                  {formatUrlDisplay(personalInfo.github)}
+                </Link>
+              </View>
             )}
             {personalInfo.website && (
-              <Link src={ensureProtocol(personalInfo.website)} style={styles.contactLink}>
-                {formatUrlDisplay(personalInfo.website)}
-              </Link>
+              <View style={styles.contactItemWrapper}>
+                <Text style={styles.contactLabel}>{ICON_LABELS.website}</Text>
+                <Link src={ensureProtocol(personalInfo.website)} style={styles.contactLink}>
+                  {formatUrlDisplay(personalInfo.website)}
+                </Link>
+              </View>
             )}
           </View>
-          
+
           {/* Additional Links */}
           {personalInfo.links.length > 0 && (
             <View style={styles.linksRow}>
               {personalInfo.links.map((link) => (
-                <Link key={link.id} src={ensureProtocol(link.url) || '#'} style={styles.link}>
-                  {link.label || formatUrlDisplay(link.url) || 'Link'}
-                </Link>
+                <View key={link.id} style={styles.contactItemWrapper}>
+                  <Text style={styles.contactLabel}>{ICON_LABELS.link}</Text>
+                  <Link src={ensureProtocol(link.url) || '#'} style={styles.link}>
+                    {link.label || formatUrlDisplay(link.url) || 'Link'}
+                  </Link>
+                </View>
               ))}
             </View>
           )}

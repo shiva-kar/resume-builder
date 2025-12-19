@@ -1,9 +1,21 @@
-# Resume Builder - Changelog
+﻿# Resume Builder - Changelog
 
 All notable changes to this project will be documented in this file.
 
 ---
 
+## [2.4.0] - 2024-12-19
+
+### Fixed
+- **PDF Contact Labels**: Added text-based labels (Email:, Phone:, LinkedIn:, GitHub:, Web:, Location:, Link:) before contact info in exported PDF since @react-pdf/renderer doesn't support SVG icons
+- **PDF Clickable Links**: All contact links (email, phone, LinkedIn, GitHub, website) are now clickable in the exported PDF with proper protocols (mailto:, tel:, https://)
+- **Custom Section Dropdown Positioning**: Fixed "Use Template" dropdown going off-screen by implementing smart positioning that opens upward when near the bottom of the viewport
+
+### Changed
+- Contact section in PDF now displays with bold labels before each item for better readability
+- Additional links in PDF now also show "Link:" prefix for consistency
+
+---
 ## [2.3.0] - 2024-12-19
 
 ### Added
@@ -139,3 +151,4 @@ Feel free to submit issues and enhancement requests!
 ## License
 
 MIT License - feel free to use this project for personal or commercial purposes.
+
