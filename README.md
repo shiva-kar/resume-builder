@@ -135,7 +135,16 @@ Edit `src/components/pdf/ResumePDF.tsx` and add new template styles in the `crea
 # For production AI integration
 NEXT_PUBLIC_OPENAI_API_KEY=your-api-key
 ```
-
+### Screenshots
+<img width="1754" height="1117" alt="Screenshot 2025-12-19 145310" src="https://github.com/user-attachments/assets/c7725e36-2abc-4679-bf64-9e190f2c7f20" />
+<img width="1249" height="661" alt="Screenshot 2025-12-19 145318" src="https://github.com/user-attachments/assets/f6e08b36-35fe-44a2-8ddf-ed1f59a8465b" />
+<img width="1844" height="1096" alt="Screenshot 2025-12-19 145356" src="https://github.com/user-attachments/assets/dfa81931-fa07-472f-b88c-61771ba27655" />
+<img width="1910" height="1271" alt="Screenshot 2025-12-19 145407" src="https://github.com/user-attachments/assets/891a8e93-2f60-4d62-a84b-86bde0e7bfdc" />
+<img width="1129" height="703" alt="Screenshot 2025-12-19 145412" src="https://github.com/user-attachments/assets/87223103-e208-417d-b599-48048b9f1c1f" />
+<img width="1456" height="847" alt="Screenshot 2025-12-19 145428" src="https://github.com/user-attachments/assets/dc722149-615e-49bb-b45f-761db882760b" />
+<img width="2173" height="1359" alt="Screenshot 2025-12-19 145450" src="https://github.com/user-attachments/assets/7951504d-83fa-44f7-99ad-94efa93e8d54" />
 ## License
+
+
 
 MIT License
