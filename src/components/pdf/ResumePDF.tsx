@@ -205,6 +205,9 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ data }) => {
   const pageSize = PAGE_SIZES[theme.pageSize];
   const isHarvard = theme.template === 'harvard';
   const isMinimal = theme.template === 'minimal';
+  const isBold = theme.template === 'bold';
+  const isNeo = theme.template === 'neo';
+  const isPortfolio = theme.template === 'portfolio';
   const fontFamily = isHarvard ? FONTS.serif : FONTS.sansSerif;
   const fontFamilyBold = isHarvard ? FONTS.serifBold : FONTS.sansSerifBold;
   const typography = theme.typography || DEFAULT_TYPOGRAPHY;
@@ -228,7 +231,7 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ data }) => {
   const styles = StyleSheet.create({
     page: {
       fontFamily,
-      padding: 40,
+      padding: isPortfolio ? 0 : 40,
       fontSize: fontSize.itemBody,
       color: '#1f2937',
       backgroundColor: '#ffffff',
@@ -236,12 +239,12 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ data }) => {
     header: {
       marginBottom: 16,
       paddingBottom: 12,
-      borderBottomWidth: 2,
+      borderBottomWidth: isBold ? 3 : 2,
       borderBottomColor: theme.color,
       textAlign: isMinimal ? 'center' : 'left',
     },
     name: {
-      fontSize: fontSize.name,
+      fontSize: isBold ? Math.round(fontSize.name * 1.15) : fontSize.name,
       fontFamily: fontFamilyBold,
       color: theme.color,
       marginBottom: 4,
@@ -289,13 +292,24 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ data }) => {
     sectionTitle: {
       fontSize: fontSize.sectionHeading,
       fontFamily: fontFamilyBold,
-      color: theme.color,
+      color: isNeo ? '#111827' : theme.color,
       marginBottom: 8,
       textTransform: 'uppercase',
       letterSpacing: 1,
       borderBottomWidth: isHarvard ? 1 : 0,
       borderBottomColor: '#d1d5db',
       paddingBottom: isHarvard ? 2 : 0,
+    },
+    sectionTitleNeoWrap: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    sectionTitleNeoBar: {
+      width: 10,
+      height: 10,
+      backgroundColor: theme.color,
+      marginRight: 6,
     },
     item: {
       marginBottom: 10,
@@ -341,7 +355,7 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ data }) => {
       color: theme.color,
       paddingVertical: 2,
       paddingHorizontal: 6,
-      borderRadius: 10,
+      borderRadius: isNeo ? 0 : 10,
     },
     skillWithLevel: {
       fontSize: fontSize.itemDate,
@@ -362,251 +376,356 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ data }) => {
       color: '#9ca3af',
       fontStyle: 'italic',
     },
+
+    // Portfolio template (two-column)
+    portfolioWrap: {
+      flexDirection: 'row',
+      width: '100%',
+      height: '100%',
+    },
+    portfolioSidebar: {
+      width: '33%',
+      padding: 28,
+      backgroundColor: '#f9fafb',
+      borderRightWidth: 1,
+      borderRightColor: '#e5e7eb',
+    },
+    portfolioMain: {
+      width: '67%',
+      padding: 28,
+    },
+    portfolioName: {
+      fontSize: isBold ? Math.round(fontSize.name * 1.15) : fontSize.name,
+      fontFamily: fontFamilyBold,
+      color: '#111827',
+      marginBottom: 6,
+    },
+    portfolioRole: {
+      fontSize: fontSize.summary,
+      color: theme.color,
+      marginBottom: 12,
+    },
   });
 
-  return (
-    <Document>
-      <Page size={[pageSize.width, pageSize.height]} style={styles.page}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.name}>
-            {personalInfo.fullName || 'Full Name'}
-          </Text>
-          {personalInfo.summary && (
-            <Text style={styles.summary}>{personalInfo.summary}</Text>
-          )}
+  const visibleSections = sections.filter((s) => s.isVisible);
+  const skillsSection = visibleSections.find((s) => s.type === 'skills');
+  const mainSections = visibleSections.filter((s) => s.type !== 'skills');
 
-          {/* Contact Info - with SVG icons and clickable links */}
-          <View style={styles.contactRow}>
-            {personalInfo.email && (
-              <View style={styles.contactItemWrapper}>
-                <EmailIcon size={iconSize} color={iconColor} />
-                <Link src={`mailto:${personalInfo.email}`} style={styles.contactLink}>
-                  {personalInfo.email}
-                </Link>
-              </View>
-            )}
-            {personalInfo.phone && (
-              <View style={styles.contactItemWrapper}>
-                <PhoneIcon size={iconSize} color={iconColor} />
-                <Link src={`tel:${personalInfo.phone.replace(/\s/g, '')}`} style={styles.contactLink}>
-                  {personalInfo.phone}
-                </Link>
-              </View>
-            )}
-            {personalInfo.location && (
-              <View style={styles.contactItemWrapper}>
-                <LocationIcon size={iconSize} color={iconColor} />
-                <Text style={styles.contactItem}>{personalInfo.location}</Text>
-              </View>
-            )}
-            {personalInfo.linkedin && (
-              <View style={styles.contactItemWrapper}>
-                <LinkedInIcon size={iconSize} color={iconColor} />
-                <Link src={ensureProtocol(personalInfo.linkedin)} style={styles.contactLink}>
-                  {formatUrlDisplay(personalInfo.linkedin)}
-                </Link>
-              </View>
-            )}
-            {personalInfo.github && (
-              <View style={styles.contactItemWrapper}>
-                <GitHubIcon size={iconSize} color={iconColor} />
-                <Link src={ensureProtocol(personalInfo.github)} style={styles.contactLink}>
-                  {formatUrlDisplay(personalInfo.github)}
-                </Link>
-              </View>
-            )}
-            {personalInfo.website && (
-              <View style={styles.contactItemWrapper}>
-                <GlobeIcon size={iconSize} color={iconColor} />
-                <Link src={ensureProtocol(personalInfo.website)} style={styles.contactLink}>
-                  {formatUrlDisplay(personalInfo.website)}
-                </Link>
-              </View>
-            )}
-          </View>
+  const renderSection = (section: any) => (
+    <View key={section.id} style={styles.section} wrap>
+      <View style={isNeo ? styles.sectionTitleNeoWrap : undefined}>
+        {isNeo ? <View style={styles.sectionTitleNeoBar} /> : null}
+        <Text style={styles.sectionTitle}>{section.title}</Text>
+      </View>
 
-          {/* Additional Links */}
-          {personalInfo.links.length > 0 && (
-            <View style={styles.linksRow}>
-              {personalInfo.links.map((link) => (
-                <View key={link.id} style={styles.contactItemWrapper}>
-                  <LinkIcon size={iconSize} color={iconColor} />
-                  <Link src={ensureProtocol(link.url) || '#'} style={styles.link}>
-                    {link.label || formatUrlDisplay(link.url) || 'Link'}
-                  </Link>
-                </View>
-              ))}
+      {section.type === 'skills' ? (
+        <View style={styles.skillsContainer}>
+          {section.items[0]?.skillsWithLevels?.map((skill: any, idx: number) => (
+            <View key={`swl-${idx}`} style={styles.skillWithLevel}>
+              <Text>{skill.name}</Text>
+              <Text style={styles.skillLevelText}>{skill.level}</Text>
             </View>
+          ))}
+          {section.items[0]?.skills?.map((skill: string, idx: number) => (
+            <Text key={`s-${idx}`} style={styles.skillTag}>
+              {skill}
+            </Text>
+          ))}
+          {!section.items[0]?.skills?.length && !section.items[0]?.skillsWithLevels?.length && (
+            <Text style={[styles.skillTag, styles.placeholder]}>Add your skills</Text>
           )}
         </View>
+      ) : section.type === 'custom' && section.fieldDefinitions?.length ? (
+        section.items.length > 0 ? (
+          section.items.map((item: any) => {
+            const getFieldValue = (fieldId: string) => {
+              const field = (item.customFields || []).find((cf: any) => cf.fieldId === fieldId);
+              return field?.value;
+            };
+            const fieldDefs = section.fieldDefinitions || [];
+            const titleField = fieldDefs.find((f: any) => f.type === 'text');
+            const dateField = fieldDefs.find((f: any) => f.type === 'date' || f.type === 'dateRange');
+            const linkField = fieldDefs.find((f: any) => f.type === 'link');
+            const tagsField = fieldDefs.find((f: any) => f.type === 'tags');
+            const textareaField = fieldDefs.find((f: any) => f.type === 'textarea');
 
-        {/* Sections */}
-        {sections
-          .filter((section) => section.isVisible)
-          .map((section) => (
-            <View key={section.id} style={styles.section}>
-              <Text style={styles.sectionTitle}>
-                {section.title}
-              </Text>
+            const title = titleField ? getFieldValue(titleField.id) : '';
+            const linkValue = linkField ? (getFieldValue(linkField.id) as string) : '';
+            const tagsValue = tagsField ? (getFieldValue(tagsField.id) as string[]) : [];
+            const description = textareaField ? (getFieldValue(textareaField.id) as string) : '';
 
-              {section.type === 'skills' ? (
-                <View style={styles.skillsContainer}>
-                  {/* Skills with levels */}
-                  {section.items[0]?.skillsWithLevels?.map((skill, idx) => (
-                    <View key={`swl-${idx}`} style={styles.skillWithLevel}>
-                      <Text>{skill.name}</Text>
-                      <Text style={styles.skillLevelText}>{skill.level}</Text>
-                    </View>
-                  ))}
-                  {/* Simple skills */}
-                  {section.items[0]?.skills?.map((skill, idx) => (
-                    <Text key={`s-${idx}`} style={styles.skillTag}>
-                      {skill}
-                    </Text>
-                  ))}
-                  {/* Empty state */}
-                  {!section.items[0]?.skills?.length && !section.items[0]?.skillsWithLevels?.length && (
-                    <Text style={[styles.skillTag, styles.placeholder]}>
-                      Add your skills
-                    </Text>
-                  )}
-                </View>
-              ) : section.type === 'custom' && section.fieldDefinitions?.length ? (
-                // Custom sections with custom field definitions
-                section.items.length > 0 ? (
-                  section.items.map((item) => {
-                    const getFieldValue = (fieldId: string) => {
-                      const field = (item.customFields || []).find((cf) => cf.fieldId === fieldId);
-                      return field?.value;
-                    };
-                    const fieldDefs = section.fieldDefinitions || [];
-                    const titleField = fieldDefs.find((f) => f.type === 'text');
-                    const dateField = fieldDefs.find((f) => f.type === 'date' || f.type === 'dateRange');
-                    const linkField = fieldDefs.find((f) => f.type === 'link');
-                    const tagsField = fieldDefs.find((f) => f.type === 'tags');
-                    const textareaField = fieldDefs.find((f) => f.type === 'textarea');
+            let dateDisplay = '';
+            if (dateField) {
+              const dateValue = getFieldValue(dateField.id) as string;
+              if (dateField.type === 'dateRange' && dateValue) {
+                const [start, end] = dateValue.split('|');
+                dateDisplay = formatDate(start, end);
+              } else if (dateValue) {
+                dateDisplay = formatDate(dateValue);
+              }
+            }
 
-                    const title = titleField ? getFieldValue(titleField.id) : '';
-                    const linkValue = linkField ? (getFieldValue(linkField.id) as string) : '';
-                    const tagsValue = tagsField ? (getFieldValue(tagsField.id) as string[]) : [];
-                    const description = textareaField ? (getFieldValue(textareaField.id) as string) : '';
-
-                    // Handle date range or single date
-                    let dateDisplay = '';
-                    if (dateField) {
-                      const dateValue = getFieldValue(dateField.id) as string;
-                      if (dateField.type === 'dateRange' && dateValue) {
-                        const [start, end] = dateValue.split('|');
-                        dateDisplay = formatDate(start, end);
-                      } else if (dateValue) {
-                        dateDisplay = formatDate(dateValue);
-                      }
-                    }
-
-                    return (
-                      <View key={item.id} style={styles.item}>
-                        <View style={styles.itemHeader}>
-                          <View style={{ flex: 1 }}>
-                            {linkValue ? (
-                              <Link src={ensureProtocol(linkValue)} style={[styles.itemTitle, { color: theme.color }]}>
-                                {title || 'Title'}
-                              </Link>
-                            ) : (
-                              <Text style={styles.itemTitle}>
-                                {title || 'Title'}
-                              </Text>
-                            )}
-                            {/* Other text fields */}
-                            {fieldDefs
-                              .filter((f) => f.type === 'text' && f !== titleField)
-                              .map((f) => {
-                                const val = getFieldValue(f.id) as string;
-                                return val ? (
-                                  <Text key={f.id} style={styles.itemSubtitle}>
-                                    {val}
-                                  </Text>
-                                ) : null;
-                              })}
-                          </View>
-                          {dateDisplay && (
-                            <Text style={styles.itemDate}>
-                              {dateDisplay}
-                            </Text>
-                          )}
-                        </View>
-                        {/* Tags/Bubbles */}
-                        {tagsValue && tagsValue.length > 0 && (
-                          <View style={[styles.skillsContainer, { marginTop: 4 }]}>
-                            {tagsValue.map((tag, idx) => (
-                              <Text key={idx} style={styles.skillTag}>
-                                {tag}
-                              </Text>
-                            ))}
-                          </View>
-                        )}
-                        {/* Description */}
-                        {description && (
-                          <Text style={styles.itemDescription}>
-                            {description}
-                          </Text>
-                        )}
-                      </View>
-                    );
-                  })
-                ) : (
-                  <Text style={[styles.itemDescription, styles.placeholder]}>
-                    Add items to this section
-                  </Text>
-                )
-              ) : section.items.length > 0 ? (
-                section.items.map((item) => (
-                  <View key={item.id} style={styles.item}>
-                    <View style={styles.itemHeader}>
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.itemTitle}>
-                          {section.type === 'experience'
-                            ? item.position || 'Position Title'
-                            : section.type === 'education'
-                            ? item.degree || 'Degree / Field of Study'
-                            : item.title || 'Title'}
-                        </Text>
-                        <Text style={styles.itemSubtitle}>
-                          {section.type === 'experience'
-                            ? item.company || 'Company Name'
-                            : section.type === 'education'
-                            ? item.institution || 'Institution Name'
-                            : item.subtitle || ''}
-                        </Text>
-                        {item.location && (
-                          <Text style={styles.itemLocation}>{item.location}</Text>
-                        )}
-                      </View>
-                      {(item.startDate || section.type === 'experience' || section.type === 'education') && (
-                        <Text style={styles.itemDate}>
-                          {formatDate(item.startDate, item.endDate, item.current) || 'Date Range'}
-                        </Text>
-                      )}
-                    </View>
-                    {(item.description || section.type === 'experience') && (
-                      <Text
-                        style={[
-                          styles.itemDescription,
-                          ...(item.description ? [] : [styles.placeholder]),
-                        ]}
+            return (
+              <View key={item.id} style={styles.item} wrap>
+                <View style={styles.itemHeader}>
+                  <View style={{ flex: 1 }}>
+                    {linkValue ? (
+                      <Link src={ensureProtocol(linkValue)} style={[styles.itemTitle, { color: theme.color }]}
                       >
-                        {item.description || 'Description of your role and achievements...'}
-                      </Text>
+                        {title || 'Title'}
+                      </Link>
+                    ) : (
+                      <Text style={styles.itemTitle}>{title || 'Title'}</Text>
                     )}
+                    {fieldDefs
+                      .filter((f: any) => f.type === 'text' && f !== titleField)
+                      .map((f: any) => {
+                        const val = getFieldValue(f.id) as string;
+                        return val ? (
+                          <Text key={f.id} style={styles.itemSubtitle}>
+                            {val}
+                          </Text>
+                        ) : null;
+                      })}
                   </View>
-                ))
-              ) : (
-                <Text style={[styles.itemDescription, styles.placeholder]}>
-                  Add items to this section
+                  {dateDisplay && <Text style={styles.itemDate}>{dateDisplay}</Text>}
+                </View>
+
+                {tagsValue && tagsValue.length > 0 && (
+                  <View style={[styles.skillsContainer, { marginTop: 4 }]}>
+                    {tagsValue.map((tag: string, idx: number) => (
+                      <Text key={idx} style={styles.skillTag}>
+                        {tag}
+                      </Text>
+                    ))}
+                  </View>
+                )}
+
+                {description && <Text style={styles.itemDescription}>{description}</Text>}
+              </View>
+            );
+          })
+        ) : (
+          <Text style={[styles.itemDescription, styles.placeholder]}>Add items to this section</Text>
+        )
+      ) : section.items.length > 0 ? (
+        section.items.map((item: any) => (
+          <View key={item.id} style={styles.item} wrap>
+            <View style={styles.itemHeader}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.itemTitle}>
+                  {section.type === 'experience'
+                    ? item.position || 'Position Title'
+                    : section.type === 'education'
+                      ? item.degree || 'Degree / Field of Study'
+                      : item.title || 'Title'}
+                </Text>
+                <Text style={styles.itemSubtitle}>
+                  {section.type === 'experience'
+                    ? item.company || 'Company Name'
+                    : section.type === 'education'
+                      ? item.institution || 'Institution Name'
+                      : item.subtitle || ''}
+                </Text>
+                {item.location && <Text style={styles.itemLocation}>{item.location}</Text>}
+              </View>
+              {(item.startDate || section.type === 'experience' || section.type === 'education') && (
+                <Text style={styles.itemDate}>
+                  {formatDate(item.startDate, item.endDate, item.current) || 'Date Range'}
                 </Text>
               )}
             </View>
-          ))}
+            {(item.description || section.type === 'experience') && (
+              <Text style={[styles.itemDescription, ...(item.description ? [] : [styles.placeholder])]}
+              >
+                {item.description || 'Description of your role and achievements...'}
+              </Text>
+            )}
+          </View>
+        ))
+      ) : (
+        <Text style={[styles.itemDescription, styles.placeholder]}>Add items to this section</Text>
+      )}
+    </View>
+  );
+
+  return (
+    <Document>
+      <Page size={[pageSize.width, pageSize.height]} style={styles.page} wrap>
+        {isPortfolio ? (
+          <View style={styles.portfolioWrap}>
+            <View style={styles.portfolioSidebar}>
+              <Text style={styles.portfolioName}>{personalInfo.fullName || 'Full Name'}</Text>
+              {personalInfo.summary ? <Text style={styles.portfolioRole}>{personalInfo.summary}</Text> : null}
+
+              <View style={styles.contactRow}>
+                {personalInfo.email && (
+                  <View style={styles.contactItemWrapper}>
+                    <EmailIcon size={iconSize} color={iconColor} />
+                    <Link src={`mailto:${personalInfo.email}`} style={styles.contactLink}>
+                      {personalInfo.email}
+                    </Link>
+                  </View>
+                )}
+                {personalInfo.phone && (
+                  <View style={styles.contactItemWrapper}>
+                    <PhoneIcon size={iconSize} color={iconColor} />
+                    <Link src={`tel:${personalInfo.phone.replace(/\s/g, '')}`} style={styles.contactLink}>
+                      {personalInfo.phone}
+                    </Link>
+                  </View>
+                )}
+                {personalInfo.location && (
+                  <View style={styles.contactItemWrapper}>
+                    <LocationIcon size={iconSize} color={iconColor} />
+                    <Text style={styles.contactItem}>{personalInfo.location}</Text>
+                  </View>
+                )}
+                {personalInfo.linkedin && (
+                  <View style={styles.contactItemWrapper}>
+                    <LinkedInIcon size={iconSize} color={iconColor} />
+                    <Link src={ensureProtocol(personalInfo.linkedin)} style={styles.contactLink}>
+                      {formatUrlDisplay(personalInfo.linkedin)}
+                    </Link>
+                  </View>
+                )}
+                {personalInfo.github && (
+                  <View style={styles.contactItemWrapper}>
+                    <GitHubIcon size={iconSize} color={iconColor} />
+                    <Link src={ensureProtocol(personalInfo.github)} style={styles.contactLink}>
+                      {formatUrlDisplay(personalInfo.github)}
+                    </Link>
+                  </View>
+                )}
+                {personalInfo.website && (
+                  <View style={styles.contactItemWrapper}>
+                    <GlobeIcon size={iconSize} color={iconColor} />
+                    <Link src={ensureProtocol(personalInfo.website)} style={styles.contactLink}>
+                      {formatUrlDisplay(personalInfo.website)}
+                    </Link>
+                  </View>
+                )}
+              </View>
+
+              {personalInfo.links.length > 0 && (
+                <View style={styles.linksRow}>
+                  {personalInfo.links.map((link) => (
+                    <View key={link.id} style={styles.contactItemWrapper}>
+                      <LinkIcon size={iconSize} color={iconColor} />
+                      <Link src={ensureProtocol(link.url) || '#'} style={styles.link}>
+                        {link.label || formatUrlDisplay(link.url) || 'Link'}
+                      </Link>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              {skillsSection ? (
+                <View style={[styles.section, { marginTop: 14 }]}>
+                  <View style={isNeo ? styles.sectionTitleNeoWrap : undefined}>
+                    {isNeo ? <View style={styles.sectionTitleNeoBar} /> : null}
+                    <Text style={styles.sectionTitle}>{skillsSection.title}</Text>
+                  </View>
+                  <View style={styles.skillsContainer}>
+                    {skillsSection.items[0]?.skillsWithLevels?.map((skill, idx) => (
+                      <View key={`swl-${idx}`} style={styles.skillWithLevel}>
+                        <Text>{skill.name}</Text>
+                        <Text style={styles.skillLevelText}>{skill.level}</Text>
+                      </View>
+                    ))}
+                    {skillsSection.items[0]?.skills?.map((skill, idx) => (
+                      <Text key={`s-${idx}`} style={styles.skillTag}>
+                        {skill}
+                      </Text>
+                    ))}
+                    {!skillsSection.items[0]?.skills?.length && !skillsSection.items[0]?.skillsWithLevels?.length && (
+                      <Text style={[styles.skillTag, styles.placeholder]}>Add your skills</Text>
+                    )}
+                  </View>
+                </View>
+              ) : null}
+            </View>
+
+            <View style={styles.portfolioMain}>
+              {mainSections.map(renderSection)}
+            </View>
+          </View>
+        ) : (
+          <>
+            {/* Header */}
+            <View style={styles.header}>
+              <Text style={styles.name}>{personalInfo.fullName || 'Full Name'}</Text>
+              {personalInfo.summary && <Text style={styles.summary}>{personalInfo.summary}</Text>}
+
+              {/* Contact Info - with SVG icons and clickable links */}
+              <View style={styles.contactRow}>
+                {personalInfo.email && (
+                  <View style={styles.contactItemWrapper}>
+                    <EmailIcon size={iconSize} color={iconColor} />
+                    <Link src={`mailto:${personalInfo.email}`} style={styles.contactLink}>
+                      {personalInfo.email}
+                    </Link>
+                  </View>
+                )}
+                {personalInfo.phone && (
+                  <View style={styles.contactItemWrapper}>
+                    <PhoneIcon size={iconSize} color={iconColor} />
+                    <Link src={`tel:${personalInfo.phone.replace(/\s/g, '')}`} style={styles.contactLink}>
+                      {personalInfo.phone}
+                    </Link>
+                  </View>
+                )}
+                {personalInfo.location && (
+                  <View style={styles.contactItemWrapper}>
+                    <LocationIcon size={iconSize} color={iconColor} />
+                    <Text style={styles.contactItem}>{personalInfo.location}</Text>
+                  </View>
+                )}
+                {personalInfo.linkedin && (
+                  <View style={styles.contactItemWrapper}>
+                    <LinkedInIcon size={iconSize} color={iconColor} />
+                    <Link src={ensureProtocol(personalInfo.linkedin)} style={styles.contactLink}>
+                      {formatUrlDisplay(personalInfo.linkedin)}
+                    </Link>
+                  </View>
+                )}
+                {personalInfo.github && (
+                  <View style={styles.contactItemWrapper}>
+                    <GitHubIcon size={iconSize} color={iconColor} />
+                    <Link src={ensureProtocol(personalInfo.github)} style={styles.contactLink}>
+                      {formatUrlDisplay(personalInfo.github)}
+                    </Link>
+                  </View>
+                )}
+                {personalInfo.website && (
+                  <View style={styles.contactItemWrapper}>
+                    <GlobeIcon size={iconSize} color={iconColor} />
+                    <Link src={ensureProtocol(personalInfo.website)} style={styles.contactLink}>
+                      {formatUrlDisplay(personalInfo.website)}
+                    </Link>
+                  </View>
+                )}
+              </View>
+
+              {/* Additional Links */}
+              {personalInfo.links.length > 0 && (
+                <View style={styles.linksRow}>
+                  {personalInfo.links.map((link) => (
+                    <View key={link.id} style={styles.contactItemWrapper}>
+                      <LinkIcon size={iconSize} color={iconColor} />
+                      <Link src={ensureProtocol(link.url) || '#'} style={styles.link}>
+                        {link.label || formatUrlDisplay(link.url) || 'Link'}
+                      </Link>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+
+            {/* Sections */}
+            {visibleSections.map(renderSection)}
+          </>
+        )}
       </Page>
     </Document>
   );

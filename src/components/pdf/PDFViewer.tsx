@@ -3,7 +3,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { usePDF } from '@react-pdf/renderer';
 import { ResumePDFDocument } from './ResumePDF';
-import { ResumeData, PAGE_SIZES } from '@/lib/schema';
+import { ResumeData } from '@/lib/schema';
 import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
 
@@ -26,11 +26,6 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({ data, className }) => {
   useEffect(() => {
     updateInstance(document);
   }, [document, updateInstance]);
-
-  const aspectRatio = useMemo(() => {
-    const size = PAGE_SIZES[data.theme.pageSize];
-    return size.width / size.height;
-  }, [data.theme.pageSize]);
 
   if (!mounted) {
     return (
@@ -60,15 +55,8 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({ data, className }) => {
   }
 
   return (
-    <div className={cn('w-full h-full overflow-auto bg-muted/30 p-4', className)}>
-      <div 
-        className="mx-auto bg-white shadow-2xl"
-        style={{
-          width: '100%',
-          maxWidth: '595px', // A4 width in pixels at 72 DPI
-          aspectRatio: aspectRatio,
-        }}
-      >
+    <div className={cn('w-full h-full bg-muted/30 p-4 overflow-auto', className)}>
+      <div className="mx-auto w-full max-w-[900px] h-full min-h-[640px] bg-white border border-border shadow-sm">
         {instance.url && (
           <iframe
             src={instance.url}

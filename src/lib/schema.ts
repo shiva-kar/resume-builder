@@ -43,19 +43,83 @@ export interface SkillWithLevel {
 }
 
 // ============================================================================
-// ACCENT COLOR PRESETS
+// ACCENT COLOR PRESETS - Refined Palette
 // ============================================================================
 
 export const ACCENT_COLORS = [
-  { color: '#000000', name: 'Black' },
-  { color: '#2563eb', name: 'Blue' },
-  { color: '#dc2626', name: 'Red' },
-  { color: '#16a34a', name: 'Green' },
-  { color: '#9333ea', name: 'Purple' },
-  { color: '#ea580c', name: 'Orange' },
-  { color: '#0891b2', name: 'Cyan' },
-  { color: '#be185d', name: 'Pink' },
+  // Neutrals
+  { color: '#1a1a2e', name: 'Charcoal' },
+  { color: '#374151', name: 'Slate' },
+  // Blues
+  { color: '#2563eb', name: 'Azure' },
+  { color: '#0ea5e9', name: 'Sky' },
+  { color: '#0d9488', name: 'Teal' },
+  // Warm
+  { color: '#dc2626', name: 'Crimson' },
+  { color: '#ea580c', name: 'Amber' },
+  { color: '#ca8a04', name: 'Gold' },
+  // Cool
+  { color: '#7c3aed', name: 'Violet' },
+  { color: '#db2777', name: 'Rose' },
+  { color: '#059669', name: 'Emerald' },
 ] as const;
+
+// ============================================================================
+// TEMPLATE METADATA - For UI Display
+// ============================================================================
+
+export const TEMPLATE_INFO = {
+  harvard: {
+    name: 'Academic Classic',
+    description: 'Traditional academic style with serif typography',
+    category: 'professional',
+  },
+  tech: {
+    name: 'Modern Tech',
+    description: 'Clean and modern with accent colors',
+    category: 'modern',
+  },
+  minimal: {
+    name: 'Minimal Light',
+    description: 'Ultra-clean with lots of whitespace',
+    category: 'minimal',
+  },
+  bold: {
+    name: 'Bold Statement',
+    description: 'High-contrast with strong typography',
+    category: 'creative',
+  },
+  neo: {
+    name: 'Neo Geometric',
+    description: 'Sharp edges with geometric accents',
+    category: 'modern',
+  },
+  portfolio: {
+    name: 'Portfolio Grid',
+    description: 'Two-column layout for creatives',
+    category: 'creative',
+  },
+  corporate: {
+    name: 'Corporate Clean',
+    description: 'Professional and business-ready',
+    category: 'professional',
+  },
+  creative: {
+    name: 'Creative Studio',
+    description: 'Expressive layout for designers',
+    category: 'creative',
+  },
+  elegant: {
+    name: 'Elegant Serif',
+    description: 'Refined typography with subtle details',
+    category: 'professional',
+  },
+  modern: {
+    name: 'Modern Edge',
+    description: 'Contemporary with clean lines',
+    category: 'modern',
+  },
+} as const;
 
 // ============================================================================
 // CUSTOM FIELD TYPES - For custom sections
@@ -220,7 +284,18 @@ export const TypographySettingsSchema = z.object({
 });
 
 export const ThemeSchema = z.object({
-  template: z.enum(['harvard', 'tech', 'minimal']),
+  template: z.enum([
+    'harvard',
+    'tech',
+    'minimal',
+    'bold',
+    'neo',
+    'portfolio',
+    'corporate',
+    'creative',
+    'elegant',
+    'modern'
+  ]),
   color: z.string(),
   fontSize: z.enum(['small', 'medium', 'large']),
   pageSize: z.enum(['A4', 'LETTER', 'LEGAL', 'EXECUTIVE', 'B5', 'A5']),

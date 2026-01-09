@@ -1,9 +1,14 @@
 {
   "name": "resume-builder",
-  "version": "2.5.0",
+  "version": "3.0.0",
   "private": true,
   "description": "Professional Resume Builder - Create beautiful resumes with live preview and PDF export",
-  "author": "shiva-kar",
+  "author": "Shiva Kar",
+  "homepage": "https://github.com/shiva-kar/resume-builder",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shiva-kar/resume-builder.git"
+  },
   "main": "electron/main.js",
   "scripts": {
     "dev": "next dev",
@@ -12,11 +17,19 @@
     "lint": "next lint",
     "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && electron .\"",
     "electron:build": "npm run build && electron-builder --win --publish never",
-    "deploy": "next build && echo. > out/.nojekyll && gh-pages -d out --dotfiles"
+    "electron:build:portable": "npm run build && electron-builder --win portable --publish never",
+    "deploy": "next build && echo. > out/.nojekyll && gh-pages -d out --dotfiles",
+    "release": "node scripts/release.js",
+    "release:patch": "node scripts/release.js --patch",
+    "release:minor": "node scripts/release.js --minor",
+    "release:major": "node scripts/release.js --major",
+    "release:quick": "node scripts/release.js --patch -y",
+    "version:bump": "node scripts/release.js --skip-build --skip-release"
   },
   "build": {
-    "appId": "com.resumebuilder.app",
+    "appId": "com.shivakar.resumebuilder",
     "productName": "Resume Builder",
+    "artifactName": "Resume-Builder-${version}-${os}.${ext}",
     "directories": {
       "output": "dist"
     },
@@ -27,9 +40,29 @@
       "package.json"
     ],
     "win": {
-      "target": "dir",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
       "icon": "public/icon.png",
       "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "portable": {
+      "artifactName": "Resume-Builder-${version}-Portable.exe"
     },
     "forceCodeSigning": false
   },

@@ -57,10 +57,10 @@ export const PersonalInfoForm: React.FC = () => {
   };
 
   return (
-    <div className="glass rounded-xl shadow-sm bento-card overflow-hidden">
+    <div className="glass rounded-none bento-card overflow-hidden">
       {/* Header */}
       <div
-        className="bg-muted/50 px-4 py-3 border-b border-border flex justify-between items-center cursor-pointer select-none"
+        className="bg-muted px-4 py-3 border-b border-border flex justify-between items-center cursor-pointer select-none"
         onClick={() => setIsOpen(!isOpen)}
       >
         <div className="flex items-center gap-2">
@@ -174,7 +174,7 @@ export const PersonalInfoForm: React.FC = () => {
             {personalInfo.links.map((link) => {
               const IconComponent = getLinkIcon(link.icon);
               return (
-                <div key={link.id} className="space-y-2 p-3 border border-border/50 rounded-lg bg-muted/30">
+                <div key={link.id} className="space-y-2 p-3 border border-border rounded-none bg-muted">
                   <div className="flex items-center gap-2">
                     {/* Icon Selector */}
                     <div className="relative flex-shrink-0">
@@ -182,7 +182,7 @@ export const PersonalInfoForm: React.FC = () => {
                         value={link.icon || 'website'}
                         onChange={(e) => updateLink(link.id, { icon: e.target.value })}
                         className={cn(
-                          'appearance-none w-10 h-10 rounded-lg',
+                          'appearance-none w-10 h-10 rounded-none',
                           'border border-border bg-background',
                           'focus:outline-none focus:ring-2 focus:ring-primary/20',
                           'cursor-pointer text-transparent'
@@ -211,7 +211,7 @@ export const PersonalInfoForm: React.FC = () => {
                     {/* Delete Button */}
                     <button
                       onClick={() => removeLink(link.id)}
-                      className="p-2 hover:bg-destructive/10 rounded-lg transition-colors text-destructive"
+                      className="p-2 hover:bg-destructive/10 rounded-none transition-colors text-destructive"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>

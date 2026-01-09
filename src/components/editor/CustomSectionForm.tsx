@@ -62,7 +62,7 @@ const FieldEditor: React.FC<{
   const IconComponent = FIELD_TYPE_INFO[field.type].icon;
 
   return (
-    <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg border border-border/50">
+    <div className="flex items-center gap-2 p-2 bg-muted rounded-none border border-border">
       <GripVertical className="w-4 h-4 text-muted-foreground cursor-grab flex-shrink-0" />
       <IconComponent className="w-4 h-4 text-muted-foreground flex-shrink-0" />
       <input
@@ -75,7 +75,7 @@ const FieldEditor: React.FC<{
       <select
         value={field.type}
         onChange={(e) => updateFieldDefinition(sectionId, field.id, { type: e.target.value as CustomFieldType })}
-        className="text-xs bg-background border border-border rounded px-2 py-1 flex-shrink-0 max-w-[100px]"
+        className="text-xs bg-background border border-border rounded-none px-2 py-1 flex-shrink-0 max-w-[100px]"
       >
         {CUSTOM_FIELD_TYPES.map((type) => (
           <option key={type} value={type}>
@@ -85,7 +85,7 @@ const FieldEditor: React.FC<{
       </select>
       <button
         onClick={onRemove}
-        className="p-1 hover:bg-destructive/10 rounded text-destructive transition-colors flex-shrink-0"
+        className="p-1 hover:bg-destructive/10 rounded-none text-destructive transition-colors flex-shrink-0"
       >
         <X className="w-3 h-3" />
       </button>
@@ -119,11 +119,11 @@ const TagInput: React.FC<{
   };
 
   return (
-    <div className="flex flex-wrap gap-1.5 p-2 border border-border rounded-lg bg-background min-h-[38px]">
+    <div className="flex flex-wrap gap-1.5 p-2 border border-border rounded-none bg-background min-h-[38px]">
       {value.map((tag, idx) => (
         <span
           key={idx}
-          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-primary/10 text-primary"
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-none text-xs bg-muted text-foreground border border-border"
         >
           {tag}
           <button
@@ -221,7 +221,7 @@ const CustomFieldRenderer: React.FC<{
               placeholder={field.placeholder || 'https://...'}
               value={(value as string) || ''}
               onChange={(e) => onChange(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="w-full pl-9 pr-3 py-2 text-sm border border-border rounded-none bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
         </div>
@@ -251,14 +251,21 @@ const TemplateDropdown: React.FC<{
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [openUpward, setOpenUpward] = useState(false);
+  const [maxMenuHeight, setMaxMenuHeight] = useState<number>(240);
 
   useEffect(() => {
-    if (isOpen && dropdownRef.current) {
-      const rect = dropdownRef.current.getBoundingClientRect();
-      const spaceBelow = window.innerHeight - rect.bottom;
-      const menuHeight = 200; // Approximate menu height
-      setOpenUpward(spaceBelow < menuHeight);
-    }
+    if (!isOpen || !dropdownRef.current) return;
+
+    const rect = dropdownRef.current.getBoundingClientRect();
+    const viewportPadding = 8;
+    const spaceBelow = Math.max(0, window.innerHeight - rect.bottom - viewportPadding);
+    const spaceAbove = Math.max(0, rect.top - viewportPadding);
+
+    const desiredMenuHeight = 220;
+    const shouldOpenUpward = spaceBelow < desiredMenuHeight && spaceAbove > spaceBelow;
+
+    setOpenUpward(shouldOpenUpward);
+    setMaxMenuHeight(Math.max(140, shouldOpenUpward ? spaceAbove : spaceBelow));
   }, [isOpen]);
 
   useEffect(() => {
@@ -275,7 +282,7 @@ const TemplateDropdown: React.FC<{
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="text-xs px-2 py-1 rounded border border-border hover:bg-muted transition-colors flex items-center gap-1"
+        className="text-xs px-2 py-1 rounded-none border border-border hover:bg-muted transition-colors flex items-center gap-1"
       >
         Use Template
         {openUpward && isOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
@@ -283,9 +290,10 @@ const TemplateDropdown: React.FC<{
       {isOpen && (
         <div
           className={cn(
-            'absolute left-0 bg-background border border-border rounded-lg shadow-xl py-1 z-50 min-w-[140px]',
+            'absolute left-0 bg-background border border-border rounded-none shadow-sm py-1 z-50 min-w-[160px] overflow-y-auto overscroll-contain',
             openUpward ? 'bottom-full mb-1' : 'top-full mt-1'
           )}
+          style={{ maxHeight: maxMenuHeight }}
         >
           {Object.entries(TEMPLATE_NAMES).map(([key, label]) => (
             <button
@@ -344,10 +352,10 @@ export const CustomSectionForm: React.FC<CustomSectionFormProps> = ({ section })
   return (
     <div className="space-y-4">
       {/* Field Configuration Panel */}
-      <div className="border border-border rounded-lg overflow-hidden">
+      <div className="border border-border rounded-none">
         <button
           onClick={() => setShowFieldConfig(!showFieldConfig)}
-          className="w-full flex items-center justify-between p-3 bg-muted/30 hover:bg-muted/50 transition-colors"
+          className="w-full flex items-center justify-between p-3 bg-muted hover:bg-muted/80 transition-colors"
         >
           <div className="flex items-center gap-2">
             <Settings2 className="w-4 h-4 text-muted-foreground" />
@@ -429,7 +437,7 @@ export const CustomSectionForm: React.FC<CustomSectionFormProps> = ({ section })
 
             <button
               onClick={() => removeSectionItem(section.id, item.id)}
-              className="p-2 hover:bg-destructive/10 rounded-lg transition-colors text-destructive ml-2"
+              className="p-2 hover:bg-destructive/10 rounded-none transition-colors text-destructive ml-2"
             >
               <Trash2 className="w-4 h-4" />
             </button>

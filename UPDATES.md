@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [3.0.0] - 2026-01-09
+
+### Added
+- Add MIT License to the project
+- Add screenshots section to README
+- feat: Add Electron desktop app support
+
+### Changed
+- Update README with badges and live demo links
+- Update README with images and complete MIT License
+
+---
+
 ## [2.5.0] - 2024-12-19
 
 ### Added
@@ -169,4 +182,3 @@ Feel free to submit issues and enhancement requests!
 ## License
 
 MIT License - feel free to use this project for personal or commercial purposes.
-
