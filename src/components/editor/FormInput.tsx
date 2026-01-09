@@ -21,7 +21,7 @@ export const FormInput = React.forwardRef<HTMLInputElement, FormInputProps>(
         <input
           ref={ref}
           className={cn(
-            'w-full px-3 py-2 border border-border rounded-lg',
+            'w-full px-3 py-2 border border-border rounded-none',
             'bg-background text-foreground',
             'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary',
             'placeholder:text-muted-foreground/50',
@@ -95,7 +95,7 @@ export const FormTextarea = React.forwardRef<
         ref={ref}
         value={value}
         className={cn(
-          'w-full px-3 py-2 border border-border rounded-lg',
+          'w-full px-3 py-2 border border-border rounded-none',
           'bg-background text-foreground',
           'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary',
           'placeholder:text-muted-foreground/50',
@@ -131,7 +131,7 @@ export const FormSelect = React.forwardRef<HTMLSelectElement, FormSelectProps>(
         <select
           ref={ref}
           className={cn(
-            'w-full px-3 py-2 border border-border rounded-lg',
+            'w-full px-3 py-2 border border-border rounded-none',
             'bg-background text-foreground',
             'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary',
             'transition-colors',
@@ -167,7 +167,7 @@ export const FormCheckbox = React.forwardRef<HTMLInputElement, FormCheckboxProps
           ref={ref}
           type="checkbox"
           className={cn(
-            'w-4 h-4 rounded border-border',
+            'w-4 h-4 rounded-none border-border',
             'text-primary focus:ring-primary/20',
             className
           )}

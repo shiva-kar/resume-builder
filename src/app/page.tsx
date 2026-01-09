@@ -39,6 +39,15 @@ import {
   Plus,
   Minus,
   Link as LinkIcon,
+  Sparkles,
+  Layout,
+  Grid3X3,
+  Building2,
+  Pen,
+  BookOpen,
+  Zap,
+  Github,
+  ExternalLink,
 } from 'lucide-react';
 import {
   useResumeStore,
@@ -56,6 +65,7 @@ import {
   ACCENT_COLORS,
   TYPOGRAPHY_SIZES,
   DEFAULT_TYPOGRAPHY,
+  TEMPLATE_INFO,
 } from '@/lib/schema';
 import {
   SectionWrapper,
@@ -66,7 +76,7 @@ import {
   PersonalInfoForm,
 } from '@/components/editor';
 import { exportToPDF, downloadPDF } from '@/components/pdf';
-import { LivePreview } from '@/components/pdf/LivePreview';
+import { PreviewCanvas } from '@/components/pdf/PreviewCanvas';
 import { cn } from '@/lib/utils';
 
 // ============================================================================
@@ -116,61 +126,116 @@ const DesignSettingsPanel: React.FC = () => {
   const typography = theme.typography || DEFAULT_TYPOGRAPHY;
 
   return (
-    <div className="glass rounded-xl shadow-sm bento-card overflow-hidden mb-4">
+    <div className="glass rounded-lg bento-card overflow-hidden mb-4">
       <div
-        className="bg-muted/50 px-4 py-3 border-b border-border flex justify-between items-center cursor-pointer select-none"
+        className="bg-muted/50 px-4 py-3 border-b border-border/50 flex justify-between items-center cursor-pointer select-none hover:bg-muted/70 transition-colors"
         onClick={() => setIsOpen(!isOpen)}
       >
         <div className="flex items-center gap-2">
-          <Palette className="w-4 h-4 text-muted-foreground" />
-          <h3 className="font-semibold text-sm text-foreground">Design & Layout</h3>
+          <div className="w-7 h-7 rounded-md bg-gradient-to-br from-violet-500/20 to-pink-500/20 flex items-center justify-center">
+            <Palette className="w-3.5 h-3.5 text-violet-600 dark:text-violet-400" />
+          </div>
+          <h3 className="font-semibold text-sm text-foreground">Design Studio</h3>
         </div>
-        {isOpen ? (
-          <ChevronUp className="w-4 h-4 text-muted-foreground" />
-        ) : (
-          <ChevronDown className="w-4 h-4 text-muted-foreground" />
-        )}
+        <ChevronDown className={cn(
+          'w-4 h-4 text-muted-foreground transition-transform duration-200',
+          isOpen && 'rotate-180'
+        )} />
       </div>
 
       {isOpen && (
-        <div className="p-4 space-y-4">
+        <div className="p-4 space-y-5 fade-in">
           {/* Template Selection */}
           <div>
             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">
-              Template
+              Choose Your Style
             </label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
               {[
-                { value: 'harvard', label: 'Harvard' },
-                { value: 'tech', label: 'Tech' },
-                { value: 'minimal', label: 'Minimal' },
-              ].map((t) => (
-                <button
-                  key={t.value}
-                  onClick={() => updateTheme({ template: t.value as TemplateType })}
-                  className={cn(
-                    'h-16 rounded-lg border-2 flex flex-col items-center justify-center gap-1 transition-all',
-                    theme.template === t.value
-                      ? 'border-primary bg-primary/10 text-primary'
-                      : 'border-border hover:border-primary/50 text-muted-foreground'
-                  )}
-                >
-                  <FileText className="w-4 h-4" />
-                  <span className="text-[10px] font-medium">{t.label}</span>
-                </button>
-              ))}
+                { value: 'harvard', label: 'Academic', icon: BookOpen, lightBg: 'from-amber-50 to-orange-50/30', darkBg: 'dark:from-amber-950/40 dark:to-orange-950/20', iconColor: 'text-amber-600 dark:text-amber-400', accentBorder: 'border-amber-500/60' },
+                { value: 'tech', label: 'Tech', icon: Code, lightBg: 'from-blue-50 to-cyan-50/30', darkBg: 'dark:from-blue-950/40 dark:to-cyan-950/20', iconColor: 'text-blue-600 dark:text-blue-400', accentBorder: 'border-blue-500/60' },
+                { value: 'minimal', label: 'Minimal', icon: Type, lightBg: 'from-gray-50 to-slate-50/30', darkBg: 'dark:from-gray-900/40 dark:to-slate-900/20', iconColor: 'text-gray-600 dark:text-gray-300', accentBorder: 'border-gray-400/60' },
+                { value: 'bold', label: 'Bold', icon: Zap, lightBg: 'from-slate-100 to-zinc-50/30', darkBg: 'dark:from-slate-800/50 dark:to-zinc-900/30', iconColor: 'text-slate-700 dark:text-slate-200', accentBorder: 'border-slate-600/60' },
+                { value: 'neo', label: 'Neo', icon: Grid3X3, lightBg: 'from-violet-50 to-purple-50/30', darkBg: 'dark:from-violet-950/40 dark:to-purple-950/20', iconColor: 'text-violet-600 dark:text-violet-400', accentBorder: 'border-violet-500/60' },
+                { value: 'portfolio', label: 'Portfolio', icon: Layout, lightBg: 'from-emerald-50 to-teal-50/30', darkBg: 'dark:from-emerald-950/40 dark:to-teal-950/20', iconColor: 'text-emerald-600 dark:text-emerald-400', accentBorder: 'border-emerald-500/60' },
+                { value: 'corporate', label: 'Corporate', icon: Building2, lightBg: 'from-sky-50 to-blue-50/30', darkBg: 'dark:from-sky-950/40 dark:to-blue-950/20', iconColor: 'text-sky-600 dark:text-sky-400', accentBorder: 'border-sky-500/60' },
+                { value: 'creative', label: 'Creative', icon: Sparkles, lightBg: 'from-pink-50 to-rose-50/30', darkBg: 'dark:from-pink-950/40 dark:to-rose-950/20', iconColor: 'text-pink-600 dark:text-pink-400', accentBorder: 'border-pink-500/60' },
+                { value: 'elegant', label: 'Elegant', icon: Pen, lightBg: 'from-stone-50 to-neutral-50/30', darkBg: 'dark:from-stone-900/40 dark:to-neutral-900/20', iconColor: 'text-stone-600 dark:text-stone-300', accentBorder: 'border-stone-500/60' },
+                { value: 'modern', label: 'Modern', icon: FolderKanban, lightBg: 'from-cyan-50 to-sky-50/30', darkBg: 'dark:from-cyan-950/40 dark:to-sky-950/20', iconColor: 'text-cyan-600 dark:text-cyan-400', accentBorder: 'border-cyan-500/60' },
+              ].map((t) => {
+                const isSelected = theme.template === t.value;
+                return (
+                  <button
+                    key={t.value}
+                    onClick={() => updateTheme({ template: t.value as TemplateType })}
+                    className={cn(
+                      'group relative h-[72px] rounded-xl flex flex-col items-center justify-center gap-1.5',
+                      'transition-all duration-200 btn-press overflow-hidden',
+                      'border-2',
+                      isSelected
+                        ? `${t.accentBorder} shadow-lg dark:shadow-[0_0_15px_-3px] dark:shadow-primary/20`
+                        : 'border-border/50 dark:border-border hover:border-primary/40 dark:hover:border-primary/50 hover:shadow-md'
+                    )}
+                  >
+                    {/* Gradient Background */}
+                    <div className={cn(
+                      'absolute inset-0 bg-gradient-to-br transition-opacity duration-200',
+                      t.lightBg,
+                      t.darkBg,
+                      isSelected ? 'opacity-100' : 'opacity-60 group-hover:opacity-80'
+                    )} />
+
+                    {/* Selected glow effect */}
+                    {isSelected && (
+                      <div className="absolute inset-0 bg-gradient-to-t from-primary/10 to-transparent dark:from-primary/20" />
+                    )}
+
+                    {/* Content */}
+                    <div className="relative z-10 flex flex-col items-center gap-1">
+                      <div className={cn(
+                        'w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200',
+                        isSelected
+                          ? 'bg-white/80 dark:bg-white/10 shadow-sm'
+                          : 'bg-white/50 dark:bg-white/5 group-hover:bg-white/70 dark:group-hover:bg-white/10'
+                      )}>
+                        <t.icon className={cn(
+                          'w-4 h-4 transition-all duration-200',
+                          isSelected ? t.iconColor : 'text-muted-foreground group-hover:text-foreground dark:group-hover:text-foreground'
+                        )} />
+                      </div>
+                      <span className={cn(
+                        'text-[10px] font-semibold transition-colors',
+                        isSelected
+                          ? 'text-foreground dark:text-foreground'
+                          : 'text-muted-foreground group-hover:text-foreground dark:text-muted-foreground dark:group-hover:text-foreground'
+                      )}>
+                        {t.label}
+                      </span>
+                    </div>
+
+                    {/* Selected indicator */}
+                    {isSelected && (
+                      <div className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary shadow-sm" />
+                    )}
+                  </button>
+                );
+              })}
             </div>
+            {/* Template Description */}
+            <p className="text-[11px] text-muted-foreground mt-2.5 italic">
+              {TEMPLATE_INFO[theme.template as keyof typeof TEMPLATE_INFO]?.description || 'Select a template style'}
+            </p>
           </div>
 
           {/* Page Size */}
           <div>
             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">
-              Page Size
+              Page Format
             </label>
             <select
               value={theme.pageSize}
               onChange={(e) => updateTheme({ pageSize: e.target.value as PageSize })}
-              className="w-full text-sm py-2 px-3 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="w-full text-sm py-2.5 px-3 rounded-lg border border-border bg-background focus-ring cursor-pointer"
             >
               {Object.entries(PAGE_SIZES).map(([key, { label }]) => (
                 <option key={key} value={key}>
@@ -182,7 +247,7 @@ const DesignSettingsPanel: React.FC = () => {
 
           {/* Accent Color */}
           <div>
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5 block">
               Accent Color
             </label>
             <div className="flex gap-2 flex-wrap">
@@ -192,38 +257,43 @@ const DesignSettingsPanel: React.FC = () => {
                   onClick={() => updateTheme({ color: c.color })}
                   title={c.name}
                   className={cn(
-                    'w-8 h-8 rounded-full transition-all',
+                    'w-8 h-8 rounded-lg border-2 transition-all duration-200 btn-press',
                     theme.color === c.color
-                      ? 'ring-2 ring-offset-2 ring-primary scale-110'
-                      : 'hover:scale-110'
+                      ? 'border-foreground scale-110 shadow-md'
+                      : 'border-transparent hover:scale-105 hover:shadow-sm'
                   )}
                   style={{ backgroundColor: c.color }}
                 />
               ))}
-              <input
-                type="color"
-                value={theme.color}
-                onChange={(e) => updateTheme({ color: e.target.value })}
-                className="w-8 h-8 rounded-full cursor-pointer border border-border overflow-hidden"
-                title="Custom color"
-              />
+              <div className="relative">
+                <input
+                  type="color"
+                  value={theme.color}
+                  onChange={(e) => updateTheme({ color: e.target.value })}
+                  className="w-8 h-8 rounded-lg cursor-pointer border-2 border-dashed border-border overflow-hidden opacity-0 absolute inset-0"
+                  title="Custom color"
+                />
+                <div className="w-8 h-8 rounded-lg border-2 border-dashed border-border flex items-center justify-center bg-muted/30 pointer-events-none">
+                  <Plus className="w-3.5 h-3.5 text-muted-foreground" />
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Global Font Size */}
           <div>
             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">
-              Global Text Size
+              Text Scale
             </label>
-            <div className="flex bg-muted p-1 rounded-lg">
+            <div className="flex bg-muted/50 p-1 rounded-lg">
               {(['small', 'medium', 'large'] as FontSizeLevel[]).map((size) => (
                 <button
                   key={size}
                   onClick={() => updateTheme({ fontSize: size })}
                   className={cn(
-                    'flex-1 text-xs py-2 rounded-md font-medium transition-all capitalize',
+                    'flex-1 text-xs py-2.5 rounded-md font-medium transition-all duration-200 capitalize',
                     theme.fontSize === size
-                      ? 'bg-background shadow-sm text-foreground'
+                      ? 'bg-background text-foreground shadow-sm'
                       : 'text-muted-foreground hover:text-foreground'
                   )}
                 >
@@ -234,30 +304,30 @@ const DesignSettingsPanel: React.FC = () => {
           </div>
 
           {/* Typography Controls */}
-          <div className="space-y-3 pt-3 border-t border-border">
+          <div className="space-y-3 pt-4 border-t border-border/50">
             <div className="flex items-center gap-2">
               <Type className="w-4 h-4 text-muted-foreground" />
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Typography Sizing
+                Fine-Tune Typography
               </span>
             </div>
 
             {[
-              { label: 'Name', key: 'name' as keyof typeof typography },
-              { label: 'Section Headers', key: 'headers' as keyof typeof typography },
-              { label: 'Body Text', key: 'body' as keyof typeof typography },
+              { label: 'Your Name', key: 'name' as keyof typeof typography },
+              { label: 'Section Titles', key: 'headers' as keyof typeof typography },
+              { label: 'Body Content', key: 'body' as keyof typeof typography },
             ].map((item) => (
               <div key={item.key} className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">{item.label}</span>
-                <div className="flex bg-muted p-0.5 rounded">
+                <div className="flex bg-muted/50 p-0.5 rounded-md">
                   {TYPOGRAPHY_SIZES.map((s) => (
                     <button
                       key={s}
                       onClick={() => updateTypography(item.key, s)}
                       className={cn(
-                        'w-8 text-[10px] py-1 rounded font-medium transition-all uppercase',
+                        'w-8 text-[10px] py-1.5 rounded font-medium transition-all duration-200 uppercase',
                         typography[item.key] === s
-                          ? 'bg-background shadow-sm text-foreground'
+                          ? 'bg-background text-foreground shadow-sm'
                           : 'text-muted-foreground hover:text-foreground'
                       )}
                     >
@@ -280,8 +350,11 @@ const DesignSettingsPanel: React.FC = () => {
 
 const SectionManagerPanel: React.FC = () => {
   const sections = useSections();
-  const { addSection, removeSection, toggleSectionVisibility } = useResumeStore();
+  const { addSection, addCustomSection, removeSection, toggleSectionVisibility } = useResumeStore();
   const [isOpen, setIsOpen] = useState(false);
+  const [customBump, setCustomBump] = useState(false);
+
+  const customCount = useMemo(() => sections.filter((s) => s.type === 'custom').length, [sections]);
 
   // Get existing section types
   const existingSectionTypes = useMemo(() => {
@@ -290,13 +363,12 @@ const SectionManagerPanel: React.FC = () => {
 
   // Available sections that can be added (not already present or allow multiple)
   const availableSections = useMemo(() => {
-    const types: SectionType[] = ['experience', 'education', 'skills', 'projects', 'certifications', 'custom'];
+    const types: SectionType[] = ['experience', 'education', 'skills', 'projects', 'certifications'];
     return types.map(type => ({
       type,
       ...SECTION_CONFIG[type],
       exists: existingSectionTypes.has(type),
-      // These types can have multiple instances
-      allowMultiple: type === 'custom',
+      allowMultiple: false,
     }));
   }, [existingSectionTypes]);
 
@@ -313,52 +385,88 @@ const SectionManagerPanel: React.FC = () => {
     }
   };
 
+  const handleAddCustomSection = () => {
+    addCustomSection();
+    setCustomBump(true);
+    window.setTimeout(() => setCustomBump(false), 140);
+  };
+
   return (
-    <div className="glass rounded-xl shadow-sm bento-card overflow-hidden mb-4">
+    <div className="glass rounded-lg bento-card overflow-hidden mb-4">
       <div
-        className="bg-muted/50 px-4 py-3 border-b border-border flex justify-between items-center cursor-pointer select-none"
+        className="bg-muted/50 px-4 py-3 border-b border-border/50 flex justify-between items-center cursor-pointer select-none hover:bg-muted/70 transition-colors"
         onClick={() => setIsOpen(!isOpen)}
       >
         <div className="flex items-center gap-2">
-          <Plus className="w-4 h-4 text-muted-foreground" />
-          <h3 className="font-semibold text-sm text-foreground">Manage Sections</h3>
+          <div className="w-7 h-7 rounded-md bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center">
+            <Plus className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+          </div>
+          <h3 className="font-semibold text-sm text-foreground">Build Your Story</h3>
         </div>
-        {isOpen ? (
-          <ChevronUp className="w-4 h-4 text-muted-foreground" />
-        ) : (
-          <ChevronDown className="w-4 h-4 text-muted-foreground" />
-        )}
+        <ChevronDown className={cn(
+          'w-4 h-4 text-muted-foreground transition-transform duration-200',
+          isOpen && 'rotate-180'
+        )} />
       </div>
 
       {isOpen && (
-        <div className="p-4">
-          <p className="text-xs text-muted-foreground mb-3">
-            Toggle sections on/off. Active sections appear in editor below.
+        <div className="p-4 fade-in">
+          <p className="text-xs text-muted-foreground mb-4">
+            Add the sections that tell your story. Make it yours.
           </p>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-3">
+            {/* Custom Section: always-add button (multiple allowed) */}
+            <button
+              type="button"
+              onClick={handleAddCustomSection}
+              className={cn(
+                'w-full px-4 py-3 rounded-lg text-sm font-medium',
+                'flex items-center justify-between gap-2 border-2',
+                'bg-gradient-to-r from-background to-muted/30 border-border hover:border-primary/50',
+                'transition-all duration-200 btn-press',
+                customBump && 'scale-[1.02] border-primary shadow-md'
+              )}
+              title="Add another custom section"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="w-6 h-6 rounded-md bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                  {SECTION_CONFIG.custom.icon}
+                </div>
+                <span className="text-foreground">{`Custom Section${customCount > 0 ? ` (${customCount})` : ''}`}</span>
+              </div>
+              <Plus className="w-4 h-4 text-primary" />
+            </button>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
             {availableSections.map(({ type, label, icon, color, exists, allowMultiple }) => (
               <button
                 key={type}
                 onClick={() => handleToggleSection(type, exists, allowMultiple)}
                 className={cn(
-                  'px-3 py-2.5 rounded-lg text-sm font-medium',
-                  'flex items-center justify-between gap-2 transition-all',
+                  'px-4 py-3 rounded-lg text-sm font-medium',
+                  'flex items-center justify-between gap-2 transition-all duration-200 btn-press',
                   exists
-                    ? 'bg-primary/10 text-primary border-2 border-primary'
-                    : 'bg-muted/50 text-muted-foreground border-2 border-transparent hover:border-muted-foreground/30'
+                    ? 'bg-primary/10 text-primary border-2 border-primary/30 shadow-sm'
+                    : 'bg-muted/50 text-muted-foreground border-2 border-transparent hover:border-border hover:bg-muted'
                 )}
               >
-                <div className="flex items-center gap-2">
-                  {icon}
+                <div className="flex items-center gap-2.5">
+                  <div className={cn(
+                    'w-6 h-6 rounded-md flex items-center justify-center',
+                    exists ? 'bg-primary/20' : 'bg-background'
+                  )}>
+                    {icon}
+                  </div>
                   <span>{label}</span>
                 </div>
                 {exists ? (
-                  allowMultiple ? <Plus className="w-4 h-4" /> : <Minus className="w-4 h-4" />
+                  allowMultiple ? <Plus className="w-4 h-4" /> : <Minus className="w-4 h-4 opacity-60" />
                 ) : (
-                  <Plus className="w-4 h-4 opacity-50" />
+                  <Plus className="w-4 h-4 opacity-40" />
                 )}
               </button>
             ))}
+            </div>
           </div>
         </div>
       )}
@@ -433,7 +541,7 @@ export default function ResumeBuilderPage() {
 
   if (!mounted) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
@@ -441,54 +549,53 @@ export default function ResumeBuilderPage() {
 
   return (
     <div className={cn(
-      'min-h-screen transition-colors',
-      isDarkMode
-        ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900'
-        : 'bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50'
+      'min-h-screen transition-colors bg-background'
     )}>
       {/* Header */}
-      <header className="glass sticky top-0 z-50 shadow-sm">
+      <header className="glass sticky top-0 z-50 border-b border-border/50">
         <div className="max-w-[1800px] mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
-            {/* Logo */}
+            {/* Brand Logo */}
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                <FileText className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary/80 rounded-lg flex items-center justify-center shadow-sm">
+                <span className="monogram text-lg text-primary-foreground">SK</span>
               </div>
               <div>
-                <h1 className="text-lg font-bold text-foreground">Resume Builder</h1>
-                <p className="text-xs text-muted-foreground hidden sm:block">
-                  Professional Portfolio Creator
+                <h1 className="text-lg font-bold text-foreground tracking-tight">
+                  Resume & Portfolio
+                </h1>
+                <p className="text-[11px] text-muted-foreground hidden sm:block">
+                  Clean. Simple. Professional.
                 </p>
               </div>
             </div>
 
             {/* Desktop Controls */}
-            <div className="hidden lg:flex items-center gap-3">
+            <div className="hidden lg:flex items-center gap-2">
               {/* Dark Mode Toggle */}
               <button
                 onClick={toggleDarkMode}
-                className="p-2 hover:bg-muted rounded-lg transition-colors"
+                className="p-2.5 hover:bg-muted rounded-lg transition-all duration-200 btn-press"
                 title={isDarkMode ? 'Light Mode' : 'Dark Mode'}
               >
                 {isDarkMode ? (
-                  <Sun className="w-5 h-5 text-yellow-500" />
+                  <Sun className="w-[18px] h-[18px] text-amber-500" />
                 ) : (
-                  <Moon className="w-5 h-5 text-slate-600" />
+                  <Moon className="w-[18px] h-[18px] text-slate-500" />
                 )}
               </button>
 
               {/* Reset Button */}
               <button
                 onClick={() => {
-                  if (confirm('Are you sure you want to reset all data?')) {
+                  if (confirm('Start fresh? This will clear all your data.')) {
                     resetStore();
                   }
                 }}
-                className="p-2 hover:bg-muted rounded-lg transition-colors text-muted-foreground"
-                title="Reset Data"
+                className="p-2.5 hover:bg-muted rounded-lg transition-all duration-200 text-muted-foreground hover:text-foreground btn-press"
+                title="Start Fresh"
               >
-                <RotateCcw className="w-5 h-5" />
+                <RotateCcw className="w-[18px] h-[18px]" />
               </button>
 
               {/* Export Button */}
@@ -496,10 +603,10 @@ export default function ResumeBuilderPage() {
                 onClick={handleExport}
                 disabled={isExporting}
                 className={cn(
-                  'px-4 py-2 rounded-lg font-medium text-sm',
-                  'bg-gradient-to-r from-blue-600 to-purple-600 text-white',
-                  'hover:from-blue-700 hover:to-purple-700',
-                  'flex items-center gap-2 shadow-lg transition-all',
+                  'px-5 py-2.5 rounded-lg font-medium text-sm',
+                  'bg-primary text-primary-foreground',
+                  'hover:bg-primary/90 shadow-sm hover:shadow-md',
+                  'flex items-center gap-2 transition-all duration-200 btn-press',
                   'disabled:opacity-50 disabled:cursor-not-allowed'
                 )}
               >
@@ -515,7 +622,7 @@ export default function ResumeBuilderPage() {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 hover:bg-muted rounded-lg"
+              className="lg:hidden p-2 hover:bg-muted rounded-lg transition-colors"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -523,25 +630,25 @@ export default function ResumeBuilderPage() {
 
           {/* Mobile Menu */}
           {mobileMenuOpen && (
-            <div className="lg:hidden mt-4 pt-4 border-t border-border space-y-3">
+            <div className="lg:hidden mt-4 pt-4 border-t border-border/50 space-y-3 fade-in">
               <div className="flex gap-2">
                 <button
                   onClick={toggleDarkMode}
-                  className="p-2 border border-border rounded-lg"
+                  className="p-2.5 border border-border rounded-lg hover:bg-muted transition-colors"
                 >
-                  {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                  {isDarkMode ? <Sun className="w-5 h-5 text-amber-500" /> : <Moon className="w-5 h-5 text-slate-500" />}
                 </button>
                 <button
                   onClick={handleExport}
                   disabled={isExporting}
-                  className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium flex items-center justify-center gap-2 shadow-sm"
                 >
                   {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                   Export PDF
                 </button>
                 <button
                   onClick={() => setMobilePreview(!isMobilePreview)}
-                  className="px-4 py-2 border border-border rounded-lg flex items-center gap-2"
+                  className="px-4 py-2.5 border border-border rounded-lg flex items-center gap-2 hover:bg-muted transition-colors"
                 >
                   {isMobilePreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   {isMobilePreview ? 'Edit' : 'Preview'}
@@ -595,14 +702,39 @@ export default function ResumeBuilderPage() {
             <button
               onClick={() => setMobilePreview(true)}
               className={cn(
-                'lg:hidden w-full py-3 rounded-lg font-medium',
-                'bg-gradient-to-r from-blue-600 to-purple-600 text-white',
-                'flex items-center justify-center gap-2 shadow-lg'
+                'lg:hidden w-full py-3.5 rounded-lg font-medium',
+                'bg-primary text-primary-foreground shadow-sm',
+                'flex items-center justify-center gap-2 btn-press'
               )}
             >
               <Eye className="w-5 h-5" />
               View Preview
             </button>
+
+            {/* Footer - Personal Branding */}
+            <footer className="mt-8 pt-6 border-t border-border/50">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 bg-gradient-to-br from-primary/80 to-primary rounded flex items-center justify-center">
+                    <span className="monogram text-[10px] text-primary-foreground">SK</span>
+                  </div>
+                  <span>Built by <span className="text-foreground font-medium">Shiva Kar</span> · 2026</span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className="italic text-muted-foreground/70">Your story, your style.</span>
+                  <a
+                    href="https://github.com/shiva-kar/resume-builder"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-muted/50 hover:text-foreground transition-all"
+                  >
+                    <Github className="w-3.5 h-3.5" />
+                    <span>Source Code</span>
+                    <ExternalLink className="w-2.5 h-2.5 opacity-50" />
+                  </a>
+                </div>
+              </div>
+            </footer>
           </div>
 
           {/* Right Pane - Live Preview */}
@@ -610,26 +742,26 @@ export default function ResumeBuilderPage() {
             'relative',
             !isMobilePreview && 'hidden lg:block'
           )}>
-            <div className="sticky top-4 glass rounded-xl shadow-lg overflow-hidden h-[calc(100vh-9rem)]">
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-3 flex items-center justify-between">
-                <h3 className="text-white font-semibold flex items-center gap-2">
-                  <Eye className="w-5 h-5" />
+            <div className="sticky top-4 glass rounded-lg overflow-hidden h-[calc(100vh-9rem)]">
+              <div className="bg-muted/50 p-3 flex items-center justify-between border-b border-border/50">
+                <h3 className="text-foreground font-semibold flex items-center gap-2 text-sm">
+                  <Eye className="w-4 h-4 text-primary" />
                   Live Preview
                 </h3>
-                <div className="flex items-center gap-2">
-                  <span className="text-white/70 text-xs">
+                <div className="flex items-center gap-3">
+                  <span className="text-muted-foreground text-xs bg-muted px-2 py-1 rounded">
                     {PAGE_SIZES[theme.pageSize].label}
                   </span>
                   <button
                     onClick={() => setMobilePreview(false)}
-                    className="lg:hidden p-1 hover:bg-white/20 rounded text-white"
+                    className="lg:hidden p-1.5 hover:bg-background rounded-md text-foreground transition-colors"
                   >
-                    <X className="w-5 h-5" />
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
               </div>
               <div className="h-[calc(100%-48px)]">
-                <LivePreview data={data} className="h-full" />
+                <PreviewCanvas data={data} className="h-full" />
               </div>
             </div>
           </div>

@@ -99,7 +99,7 @@ export const SkillsForm: React.FC<SkillsFormProps> = ({ section }) => {
             {skillsWithLevels.map((skill, idx) => (
               <div
                 key={idx}
-                className="flex items-center gap-2 p-2 border border-border rounded-lg bg-muted/30"
+                className="flex items-center gap-2 p-2 border border-border rounded-none bg-muted"
               >
                 <input
                   type="text"
@@ -110,7 +110,7 @@ export const SkillsForm: React.FC<SkillsFormProps> = ({ section }) => {
                     })
                   }
                   className={cn(
-                    'flex-1 px-2 py-1 rounded border-none bg-transparent',
+                    'flex-1 px-2 py-1 rounded-none border-none bg-transparent',
                     'text-sm text-foreground focus:outline-none'
                   )}
                   placeholder="Skill name"
@@ -123,7 +123,7 @@ export const SkillsForm: React.FC<SkillsFormProps> = ({ section }) => {
                     })
                   }
                   className={cn(
-                    'px-2 py-1 rounded text-xs font-medium border-none',
+                    'px-2 py-1 rounded-none text-xs font-medium border-none',
                     levelColors[skill.level]
                   )}
                 >
@@ -135,7 +135,7 @@ export const SkillsForm: React.FC<SkillsFormProps> = ({ section }) => {
                 </select>
                 <button
                   onClick={() => removeSkillWithLevel(section.id, skillsItem.id, idx)}
-                  className="p-1 hover:bg-destructive/10 rounded text-destructive"
+                  className="p-1 hover:bg-destructive/10 rounded-none text-destructive"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -156,15 +156,15 @@ export const SkillsForm: React.FC<SkillsFormProps> = ({ section }) => {
               <span
                 key={idx}
                 className={cn(
-                  'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full',
-                  'bg-primary/10 text-primary text-sm font-medium',
-                  'transition-all hover:bg-primary/20'
+                  'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-none',
+                  'bg-muted text-foreground text-sm font-medium border border-border',
+                  'transition-colors hover:bg-muted/80'
                 )}
               >
                 {skill}
                 <button
                   onClick={() => removeSkill(idx)}
-                  className="hover:bg-primary/30 rounded-full p-0.5 transition-colors"
+                  className="hover:bg-background rounded-none p-0.5 transition-colors"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -187,7 +187,7 @@ export const SkillsForm: React.FC<SkillsFormProps> = ({ section }) => {
             onKeyDown={handleKeyDown}
             placeholder="Type skill name..."
             className={cn(
-              'flex-1 px-3 py-2 rounded-lg',
+              'flex-1 px-3 py-2 rounded-none',
               'border border-border bg-background',
               'text-foreground placeholder:text-muted-foreground/50',
               'focus:outline-none focus:ring-2 focus:ring-primary/20'
@@ -197,7 +197,7 @@ export const SkillsForm: React.FC<SkillsFormProps> = ({ section }) => {
             value={selectedLevel}
             onChange={(e) => setSelectedLevel(e.target.value as SkillLevel)}
             className={cn(
-              'px-3 py-2 rounded-lg border border-border bg-background',
+              'px-3 py-2 rounded-none border border-border bg-background',
               'text-sm focus:outline-none focus:ring-2 focus:ring-primary/20'
             )}
           >
@@ -211,7 +211,7 @@ export const SkillsForm: React.FC<SkillsFormProps> = ({ section }) => {
             onClick={addSkillLevel}
             disabled={!inputValue.trim()}
             className={cn(
-              'px-4 py-2 rounded-lg font-medium text-sm',
+              'px-4 py-2 rounded-none font-medium text-sm',
               'bg-primary text-primary-foreground',
               'hover:bg-primary/90 transition-colors',
               'disabled:opacity-50 disabled:cursor-not-allowed',
@@ -237,7 +237,7 @@ export const SkillsForm: React.FC<SkillsFormProps> = ({ section }) => {
                   setInputValue(suggestion);
                 }}
                 className={cn(
-                  'text-xs px-2 py-1 rounded-full',
+                  'text-xs px-2 py-1 rounded-none',
                   'border border-dashed border-border',
                   'text-muted-foreground hover:text-primary hover:border-primary',
                   'transition-colors flex items-center gap-1'

@@ -2,50 +2,78 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================================
+   SHIVA KAR — Resume & Portfolio Builder
+   A handcrafted design system for professional resumes
+   ============================================================================ */
+
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Custom Brand Palette - Warm Slate with Accent */
+    --background: 210 20% 99%;
+    --foreground: 222 47% 11%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
+    --popover-foreground: 222 47% 11%;
+
+    /* Signature Blue - Refined & Professional */
+    --primary: 224 76% 48%;
     --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
+
+    /* Soft Neutrals */
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 220 14% 96%;
+    --accent-foreground: 222 47% 11%;
+
+    /* Status Colors */
+    --destructive: 0 72% 51%;
     --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 0.5rem;
+
+    /* Borders & Inputs */
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 224 76% 48%;
+
+    /* Design Tokens */
+    --radius: 0.375rem;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.03);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.04);
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
+    /* Dark Mode - Refined Slate */
+    --background: 224 71% 4%;
+    --foreground: 213 31% 91%;
+    --card: 224 71% 6%;
+    --card-foreground: 213 31% 91%;
+    --popover: 224 71% 6%;
+    --popover-foreground: 213 31% 91%;
+
+    /* Signature Blue - Dark Variant */
+    --primary: 217 91% 60%;
+    --primary-foreground: 222 47% 11%;
+
+    /* Dark Neutrals */
+    --secondary: 215 28% 17%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
+    --muted: 215 28% 17%;
+    --muted-foreground: 217 19% 62%;
+    --accent: 215 28% 17%;
     --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
+
+    /* Status Colors */
+    --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+
+    /* Borders & Inputs */
+    --border: 215 28% 17%;
+    --input: 215 28% 17%;
+    --ring: 224 76% 48%;
   }
 }
 
@@ -53,54 +81,147 @@
   * {
     @apply border-border;
   }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv11", "ss01";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Typography Scale */
+  h1, h2, h3, h4, h5, h6 {
+    @apply tracking-tight;
   }
 }
 
-/* Custom scrollbar */
+/* ============================================================================
+   CUSTOM SCROLLBAR
+   ============================================================================ */
+
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-muted/50;
+  @apply bg-transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-border rounded-full;
+  @apply bg-border/60 rounded-full;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-muted-foreground/50;
+  @apply bg-muted-foreground/40;
 }
 
-/* Glass effect */
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--border)) transparent;
+}
+
+/* ============================================================================
+   GLASS EFFECT & CARD STYLES
+   ============================================================================ */
+
 .glass {
-  @apply bg-white/70 backdrop-blur-xl border border-border/50;
+  @apply bg-card/80 backdrop-blur-sm border border-border/50;
+  box-shadow: var(--shadow-sm);
 }
 
 .dark .glass {
-  @apply bg-slate-900/70 border-slate-700/50;
+  @apply bg-card/90 backdrop-blur-sm border-border/30;
 }
 
-/* Bento grid animation */
 .bento-card {
-  @apply transition-all duration-300 hover:shadow-lg hover:scale-[1.02];
+  @apply transition-all duration-200 ease-out;
 }
 
-/* A4 aspect ratio */
-.a4-preview {
-  aspect-ratio: 210 / 297;
+.bento-card:hover {
+  box-shadow: var(--shadow-md);
 }
 
-/* Letter aspect ratio */
-.letter-preview {
-  aspect-ratio: 8.5 / 11;
+/* ============================================================================
+   BUTTON ANIMATIONS
+   ============================================================================ */
+
+.btn-press {
+  @apply transition-all duration-150 ease-out;
 }
 
-/* Legal aspect ratio */
-.legal-preview {
-  aspect-ratio: 8.5 / 14;
+.btn-press:active {
+  @apply scale-[0.98] translate-y-[1px];
+}
+
+.btn-glow {
+  @apply relative overflow-hidden;
+}
+
+.btn-glow::after {
+  content: '';
+  @apply absolute inset-0 opacity-0 transition-opacity duration-300;
+  background: linear-gradient(135deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+}
+
+.btn-glow:hover::after {
+  @apply opacity-100;
+}
+
+/* ============================================================================
+   FORM FOCUS STATES
+   ============================================================================ */
+
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40;
+  @apply transition-all duration-150;
+}
+
+/* ============================================================================
+   PAGE ASPECT RATIOS
+   ============================================================================ */
+
+.a4-preview { aspect-ratio: 210 / 297; }
+.letter-preview { aspect-ratio: 8.5 / 11; }
+.legal-preview { aspect-ratio: 8.5 / 14; }
+
+/* ============================================================================
+   SMOOTH TRANSITIONS
+   ============================================================================ */
+
+.fade-in {
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.slide-in {
+  animation: slideIn 0.25s ease-out;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* ============================================================================
+   SELECTION STYLES
+   ============================================================================ */
+
+::selection {
+  @apply bg-primary/20 text-foreground;
+}
+
+/* ============================================================================
+   BRAND MONOGRAM
+   ============================================================================ */
+
+.monogram {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }

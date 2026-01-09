@@ -173,12 +173,12 @@ const ContactItem: React.FC<ContactItemProps> = ({ icon: Icon, value, href, colo
   return content;
 };
 
-interface LivePreviewProps {
+interface PreviewCanvasProps {
   data: ResumeData;
   className?: string;
 }
 
-export const LivePreview: React.FC<LivePreviewProps> = ({ data, className }) => {
+export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className }) => {
   const { personalInfo, sections, theme } = data;
   const pageSize = PAGE_SIZES[theme.pageSize];
   const aspectRatio = pageSize.width / pageSize.height;
@@ -591,6 +591,153 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ data, className }) => 
       return <p className="text-gray-400 italic" style={{ fontSize: fontSize.itemBody }}>Add items to this section</p>;
     }
 
+    // Elegant template - centered with refined typography
+    if (isElegant) {
+      return section.items.map((item) => (
+        <div key={item.id} className="mb-4 text-center">
+          <h3 className="font-serif font-semibold text-gray-800" style={{ fontSize: fontSize.itemTitle }}>
+            {section.type === 'experience'
+              ? item.position || <span className="text-gray-400 italic font-normal">Position</span>
+              : section.type === 'education'
+                ? item.degree || <span className="text-gray-400 italic font-normal">Degree</span>
+                : item.title || <span className="text-gray-400 italic font-normal">Title</span>}
+          </h3>
+          <p className="font-serif text-gray-600" style={{ fontSize: fontSize.itemSubtitle }}>
+            {section.type === 'experience'
+              ? item.company || <span className="text-gray-400">Company</span>
+              : section.type === 'education'
+                ? item.institution || <span className="text-gray-400">Institution</span>
+                : item.subtitle || ''}
+            {item.location && <span className="text-gray-400"> · {item.location}</span>}
+          </p>
+          <p className="text-gray-400 text-[10px] uppercase tracking-wider mt-0.5">
+            {formatDate(item.startDate, item.endDate, item.current) || 'Date'}
+          </p>
+          {item.description && (
+            <p className="text-gray-600 whitespace-pre-line mt-2 max-w-lg mx-auto" style={{ fontSize: fontSize.itemBody }}>
+              <RenderWithLinks text={item.description} />
+            </p>
+          )}
+        </div>
+      ));
+    }
+
+    // Corporate template - clean with left border accent
+    if (isCorporate) {
+      return section.items.map((item) => (
+        <div key={item.id} className="mb-3 pl-3 border-l-2" style={{ borderLeftColor: theme.color + '40' }}>
+          <div className="flex justify-between items-baseline">
+            <h3 className="font-semibold text-gray-800" style={{ fontSize: fontSize.itemTitle }}>
+              {section.type === 'experience'
+                ? item.position || <span className="text-gray-400 italic font-normal">Position</span>
+                : section.type === 'education'
+                  ? item.degree || <span className="text-gray-400 italic font-normal">Degree</span>
+                  : item.title || <span className="text-gray-400 italic font-normal">Title</span>}
+            </h3>
+            <span className="text-gray-500 text-[10px] uppercase tracking-wide">
+              {formatDate(item.startDate, item.endDate, item.current) || 'Date'}
+            </span>
+          </div>
+          <div className="flex items-center gap-2" style={{ fontSize: fontSize.itemSubtitle }}>
+            <span style={{ color: theme.color }}>
+              {section.type === 'experience'
+                ? item.company || <span className="text-gray-400">Company</span>
+                : section.type === 'education'
+                  ? item.institution || <span className="text-gray-400">Institution</span>
+                  : item.subtitle || ''}
+            </span>
+            {item.location && <span className="text-gray-400">· {item.location}</span>}
+          </div>
+          {item.description && (
+            <p className="text-gray-600 whitespace-pre-line mt-1.5" style={{ fontSize: fontSize.itemBody }}>
+              <RenderWithLinks text={item.description} />
+            </p>
+          )}
+        </div>
+      ));
+    }
+
+    // Creative template - bold with accent block
+    if (isCreative) {
+      return section.items.map((item) => (
+        <div key={item.id} className="mb-4 relative">
+          <div className="absolute left-0 top-0 bottom-0 w-1 rounded" style={{ backgroundColor: theme.color + '30' }} />
+          <div className="pl-4">
+            <div className="flex justify-between items-start">
+              <div>
+                <h3 className="font-bold text-gray-900" style={{ fontSize: fontSize.itemTitle }}>
+                  {section.type === 'experience'
+                    ? item.position || <span className="text-gray-400 italic font-normal">Position</span>
+                    : section.type === 'education'
+                      ? item.degree || <span className="text-gray-400 italic font-normal">Degree</span>
+                      : item.title || <span className="text-gray-400 italic font-normal">Title</span>}
+                </h3>
+                <p className="font-medium" style={{ fontSize: fontSize.itemSubtitle, color: theme.color }}>
+                  {section.type === 'experience'
+                    ? item.company || <span className="text-gray-400">Company</span>
+                    : section.type === 'education'
+                      ? item.institution || <span className="text-gray-400">Institution</span>
+                      : item.subtitle || ''}
+                </p>
+              </div>
+              <div className="text-right">
+                <span className="text-gray-500 text-[10px]">
+                  {formatDate(item.startDate, item.endDate, item.current) || 'Date'}
+                </span>
+                {item.location && <p className="text-gray-400 text-[9px]">{item.location}</p>}
+              </div>
+            </div>
+            {item.description && (
+              <p className="text-gray-600 whitespace-pre-line mt-2" style={{ fontSize: fontSize.itemBody }}>
+                <RenderWithLinks text={item.description} />
+              </p>
+            )}
+          </div>
+        </div>
+      ));
+    }
+
+    // Modern template - clean with subtle dividers
+    if (isModern) {
+      return section.items.map((item, idx) => (
+        <div key={item.id} className={cn('mb-3 pb-3', idx < section.items.length - 1 && 'border-b border-gray-100')}>
+          <div className="flex justify-between items-baseline">
+            <h3 className="font-semibold text-gray-900" style={{ fontSize: fontSize.itemTitle }}>
+              {section.type === 'experience'
+                ? item.position || <span className="text-gray-400 italic font-normal">Position</span>
+                : section.type === 'education'
+                  ? item.degree || <span className="text-gray-400 italic font-normal">Degree</span>
+                  : item.title || <span className="text-gray-400 italic font-normal">Title</span>}
+            </h3>
+            <span className="text-gray-400 text-[10px]">
+              {formatDate(item.startDate, item.endDate, item.current) || 'Date'}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 mt-0.5" style={{ fontSize: fontSize.itemSubtitle }}>
+            <span className="text-gray-600">
+              {section.type === 'experience'
+                ? item.company || <span className="text-gray-400">Company</span>
+                : section.type === 'education'
+                  ? item.institution || <span className="text-gray-400">Institution</span>
+                  : item.subtitle || ''}
+            </span>
+            {item.location && (
+              <>
+                <div className="w-1 h-1 rounded-full" style={{ backgroundColor: theme.color }} />
+                <span className="text-gray-400">{item.location}</span>
+              </>
+            )}
+          </div>
+          {item.description && (
+            <p className="text-gray-600 whitespace-pre-line mt-1.5" style={{ fontSize: fontSize.itemBody }}>
+              <RenderWithLinks text={item.description} />
+            </p>
+          )}
+        </div>
+      ));
+    }
+
+    // Default layout for Harvard, Tech, Minimal, Bold, Neo, Portfolio
     return section.items.map((item) => (
       <div key={item.id} className="mb-2.5">
         <div className="flex justify-between items-baseline mb-0.5">
@@ -1264,4 +1411,4 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ data, className }) => 
   );
 };
 
-export default LivePreview;
+export default PreviewCanvas;

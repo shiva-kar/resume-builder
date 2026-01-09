@@ -60,8 +60,8 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
       ref={setNodeRef}
       style={style}
       className={cn(
-        'glass rounded-xl shadow-sm bento-card overflow-hidden',
-        isDragging && 'opacity-50 scale-[0.98] shadow-lg'
+        'glass rounded-none bento-card overflow-hidden',
+        isDragging && 'opacity-50'
       )}
     >
       {/* Section Header */}
@@ -70,7 +70,7 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
           <button
             {...attributes}
             {...listeners}
-            className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors p-1 rounded hover:bg-muted"
+            className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors p-1 rounded-none hover:bg-muted"
           >
             <GripVertical className="w-5 h-5" />
           </button>
@@ -81,7 +81,7 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
             type="text"
             value={section.title}
             onChange={(e) => updateSection(section.id, { title: e.target.value })}
-            className="font-semibold text-foreground bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-primary/20 rounded px-2 py-1 flex-1 min-w-0"
+            className="font-semibold text-foreground bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-primary/20 rounded-none px-2 py-1 flex-1 min-w-0"
             placeholder="Section Title"
           />
         </div>
@@ -90,7 +90,7 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
           <button
             onClick={() => setShowSettings(!showSettings)}
             className={cn(
-              'p-2 rounded-lg transition-colors',
+              'p-2 rounded-none transition-colors',
               showSettings
                 ? 'bg-primary/10 text-primary'
                 : 'hover:bg-muted text-muted-foreground'
@@ -103,7 +103,7 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
           <button
             onClick={() => toggleSectionVisibility(section.id)}
             className={cn(
-              'p-2 rounded-lg transition-colors',
+              'p-2 rounded-none transition-colors',
               section.isVisible
                 ? 'text-primary hover:bg-primary/10'
                 : 'text-muted-foreground hover:bg-muted'
@@ -119,7 +119,7 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
 
           <button
             onClick={() => removeSection(section.id)}
-            className="p-2 hover:bg-destructive/10 rounded-lg transition-colors text-destructive"
+            className="p-2 hover:bg-destructive/10 rounded-none transition-colors text-destructive"
             title="Remove section"
           >
             <Trash2 className="w-4 h-4" />
@@ -127,7 +127,7 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
 
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="p-2 hover:bg-muted rounded-lg transition-colors text-muted-foreground"
+            className="p-2 hover:bg-muted rounded-none transition-colors text-muted-foreground"
           >
             {isExpanded ? (
               <ChevronUp className="w-4 h-4" />
@@ -140,7 +140,7 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
 
       {/* Font Size Settings Panel */}
       {showSettings && (
-        <div className="px-4 py-3 bg-muted/30 border-b border-border/50">
+        <div className="px-4 py-3 bg-muted border-b border-border/50">
           <p className="text-xs font-medium text-muted-foreground mb-2">
             Section Font Sizes
           </p>
@@ -155,7 +155,7 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
                   onChange={(e) =>
                     updateSectionFontSize(section.id, type, e.target.value as TextSize)
                   }
-                  className="w-full px-2 py-1.5 text-xs border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="w-full px-2 py-1.5 text-xs border border-border rounded-none bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
                 >
                   {FONT_SIZE_OPTIONS.map((opt) => (
                     <option key={opt.value} value={opt.value}>
