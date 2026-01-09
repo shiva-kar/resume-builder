@@ -296,20 +296,17 @@ Create custom sections with various field types:
 ---
 
 ## 🖼️ Screenshots
+<img width="1932" height="1221" alt="Screenshot 2026-01-10 014416" src="https://github.com/user-attachments/assets/01a5a361-7ff5-42e4-85b4-652de4283540" />
+<img width="989" height="1067" alt="Screenshot 2026-01-10 014921" src="https://github.com/user-attachments/assets/02015fd5-bec5-4ddb-8f3d-ef9123b6e081" />
+<img width="1490" height="733" alt="Screenshot 2026-01-10 014946" src="https://github.com/user-attachments/assets/048fae29-7e7f-4648-b035-a87545778353" />
+<img width="1034" height="623" alt="Screenshot 2026-01-10 014938" src="https://github.com/user-attachments/assets/4df718f7-0601-4e03-900f-f37f8b6d2961" />
+<img width="882" height="297" alt="Screenshot 2026-01-10 014930" src="https://github.com/user-attachments/assets/3e8e33e0-d023-4997-bf2c-c8303381b7bc" />
+<img width="1744" height="985" alt="Screenshot 2026-01-10 015052" src="https://github.com/user-attachments/assets/9dde9437-39e8-46a3-9b62-29131cdd289e" />
+<img width="896" height="436" alt="Screenshot 2026-01-10 015044" src="https://github.com/user-attachments/assets/1eca8a89-e3b8-400a-8c47-7b691259b07c" />
+<img width="917" height="668" alt="Screenshot 2026-01-10 015026" src="https://github.com/user-attachments/assets/82e71cba-8f51-457e-a60c-9802d9454fb4" />
+<img width="521" height="511" alt="Screenshot 2026-01-10 015021" src="https://github.com/user-attachments/assets/c864878d-074c-402b-8ba4-2352563af899" />
+<img width="1118" height="1080" alt="Screenshot 2026-01-10 015004" src="https://github.com/user-attachments/assets/0b38cb8a-fb79-4e5b-be2d-2725ae2b38f2" />
 
-<img width="1754" alt="Main Editor" src="https://github.com/user-attachments/assets/c7725e36-2abc-4679-bf64-9e190f2c7f20" />
-
-<img width="1249" alt="Template Selection" src="https://github.com/user-attachments/assets/f6e08b36-35fe-44a2-8ddf-ed1f59a8465b" />
-
-<img width="1844" alt="Dark Mode" src="https://github.com/user-attachments/assets/dfa81931-fa07-472f-b88c-61771ba27655" />
-
-<img width="1910" alt="PDF Export" src="https://github.com/user-attachments/assets/891a8e93-2f60-4d62-a84b-86bde0e7bfdc" />
-
-<img width="1129" alt="Mobile View" src="https://github.com/user-attachments/assets/87223103-e208-417d-b599-48048b9f1c1f" />
-
-<img width="1456" alt="Custom Sections" src="https://github.com/user-attachments/assets/dc722149-615e-49bb-b45f-761db882760b" />
-
-<img width="2173" alt="Full Preview" src="https://github.com/user-attachments/assets/7951504d-83fa-44f7-99ad-94efa93e8d54" />
 
 ---
 
