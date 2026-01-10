@@ -1,5 +1,20 @@
 # Changelog
 
+## [3.1.1] - 2026-01-10
+
+### Added
+- Multi-LLM support with 40+ AI models across 4 providers
+- OpenAI models: GPT-5.2, GPT-5.2 Pro, GPT-5.1, GPT-5, GPT-5 Mini/Nano, GPT-4.1, GPT-4o, o3, o4-mini, o1
+- Anthropic models: Claude Opus 4.5, Claude Sonnet 4.5, Claude Haiku 4.5, Claude 4, Claude 3.5/3
+- Groq models: Groq Compound, GPT-OSS 120B/20B, Llama 4, Llama 3.3, Qwen3, Kimi K2
+- Mistral models: Mistral Large 3, Medium 3.1, Small 3.2, Magistral, Codestral, Devstral 2
+
+### Fixed
+- Corrected all LLM model names with verified API model IDs from official documentation
+- Model selector now shows grouped models by provider with accurate naming
+
+---
+
 ## [3.1.0] - 2026-01-10
 
 ### Added
