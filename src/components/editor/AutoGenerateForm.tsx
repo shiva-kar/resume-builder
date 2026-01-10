@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Sparkles, Loader2 } from 'lucide-react';
 import { FormTextarea } from './FormInput';
-import { generateResumeFromJobReq } from '@/lib/ai';
+import { generateResumeFromJobReq, LLM_MODELS, LLMProvider } from '@/lib/ai';
 import { useResumeStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 
@@ -19,14 +19,28 @@ const DEI_OPTIONS = [
   { id: 'veteran', label: 'Veteran' },
 ];
 
+const PROVIDER_LABELS: Record<LLMProvider, string> = {
+  openai: 'OpenAI',
+  anthropic: 'Anthropic (Claude)',
+  groq: 'Groq (Fast)',
+  mistral: 'Mistral AI',
+};
+
 export const AutoGenerateForm: React.FC = () => {
   const [jobReq, setJobReq] = useState('');
   const [deiTraits, setDeiTraits] = useState<string[]>([]);
   const [apiKey, setApiKey] = useState('');
-  const [model, setModel] = useState<'openai' | 'claude'>('openai');
+  const [modelId, setModelId] = useState('gpt-4o');
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState('');
   const { autoGenerateResume } = useResumeStore();
+
+  // Group models by provider
+  const modelsByProvider = LLM_MODELS.reduce((acc, model) => {
+    if (!acc[model.provider]) acc[model.provider] = [];
+    acc[model.provider].push(model);
+    return acc;
+  }, {} as Record<LLMProvider, typeof LLM_MODELS>);
 
   const handleDeiChange = (id: string, checked: boolean) => {
     if (checked) {
@@ -35,6 +49,8 @@ export const AutoGenerateForm: React.FC = () => {
       setDeiTraits(deiTraits.filter((t: string) => t !== id));
     }
   };
+
+  const selectedModel = LLM_MODELS.find(m => m.id === modelId);
 
   const handleGenerate = async () => {
     if (!jobReq.trim()) {
@@ -48,7 +64,7 @@ export const AutoGenerateForm: React.FC = () => {
     setError('');
     setIsGenerating(true);
     try {
-      const data = await generateResumeFromJobReq({ jobReq, deiTraits, apiKey, model });
+      const data = await generateResumeFromJobReq({ jobReq, deiTraits, apiKey, modelId });
       autoGenerateResume(data);
       alert('Resume generated successfully! Edit as needed.');
     } catch (err) {
@@ -93,26 +109,40 @@ export const AutoGenerateForm: React.FC = () => {
             ))}
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-3">
           <div>
             <label className="text-sm font-medium text-muted-foreground">LLM Model</label>
             <select
-              value={model}
-              onChange={(e) => setModel(e.target.value as 'openai' | 'claude')}
-              className="w-full px-3 py-2 border border-border rounded-none bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+              value={modelId}
+              onChange={(e) => setModelId(e.target.value)}
+              className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
-              <option value="openai">OpenAI GPT-4</option>
-              <option value="claude">Claude 3.5 Sonnet</option>
+              {(Object.keys(modelsByProvider) as LLMProvider[]).map(provider => (
+                <optgroup key={provider} label={PROVIDER_LABELS[provider]}>
+                  {modelsByProvider[provider].map(model => (
+                    <option key={model.id} value={model.id}>
+                      {model.name}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
             </select>
+            {selectedModel && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Provider: {PROVIDER_LABELS[selectedModel.provider]} • Model: {selectedModel.modelId}
+              </p>
+            )}
           </div>
           <div>
-            <label className="text-sm font-medium text-muted-foreground">API Key</label>
+            <label className="text-sm font-medium text-muted-foreground">
+              {selectedModel ? `${PROVIDER_LABELS[selectedModel.provider]} API Key` : 'API Key'}
+            </label>
             <input
               type="password"
-              placeholder="Your API key..."
+              placeholder={selectedModel ? `Enter your ${PROVIDER_LABELS[selectedModel.provider]} API key...` : 'Your API key...'}
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
-              className="w-full px-3 py-2 border border-border rounded-none bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
         </div>

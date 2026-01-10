@@ -1,10 +1,56 @@
 // ============================================================================
-// AI SERVICE - OpenAI Integration (Structured for future use)
+// AI SERVICE - Multi-LLM Integration
 // ============================================================================
 
 import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
+import Groq from 'groq-sdk';
+import { Mistral } from '@mistralai/mistralai';
 import { ResumeData } from './schema';
+
+// Supported LLM Models
+export type LLMProvider = 'openai' | 'anthropic' | 'groq' | 'mistral';
+
+export interface LLMModel {
+  id: string;
+  name: string;
+  provider: LLMProvider;
+  modelId: string;
+}
+
+export const LLM_MODELS: LLMModel[] = [
+  // OpenAI Models
+  { id: 'gpt-5', name: 'GPT-5', provider: 'openai', modelId: 'gpt-5' },
+  { id: 'gpt-5.2', name: 'GPT-5.2 Turbo', provider: 'openai', modelId: 'gpt-5.2-turbo' },
+  { id: 'gpt-5.1', name: 'GPT-5.1', provider: 'openai', modelId: 'gpt-5.1' },
+  { id: 'gpt-4o', name: 'GPT-4o', provider: 'openai', modelId: 'gpt-4o' },
+  { id: 'gpt-4o-mini', name: 'GPT-4o Mini', provider: 'openai', modelId: 'gpt-4o-mini' },
+  { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', provider: 'openai', modelId: 'gpt-4-turbo' },
+  { id: 'gpt-4', name: 'GPT-4', provider: 'openai', modelId: 'gpt-4' },
+  { id: 'o1', name: 'OpenAI o1', provider: 'openai', modelId: 'o1' },
+  { id: 'o1-mini', name: 'OpenAI o1-mini', provider: 'openai', modelId: 'o1-mini' },
+  { id: 'o3-mini', name: 'OpenAI o3-mini', provider: 'openai', modelId: 'o3-mini' },
+
+  // Anthropic Claude Models
+  { id: 'claude-4-opus', name: 'Claude 4 Opus', provider: 'anthropic', modelId: 'claude-4-opus-20260101' },
+  { id: 'claude-4-sonnet', name: 'Claude 4 Sonnet', provider: 'anthropic', modelId: 'claude-4-sonnet-20260101' },
+  { id: 'claude-3.5-sonnet', name: 'Claude 3.5 Sonnet', provider: 'anthropic', modelId: 'claude-3-5-sonnet-20241022' },
+  { id: 'claude-3-opus', name: 'Claude 3 Opus', provider: 'anthropic', modelId: 'claude-3-opus-20240229' },
+  { id: 'claude-3-haiku', name: 'Claude 3 Haiku', provider: 'anthropic', modelId: 'claude-3-haiku-20240307' },
+
+  // Groq Models (Fast inference)
+  { id: 'groq-llama-3.3-70b', name: 'Llama 3.3 70B (Groq)', provider: 'groq', modelId: 'llama-3.3-70b-versatile' },
+  { id: 'groq-llama-3.1-70b', name: 'Llama 3.1 70B (Groq)', provider: 'groq', modelId: 'llama-3.1-70b-versatile' },
+  { id: 'groq-llama-3.1-8b', name: 'Llama 3.1 8B (Groq)', provider: 'groq', modelId: 'llama-3.1-8b-instant' },
+  { id: 'groq-mixtral', name: 'Mixtral 8x7B (Groq)', provider: 'groq', modelId: 'mixtral-8x7b-32768' },
+  { id: 'groq-gemma2', name: 'Gemma 2 9B (Groq)', provider: 'groq', modelId: 'gemma2-9b-it' },
+
+  // Mistral Models
+  { id: 'mistral-large', name: 'Mistral Large', provider: 'mistral', modelId: 'mistral-large-latest' },
+  { id: 'mistral-medium', name: 'Mistral Medium', provider: 'mistral', modelId: 'mistral-medium-latest' },
+  { id: 'mistral-small', name: 'Mistral Small', provider: 'mistral', modelId: 'mistral-small-latest' },
+  { id: 'codestral', name: 'Codestral', provider: 'mistral', modelId: 'codestral-latest' },
+];
 
 interface AIEnhanceRequest {
   text: string;
@@ -94,11 +140,16 @@ interface AutoGenerateRequest {
   jobReq: string;
   deiTraits: string[];
   apiKey: string;
-  model: 'openai' | 'claude';
+  modelId: string; // e.g., 'gpt-5', 'claude-4-opus', 'groq-llama-3.3-70b'
 }
 
 export async function generateResumeFromJobReq(request: AutoGenerateRequest): Promise<ResumeData> {
-  const { jobReq, deiTraits, apiKey, model } = request;
+  const { jobReq, deiTraits, apiKey, modelId } = request;
+
+  const selectedModel = LLM_MODELS.find(m => m.id === modelId);
+  if (!selectedModel) {
+    throw new Error(`Unknown model: ${modelId}`);
+  }
 
   const deiString = deiTraits.length > 0 ? `Incorporate these DEI traits naturally: ${deiTraits.join(', ')}. Make the persona embody these traits (e.g., name, pronouns, affiliations).` : 'No specific DEI traits required.';
 
@@ -154,40 +205,88 @@ Job Requirement: ${jobReq}`;
   try {
     let response: string;
 
-    if (model === 'openai') {
-      const openai = new OpenAI({
-        apiKey,
-        dangerouslyAllowBrowser: true,
-      });
-      const completion = await openai.chat.completions.create({
-        model: 'gpt-4',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: jobReq },
-        ],
-        temperature: 0.7,
-        max_tokens: 4000,
-      });
-      response = completion.choices[0]?.message?.content || '{}';
-    } else if (model === 'claude') {
-      const anthropic = new Anthropic({
-        apiKey,
-      });
-      const message = await anthropic.messages.create({
-        model: 'claude-3-5-sonnet-20241022',
-        max_tokens: 4000,
-        system: systemPrompt,
-        messages: [
-          { role: 'user', content: jobReq },
-        ],
-      });
-      response = message.content[0]?.type === 'text' ? message.content[0].text : '{}';
-    } else {
-      throw new Error('Unsupported model');
+    switch (selectedModel.provider) {
+      case 'openai': {
+        const openai = new OpenAI({
+          apiKey,
+          dangerouslyAllowBrowser: true,
+        });
+        const completion = await openai.chat.completions.create({
+          model: selectedModel.modelId,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: jobReq },
+          ],
+          temperature: 0.7,
+          max_tokens: 4000,
+        });
+        response = completion.choices[0]?.message?.content || '{}';
+        break;
+      }
+
+      case 'anthropic': {
+        const anthropic = new Anthropic({
+          apiKey,
+        });
+        const message = await anthropic.messages.create({
+          model: selectedModel.modelId,
+          max_tokens: 4000,
+          system: systemPrompt,
+          messages: [
+            { role: 'user', content: jobReq },
+          ],
+        });
+        response = message.content[0]?.type === 'text' ? message.content[0].text : '{}';
+        break;
+      }
+
+      case 'groq': {
+        const groq = new Groq({
+          apiKey,
+          dangerouslyAllowBrowser: true,
+        });
+        const completion = await groq.chat.completions.create({
+          model: selectedModel.modelId,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: jobReq },
+          ],
+          temperature: 0.7,
+          max_tokens: 4000,
+        });
+        response = completion.choices[0]?.message?.content || '{}';
+        break;
+      }
+
+      case 'mistral': {
+        const mistral = new Mistral({ apiKey });
+        const completion = await mistral.chat.complete({
+          model: selectedModel.modelId,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: jobReq },
+          ],
+          temperature: 0.7,
+          maxTokens: 4000,
+        });
+        const choice = completion.choices?.[0];
+        response = (choice?.message?.content as string) || '{}';
+        break;
+      }
+
+      default:
+        throw new Error(`Unsupported provider: ${selectedModel.provider}`);
+    }
+
+    // Extract JSON from response (handle markdown code blocks)
+    let jsonStr = response;
+    const jsonMatch = response.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (jsonMatch) {
+      jsonStr = jsonMatch[1].trim();
     }
 
     // Parse and validate JSON
-    const parsed = JSON.parse(response);
+    const parsed = JSON.parse(jsonStr);
     // Basic validation - in real app, use Zod
     if (!parsed.personalInfo || !parsed.sections) {
       throw new Error('Invalid response format');
@@ -195,6 +294,6 @@ Job Requirement: ${jobReq}`;
     return parsed as ResumeData;
   } catch (error) {
     console.error('Resume generation failed:', error);
-    throw new Error('Failed to generate resume - check API key and try again, bhai!');
+    throw new Error(`Failed to generate resume with ${selectedModel.name} - check API key and try again!`);
   }
 }
