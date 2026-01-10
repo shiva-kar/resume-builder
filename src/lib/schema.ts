@@ -301,6 +301,7 @@ export const ThemeSchema = z.object({
   pageSize: z.enum(['A4', 'LETTER', 'LEGAL', 'EXECUTIVE', 'B5', 'A5']),
   typography: TypographySettingsSchema.optional(),
   autoAdjust: z.boolean().optional(), // Auto-adjust page size/font if content overflows
+  recentColors: z.array(z.string()).optional(), // Recently used custom colors
 });
 
 export const ResumeDataSchema = z.object({

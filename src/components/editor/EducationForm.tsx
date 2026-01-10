@@ -24,7 +24,7 @@ export const EducationForm: React.FC<EducationFormProps> = ({ section }) => {
             <div className="flex-1 space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <FormInput
-                  placeholder="Degree / Field of Study"
+                  placeholder="e.g. B.S. Computer Science, MBA"
                   value={item.degree || ''}
                   onChange={(e) =>
                     updateSectionItem(section.id, item.id, {
@@ -33,7 +33,7 @@ export const EducationForm: React.FC<EducationFormProps> = ({ section }) => {
                   }
                 />
                 <FormInput
-                  placeholder="Institution Name"
+                  placeholder="e.g. MIT, Stanford University"
                   value={item.institution || ''}
                   onChange={(e) =>
                     updateSectionItem(section.id, item.id, {
@@ -81,7 +81,9 @@ export const EducationForm: React.FC<EducationFormProps> = ({ section }) => {
               </div>
 
               <FormTextarea
-                placeholder="Additional details (GPA, honors, relevant coursework...)"
+                placeholder="• GPA: 3.8/4.0
+• Dean's List, Cum Laude
+• Relevant coursework: Data Structures, Algorithms..."
                 value={item.description || ''}
                 onChange={(e) =>
                   updateSectionItem(section.id, item.id, {

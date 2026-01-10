@@ -113,7 +113,7 @@ export const SkillsForm: React.FC<SkillsFormProps> = ({ section }) => {
                     'flex-1 px-2 py-1 rounded-none border-none bg-transparent',
                     'text-sm text-foreground focus:outline-none'
                   )}
-                  placeholder="Skill name"
+                  placeholder="e.g. Python, Project Management"
                 />
                 <select
                   value={skill.level}
@@ -185,7 +185,7 @@ export const SkillsForm: React.FC<SkillsFormProps> = ({ section }) => {
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Type skill name..."
+            placeholder="e.g. JavaScript, Leadership, AWS..."
             className={cn(
               'flex-1 px-3 py-2 rounded-none',
               'border border-border bg-background',

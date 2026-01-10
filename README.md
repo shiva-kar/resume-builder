@@ -1,6 +1,6 @@
 # Resume Builder
 
-[![Version](https://img.shields.io/badge/Version-3.0.0-blue?style=for-the-badge)](https://github.com/shiva-kar/resume-builder/releases)
+[![Version](https://img.shields.io/badge/Version-3.1.0-blue?style=for-the-badge)](https://github.com/shiva-kar/resume-builder/releases)
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-green?style=for-the-badge&logo=github)](https://shiva-kar.github.io/resume-builder/)
 [![Next.js](https://img.shields.io/badge/Next.js-14-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
@@ -28,8 +28,8 @@ A sophisticated, SaaS-level resume and portfolio builder featuring real-time DOM
 | Platform | Download | Description |
 |----------|----------|-------------|
 | 🌐 **Web App** | [Launch Online](https://shiva-kar.github.io/resume-builder/) | No installation required |
-| 🖥️ **Windows Installer** | [Resume-Builder-3.0.0-win.exe](https://github.com/shiva-kar/resume-builder/releases/latest) | Full installation with uninstaller |
-| 🖥️ **Windows Portable** | [Resume-Builder-3.0.0-Portable.exe](https://github.com/shiva-kar/resume-builder/releases/latest) | No installation, run anywhere |
+| 🖥️ **Windows Installer** | [Resume-Builder-3.1.0-win.exe](https://github.com/shiva-kar/resume-builder/releases/latest) | Full installation with uninstaller |
+| 🖥️ **Windows Portable** | [Resume-Builder-3.1.0-Portable.exe](https://github.com/shiva-kar/resume-builder/releases/latest) | No installation, run anywhere |
 | 📦 **Source Code** | [Clone Repository](https://github.com/shiva-kar/resume-builder) | Build from source |
 
 ---
@@ -310,9 +310,34 @@ Create custom sections with various field types:
 
 ---
 
+## ⚠️ Known Issues (v3.1.0)
+
+| Issue | Description |
+|-------|-------------|
+| **PDF Export Formatting** | PDF export formatting does not fully match preview in some edge cases |
+| **Font Styles** | Font styles and sizes may differ slightly between Preview and PDF |
+| **Markdown Formatting** | Markdown and bullet formatting may be inconsistent in certain templates |
+| **Theme Differences** | Some themes have minor layout differences between Preview and PDF |
+
+We are actively working on improving these areas and welcome community contributions.
+
+---
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+### Priority Areas for Contribution
+
+We especially welcome contributions for:
+
+- 🔧 **Fixing PDF export formatting** - Help match PDF output to Preview
+- 🎨 **Matching Preview and PDF layouts** - Ensure visual consistency
+- 📝 **Improving font consistency** - Unified typography across exports
+- ✍️ **Preserving markdown styling** - Bold, italic, and bullet support
+- 🎯 **Stabilizing theme exports** - Template-specific fixes
+
+### How to Contribute
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`)

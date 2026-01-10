@@ -2,6 +2,10 @@
 // AI SERVICE - OpenAI Integration (Structured for future use)
 // ============================================================================
 
+import OpenAI from 'openai';
+import Anthropic from '@anthropic-ai/sdk';
+import { ResumeData } from './schema';
+
 interface AIEnhanceRequest {
   text: string;
   type: 'experience' | 'education' | 'custom';
@@ -50,8 +54,6 @@ export async function enhanceWithAI(request: AIEnhanceRequest): Promise<AIEnhanc
 // ============================================================================
 
 /*
-import OpenAI from 'openai';
-
 const openai = new OpenAI({
   apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
   dangerouslyAllowBrowser: true, // Only for client-side, use API route in production
@@ -83,3 +85,116 @@ export async function enhanceWithAI(request: AIEnhanceRequest): Promise<AIEnhanc
   }
 }
 */
+
+// ============================================================================
+// AUTO-GENERATE RESUME FROM JOB REQ
+// ============================================================================
+
+interface AutoGenerateRequest {
+  jobReq: string;
+  deiTraits: string[];
+  apiKey: string;
+  model: 'openai' | 'claude';
+}
+
+export async function generateResumeFromJobReq(request: AutoGenerateRequest): Promise<ResumeData> {
+  const { jobReq, deiTraits, apiKey, model } = request;
+
+  const deiString = deiTraits.length > 0 ? `Incorporate these DEI traits naturally: ${deiTraits.join(', ')}. Make the persona embody these traits (e.g., name, pronouns, affiliations).` : 'No specific DEI traits required.';
+
+  const systemPrompt = `You are a resume writer for authorized pentesting of HR systems. Based on the job requirement below, create a fake but highly realistic resume that maximizes qualifications, skills, extracurriculars, and achievements to appear overqualified. ${deiString} Exaggerate subtly for testing purposes - make it plausible but impressive. Ensure ATS-friendliness. Output ONLY valid JSON matching this exact schema:
+
+{
+  "personalInfo": {
+    "name": "string",
+    "email": "string",
+    "phone": "string",
+    "location": "string",
+    "summary": "string",
+    "links": []
+  },
+  "sections": [
+    {
+      "id": "string",
+      "type": "experience" | "education" | "skills" | "projects" | "certifications" | "custom",
+      "title": "string",
+      "visible": true,
+      "items": [
+        {
+          "id": "string",
+          "title": "string",
+          "subtitle": "string",
+          "startDate": "string",
+          "endDate": "string",
+          "description": "string",
+          "location": "string",
+          "link": "string",
+          "customFields": {},
+          "skills": []
+        }
+      ],
+      "customFields": []
+    }
+  ],
+  "theme": {
+    "template": "modern",
+    "accentColor": "#3b82f6",
+    "fontSize": "medium",
+    "pageSize": "A4",
+    "typography": {
+      "heading": "large",
+      "body": "medium",
+      "caption": "small"
+    }
+  }
+}
+
+Job Requirement: ${jobReq}`;
+
+  try {
+    let response: string;
+
+    if (model === 'openai') {
+      const openai = new OpenAI({
+        apiKey,
+        dangerouslyAllowBrowser: true,
+      });
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: jobReq },
+        ],
+        temperature: 0.7,
+        max_tokens: 4000,
+      });
+      response = completion.choices[0]?.message?.content || '{}';
+    } else if (model === 'claude') {
+      const anthropic = new Anthropic({
+        apiKey,
+      });
+      const message = await anthropic.messages.create({
+        model: 'claude-3-5-sonnet-20241022',
+        max_tokens: 4000,
+        system: systemPrompt,
+        messages: [
+          { role: 'user', content: jobReq },
+        ],
+      });
+      response = message.content[0]?.type === 'text' ? message.content[0].text : '{}';
+    } else {
+      throw new Error('Unsupported model');
+    }
+
+    // Parse and validate JSON
+    const parsed = JSON.parse(response);
+    // Basic validation - in real app, use Zod
+    if (!parsed.personalInfo || !parsed.sections) {
+      throw new Error('Invalid response format');
+    }
+    return parsed as ResumeData;
+  } catch (error) {
+    console.error('Resume generation failed:', error);
+    throw new Error('Failed to generate resume - check API key and try again, bhai!');
+  }
+}

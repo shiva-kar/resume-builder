@@ -5,3 +5,4 @@ export { EducationForm } from './EducationForm';
 export { SkillsForm } from './SkillsForm';
 export { CustomSectionForm } from './CustomSectionForm';
 export { PersonalInfoForm } from './PersonalInfoForm';
+export { AutoGenerateForm } from './AutoGenerateForm';
