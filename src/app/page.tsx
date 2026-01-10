@@ -119,12 +119,50 @@ const getSectionForm = (section: ReturnType<typeof useSections>[number]) => {
 // DESIGN SETTINGS PANEL
 // ============================================================================
 
-const DesignSettingsPanel: React.FC = () => {
+interface DesignSettingsPanelProps {
+  onPreviewColorChange?: (color: string | null) => void;
+}
+
+const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = ({ onPreviewColorChange }) => {
   const theme = useTheme();
   const { updateTheme, updateTypography } = useResumeStore();
   const [isOpen, setIsOpen] = useState(true);
 
+  // Color picker state - only confirmed colors are saved
+  const [isPickingColor, setIsPickingColor] = useState(false);
+  const [tempColor, setTempColor] = useState(theme.color);
+  const colorInputRef = React.useRef<HTMLInputElement>(null);
+
   const typography = theme.typography || DEFAULT_TYPOGRAPHY;
+
+  // Handle opening color picker
+  const openColorPicker = () => {
+    setTempColor(theme.color);
+    setIsPickingColor(true);
+    onPreviewColorChange?.(theme.color); // Start live preview with current color
+    // Small delay to ensure state is set before opening native picker
+    setTimeout(() => colorInputRef.current?.click(), 50);
+  };
+
+  // Handle color change (preview only, not saved) - updates live preview
+  const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTempColor(e.target.value);
+    onPreviewColorChange?.(e.target.value); // Update live preview
+  };
+
+  // Confirm the selected color - saves and ends preview
+  const confirmColor = () => {
+    updateTheme({ color: tempColor });
+    setIsPickingColor(false);
+    onPreviewColorChange?.(null); // End live preview (use saved color)
+  };
+
+  // Cancel color selection - reverts preview
+  const cancelColor = () => {
+    setTempColor(theme.color);
+    setIsPickingColor(false);
+    onPreviewColorChange?.(null); // End live preview (use saved color)
+  };
 
   return (
     <div className="glass rounded-lg bento-card overflow-hidden mb-4">
@@ -251,7 +289,8 @@ const DesignSettingsPanel: React.FC = () => {
             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5 block">
               Accent Color
             </label>
-            <div className="flex gap-2 flex-wrap">
+            <div className="flex gap-2 flex-wrap items-center">
+              {/* Preset Colors */}
               {ACCENT_COLORS.map((c) => (
                 <button
                   key={c.color}
@@ -266,17 +305,94 @@ const DesignSettingsPanel: React.FC = () => {
                   style={{ backgroundColor: c.color }}
                 />
               ))}
-              <div className="relative">
-                <input
-                  type="color"
-                  value={theme.color}
-                  onChange={(e) => updateTheme({ color: e.target.value })}
-                  className="w-8 h-8 rounded-lg cursor-pointer border-2 border-dashed border-border overflow-hidden opacity-0 absolute inset-0"
-                  title="Custom color"
+
+              {/* Recent custom colors */}
+              {theme.recentColors?.filter(c => !ACCENT_COLORS.some(ac => ac.color === c)).slice(0, 5).map((color) => (
+                <button
+                  key={color}
+                  onClick={() => updateTheme({ color })}
+                  title="Recent custom color"
+                  className={cn(
+                    'w-8 h-8 rounded-lg border-2 transition-all duration-200 btn-press',
+                    theme.color === color
+                      ? 'border-foreground scale-110 shadow-md'
+                      : 'border-border/50 hover:scale-105 hover:shadow-sm'
+                  )}
+                  style={{ backgroundColor: color }}
                 />
-                <div className="w-8 h-8 rounded-lg border-2 border-dashed border-border flex items-center justify-center bg-muted/30 pointer-events-none">
-                  <Plus className="w-3.5 h-3.5 text-muted-foreground" />
-                </div>
+              ))}
+
+              {/* Custom color picker with confirmation */}
+              <div className="relative">
+                {/* Hidden color input */}
+                <input
+                  ref={colorInputRef}
+                  type="color"
+                  value={tempColor}
+                  onChange={handleColorChange}
+                  className="sr-only"
+                />
+
+                {/* Custom color trigger button */}
+                <button
+                  onClick={openColorPicker}
+                  title="Pick custom color"
+                  className={cn(
+                    'w-8 h-8 rounded-lg border-2 border-dashed flex items-center justify-center transition-all',
+                    isPickingColor
+                      ? 'border-primary ring-2 ring-primary/20'
+                      : !ACCENT_COLORS.some(c => c.color === theme.color) && !theme.recentColors?.includes(theme.color)
+                        ? 'border-foreground'
+                        : 'border-border hover:border-primary/50 bg-muted/30'
+                  )}
+                  style={
+                    isPickingColor
+                      ? { backgroundColor: tempColor }
+                      : !ACCENT_COLORS.some(c => c.color === theme.color)
+                        ? { backgroundColor: theme.color }
+                        : undefined
+                  }
+                >
+                  {(ACCENT_COLORS.some(c => c.color === theme.color) || theme.recentColors?.includes(theme.color)) && !isPickingColor && (
+                    <Plus className="w-3.5 h-3.5 text-muted-foreground" />
+                  )}
+                </button>
+
+                {/* Color picker confirmation popover */}
+                {isPickingColor && (
+                  <div className="absolute top-full left-0 mt-2 z-50 bg-background border border-border rounded-lg shadow-lg p-3 min-w-[180px]">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div
+                        className="w-10 h-10 rounded-lg border border-border shadow-inner"
+                        style={{ backgroundColor: tempColor }}
+                      />
+                      <div className="flex-1">
+                        <p className="text-xs text-muted-foreground mb-1">Selected</p>
+                        <p className="text-sm font-mono">{tempColor.toUpperCase()}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => colorInputRef.current?.click()}
+                      className="w-full text-xs py-1.5 px-2 mb-2 rounded border border-border hover:bg-muted transition-colors"
+                    >
+                      Change Color
+                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={cancelColor}
+                        className="flex-1 text-xs py-1.5 px-2 rounded border border-border hover:bg-muted transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={confirmColor}
+                        className="flex-1 text-xs py-1.5 px-2 rounded bg-primary text-primary-foreground hover:bg-primary/90 transition-colors font-medium"
+                      >
+                        ✓ Apply
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -483,6 +599,8 @@ export default function ResumeBuilderPage() {
   const [mounted, setMounted] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  // Color picker preview state - allows live preview without saving
+  const [previewColor, setPreviewColor] = useState<string | null>(null);
 
   const sections = useSections();
   const theme = useTheme();
@@ -512,7 +630,8 @@ export default function ResumeBuilderPage() {
     }
   };
 
-  // Handle PDF export
+  // Handle PDF export using @react-pdf/renderer.
+  // NOTE: This does not capture the Preview DOM/Tailwind CSS; it renders a separate PDF component tree.
   const handleExport = async () => {
     setIsExporting(true);
     try {
@@ -669,7 +788,7 @@ export default function ResumeBuilderPage() {
             isMobilePreview && 'hidden lg:block'
           )}>
             {/* Design Settings */}
-            <DesignSettingsPanel />
+            <DesignSettingsPanel onPreviewColorChange={setPreviewColor} />
 
             {/* Auto Generate */}
             <AutoGenerateForm />
@@ -765,7 +884,10 @@ export default function ResumeBuilderPage() {
                 </div>
               </div>
               <div className="h-[calc(100%-48px)]">
-                <PreviewCanvas data={data} className="h-full" />
+                <PreviewCanvas
+                  data={previewColor ? { ...data, theme: { ...data.theme, color: previewColor } } : data}
+                  className="h-full"
+                />
               </div>
             </div>
           </div>

@@ -19,6 +19,7 @@ import {
   CustomFieldDefinition,
   CustomFieldValue,
   CUSTOM_FIELD_TEMPLATES,
+  ACCENT_COLORS,
 } from './schema';
 
 // ============================================================================
@@ -522,12 +523,26 @@ export const useResumeStore = create<ResumeStore>()(
 
       // Theme Actions
       updateTheme: (theme) =>
-        set((state) => ({
-          data: {
-            ...state.data,
-            theme: { ...state.data.theme, ...theme },
-          },
-        })),
+        set((state) => {
+          const newTheme = { ...state.data.theme, ...theme };
+
+          // Track recent custom colors (max 8)
+          if (theme.color) {
+            const isPresetColor = ACCENT_COLORS.some(c => c.color === theme.color);
+            if (!isPresetColor) {
+              const recentColors = state.data.theme.recentColors || [];
+              const filteredRecent = recentColors.filter(c => c !== theme.color);
+              newTheme.recentColors = [theme.color, ...filteredRecent].slice(0, 8);
+            }
+          }
+
+          return {
+            data: {
+              ...state.data,
+              theme: newTheme,
+            },
+          };
+        }),
 
       updateTypography: (type, size) =>
         set((state) => ({

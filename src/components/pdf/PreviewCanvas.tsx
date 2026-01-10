@@ -125,12 +125,223 @@ const RenderWithLinks: React.FC<{ text: string; className?: string; style?: Reac
   );
 };
 
+// ============================================================================
+// RICH TEXT RENDERER - Markdown & Bullet Support
+// ============================================================================
+
+interface RichTextProps {
+  text: string;
+  className?: string;
+  style?: React.CSSProperties;
+  themeColor?: string;
+}
+
+// Render inline markdown segments
+const RenderInlineMarkdown: React.FC<{ text: string }> = ({ text }) => {
+  if (!text) return null;
+
+  // Pattern for: **bold**, __bold__, *italic*, _italic_, ***boldItalic***, [text](url)
+  const pattern = /(\*\*\*(.+?)\*\*\*|___(.+?)___|(\*\*|__)(.+?)\4|(\*|_)([^*_]+?)\6|\[([^\]]+)\]\(([^)]+)\))/g;
+
+  const segments: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match;
+  let key = 0;
+
+  while ((match = pattern.exec(text)) !== null) {
+    // Add text before the match
+    if (match.index > lastIndex) {
+      segments.push(<span key={key++}>{text.slice(lastIndex, match.index)}</span>);
+    }
+
+    if (match[2] || match[3]) {
+      // Bold + Italic (*** or ___)
+      segments.push(<strong key={key++} className="font-bold italic">{match[2] || match[3]}</strong>);
+    } else if (match[5]) {
+      // Bold (** or __)
+      segments.push(<strong key={key++} className="font-bold">{match[5]}</strong>);
+    } else if (match[7]) {
+      // Italic (* or _)
+      segments.push(<em key={key++} className="italic">{match[7]}</em>);
+    } else if (match[8] && match[9]) {
+      // Link [text](url)
+      segments.push(
+        <a
+          key={key++}
+          href={ensureProtocol(match[9])}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 hover:underline"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {match[8]}
+        </a>
+      );
+    }
+
+    lastIndex = match.index + match[0].length;
+  }
+
+  // Add remaining text
+  if (lastIndex < text.length) {
+    segments.push(<span key={key++}>{text.slice(lastIndex)}</span>);
+  }
+
+  return <>{segments.length > 0 ? segments : text}</>;
+};
+
+// Main rich text renderer with bullets, numbered lists, and markdown
+const RichText: React.FC<RichTextProps> = ({ text, className, style, themeColor }) => {
+  if (!text) return null;
+
+  const lines = text.split('\n');
+  const elements: React.ReactNode[] = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    // Check for headers (## or ###)
+    const headerMatch = trimmed.match(/^(#{1,6})\s+(.+)$/);
+    if (headerMatch) {
+      const level = headerMatch[1].length;
+      const sizes: Record<number, string> = {
+        1: 'text-lg font-bold',
+        2: 'text-base font-bold',
+        3: 'text-sm font-semibold',
+        4: 'text-sm font-medium',
+        5: 'text-xs font-medium',
+        6: 'text-xs font-normal',
+      };
+      elements.push(
+        <div key={i} className={sizes[level] || sizes[3]} style={{ color: themeColor }}>
+          <RenderInlineMarkdown text={headerMatch[2]} />
+        </div>
+      );
+      continue;
+    }
+
+    // Check for bullet points (-, *, •)
+    const bulletMatch = trimmed.match(/^[-*•]\s+(.+)$/);
+    if (bulletMatch) {
+      elements.push(
+        <div key={i} className="flex items-start gap-2 ml-1">
+          <span className="mt-[0.4em] w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: themeColor || '#6b7280' }} />
+          <span><RenderInlineMarkdown text={bulletMatch[1]} /></span>
+        </div>
+      );
+      continue;
+    }
+
+    // Check for numbered lists (1., 2., etc.)
+    const numberedMatch = trimmed.match(/^(\d+)[.)]\s+(.+)$/);
+    if (numberedMatch) {
+      elements.push(
+        <div key={i} className="flex items-start gap-2 ml-1">
+          <span className="font-medium min-w-[1.25em] text-right flex-shrink-0" style={{ color: themeColor || '#6b7280' }}>
+            {numberedMatch[1]}.
+          </span>
+          <span><RenderInlineMarkdown text={numberedMatch[2]} /></span>
+        </div>
+      );
+      continue;
+    }
+
+    // Regular text or empty line
+    if (trimmed) {
+      elements.push(
+        <div key={i}>
+          <RenderInlineMarkdown text={trimmed} />
+        </div>
+      );
+    } else if (line === '' && i > 0 && i < lines.length - 1) {
+      // Empty line (paragraph break)
+      elements.push(<div key={i} className="h-2" />);
+    }
+  }
+
+  return (
+    <div className={className} style={style}>
+      {elements}
+    </div>
+  );
+};
+
 // Typography pixel sizes
 const TYPO_PX = {
   sm: { name: 18, headers: 11, body: 9 },
   md: { name: 22, headers: 13, body: 10 },
   lg: { name: 26, headers: 15, body: 11 },
   xl: { name: 30, headers: 17, body: 12 },
+};
+
+// ============================================================================
+// DUMMY DATA FOR PREVIEW (shows realistic layout when sections are empty)
+// These values are styled distinctively and NEVER appear in exported PDF
+// ============================================================================
+
+const DUMMY_DATA = {
+  personalInfo: {
+    fullName: 'Your Full Name',
+    email: 'email@example.com',
+    phone: '(555) 123-4567',
+    location: 'City, State',
+    summary: 'A brief professional summary highlighting your key skills, experience, and career objectives. This helps recruiters quickly understand your value proposition.',
+  },
+  experience: [
+    {
+      id: 'dummy-exp-1',
+      title: 'Senior Software Engineer',
+      position: 'Senior Software Engineer',
+      company: 'Technology Company',
+      institution: '',
+      degree: '',
+      subtitle: 'Technology Company',
+      location: 'San Francisco, CA',
+      startDate: '2021-01',
+      endDate: '',
+      current: true,
+      description: '• Led development of key features resulting in 40% performance improvement\n• Mentored junior developers and conducted code reviews\n• Collaborated with cross-functional teams on product roadmap',
+    },
+    {
+      id: 'dummy-exp-2',
+      title: 'Software Developer',
+      position: 'Software Developer',
+      company: 'Digital Agency',
+      institution: '',
+      degree: '',
+      subtitle: 'Digital Agency',
+      location: 'New York, NY',
+      startDate: '2018-06',
+      endDate: '2020-12',
+      current: false,
+      description: '• Built responsive web applications using modern frameworks\n• Implemented CI/CD pipelines reducing deployment time by 60%',
+    },
+  ],
+  education: [
+    {
+      id: 'dummy-edu-1',
+      title: 'Bachelor of Science in Computer Science',
+      position: '',
+      company: '',
+      degree: 'Bachelor of Science in Computer Science',
+      institution: 'State University',
+      subtitle: 'State University',
+      location: 'Boston, MA',
+      startDate: '2014-09',
+      endDate: '2018-05',
+      current: false,
+      description: 'Relevant coursework: Data Structures, Algorithms, Software Engineering',
+    },
+  ],
+  skills: ['JavaScript', 'TypeScript', 'React', 'Node.js', 'Python', 'SQL', 'Git', 'AWS', 'Docker', 'Agile'],
+};
+
+// Helper to check if data has any real user content
+const hasRealContent = (value: string | string[] | undefined | null): boolean => {
+  if (!value) return false;
+  if (Array.isArray(value)) return value.length > 0;
+  return value.trim().length > 0;
 };
 
 // ============================================================================
@@ -326,13 +537,17 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
 
   const renderSkillsSection = (section: Section) => {
     const item = section.items[0];
-    if (!item) return <p className="text-gray-400 italic text-[10px]">Add your skills</p>;
+    const hasSkills = item?.skills?.length || item?.skillsWithLevels?.length;
+    const isDummy = !hasSkills;
+
+    // Use dummy skills if none exist
+    const displaySkills = hasSkills ? (item.skills || []) : DUMMY_DATA.skills;
 
     // Elegant template - inline comma-separated list
     if (isElegant) {
       return (
         <div className="text-center">
-          {item.skillsWithLevels?.length ? (
+          {item?.skillsWithLevels?.length ? (
             <p className="text-gray-600 font-serif" style={{ fontSize: fontSize.itemBody }}>
               {item.skillsWithLevels.map((s, i) => (
                 <span key={i}>
@@ -342,12 +557,10 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
                 </span>
               ))}
             </p>
-          ) : item.skills?.length ? (
-            <p className="text-gray-600 font-serif" style={{ fontSize: fontSize.itemBody }}>
-              {item.skills.join(' · ')}
-            </p>
           ) : (
-            <span className="text-gray-400 italic text-[10px]">Add your skills</span>
+            <p className={cn('font-serif', isDummy ? 'text-gray-400 italic' : 'text-gray-600')} style={{ fontSize: fontSize.itemBody }}>
+              {displaySkills.join(' · ')}
+            </p>
           )}
         </div>
       );
@@ -357,7 +570,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
     if (isCorporate) {
       return (
         <div className="space-y-2">
-          {item.skillsWithLevels?.length ? (
+          {item?.skillsWithLevels?.length ? (
             <div className="flex flex-wrap gap-2">
               {item.skillsWithLevels.map((skill, idx) => (
                 <span
@@ -369,16 +582,14 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
                 </span>
               ))}
             </div>
-          ) : item.skills?.length ? (
-            <div className="flex flex-wrap gap-2">
-              {item.skills.map((skill, idx) => (
-                <span key={idx} className="px-2.5 py-1 text-[10px] bg-gray-100 text-gray-700 rounded">
+          ) : (
+            <div className={cn('flex flex-wrap gap-2', isDummy && 'opacity-60')}>
+              {displaySkills.map((skill, idx) => (
+                <span key={idx} className={cn('px-2.5 py-1 text-[10px] rounded', isDummy ? 'bg-gray-100 text-gray-400 italic' : 'bg-gray-100 text-gray-700')}>
                   {skill}
                 </span>
               ))}
             </div>
-          ) : (
-            <span className="text-gray-400 italic text-[10px]">Add your skills</span>
           )}
         </div>
       );
@@ -388,7 +599,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
     if (isCreative) {
       return (
         <div className="space-y-2">
-          {item.skillsWithLevels?.length ? (
+          {item?.skillsWithLevels?.length ? (
             <div className="flex flex-wrap gap-1.5">
               {item.skillsWithLevels.map((skill, idx) => (
                 <span
@@ -401,20 +612,18 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
                 </span>
               ))}
             </div>
-          ) : item.skills?.length ? (
-            <div className="flex flex-wrap gap-1.5">
-              {item.skills.map((skill, idx) => (
+          ) : (
+            <div className={cn('flex flex-wrap gap-1.5', isDummy && 'opacity-60')}>
+              {displaySkills.map((skill, idx) => (
                 <span
                   key={idx}
-                  className="px-2 py-1 text-[10px] font-bold rounded"
-                  style={{ backgroundColor: theme.color + '15', color: theme.color }}
+                  className={cn('px-2 py-1 text-[10px] rounded', isDummy ? 'font-normal italic' : 'font-bold')}
+                  style={{ backgroundColor: isDummy ? '#f3f4f6' : theme.color + '15', color: isDummy ? '#9ca3af' : theme.color }}
                 >
                   {skill}
                 </span>
               ))}
             </div>
-          ) : (
-            <span className="text-gray-400 italic text-[10px]">Add your skills</span>
           )}
         </div>
       );
@@ -424,7 +633,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
     if (isModern) {
       return (
         <div className="space-y-1.5">
-          {item.skillsWithLevels?.length ? (
+          {item?.skillsWithLevels?.length ? (
             item.skillsWithLevels.map((skill, idx) => (
               <div key={idx} className="flex items-center gap-2 text-[10px]">
                 <div className="w-1 h-1 rounded-full" style={{ backgroundColor: theme.color }} />
@@ -432,24 +641,35 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
                 <span className="text-gray-400 text-[8px]">{skill.level}</span>
               </div>
             ))
-          ) : item.skills?.length ? (
-            item.skills.map((skill, idx) => (
-              <div key={idx} className="flex items-center gap-2 text-[10px]">
-                <div className="w-1 h-1 rounded-full" style={{ backgroundColor: theme.color }} />
-                <span className="text-gray-700">{skill}</span>
-              </div>
-            ))
           ) : (
-            <span className="text-gray-400 italic text-[10px]">Add your skills</span>
+            <div className={isDummy ? 'opacity-60' : ''}>
+              {displaySkills.map((skill, idx) => (
+                <div key={idx} className="flex items-center gap-2 text-[10px]">
+                  <div className="w-1 h-1 rounded-full" style={{ backgroundColor: isDummy ? '#9ca3af' : theme.color }} />
+                  <span className={isDummy ? 'text-gray-400 italic' : 'text-gray-700'}>{skill}</span>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       );
     }
 
-    // Default rendering for other templates (Tech, Harvard, Minimal, Bold, Neo, Portfolio)
+    // Harvard template - simple comma-separated text (matches PDF)
+    if (isHarvard) {
+      return (
+        <p className={cn('font-serif', isDummy ? 'text-gray-400 italic' : 'text-gray-700')} style={{ fontSize: fontSize.itemBody }}>
+          {item?.skillsWithLevels?.length
+            ? item.skillsWithLevels.map((s) => s.name).join(', ')
+            : displaySkills.join(', ')}
+        </p>
+      );
+    }
+
+    // Default rendering for other templates (Tech, Minimal, Bold, Neo, Portfolio)
     return (
       <div className="space-y-2">
-        {item.skillsWithLevels?.length ? (
+        {item?.skillsWithLevels?.length ? (
           <div className="flex flex-wrap gap-1.5">
             {item.skillsWithLevels.map((skill, idx) => (
               <span
@@ -467,22 +687,17 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
             ))}
           </div>
         ) : null}
-        {item.skills?.length ? (
-          <div className="flex flex-wrap gap-1.5">
-            {item.skills.map((skill, idx) => (
-              <span
-                key={idx}
-                className={cn('px-2 py-0.5 text-[10px]', isNeo ? 'rounded-none' : 'rounded-sm')}
-                style={{ backgroundColor: theme.color + '20', color: theme.color }}
-              >
-                {skill}
-              </span>
-            ))}
-          </div>
-        ) : null}
-        {!item.skills?.length && !item.skillsWithLevels?.length && (
-          <span className="px-2 py-0.5 text-gray-400 italic text-[10px] bg-gray-100">Add your skills</span>
-        )}
+        <div className={cn('flex flex-wrap gap-1.5', isDummy && 'opacity-60')}>
+          {displaySkills.map((skill, idx) => (
+            <span
+              key={idx}
+              className={cn('px-2 py-0.5 text-[10px]', isNeo ? 'rounded-none' : 'rounded-sm', isDummy && 'italic')}
+              style={{ backgroundColor: isDummy ? '#f3f4f6' : theme.color + '20', color: isDummy ? '#9ca3af' : theme.color }}
+            >
+              {skill}
+            </span>
+          ))}
+        </div>
       </div>
     );
   };
@@ -587,22 +802,27 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
   };
 
   const renderExperienceEducation = (section: Section) => {
-    if (!section.items.length) {
+    // Use dummy data if section is empty
+    const isDummy = !section.items.length;
+    const dummyItems = section.type === 'experience' ? DUMMY_DATA.experience : section.type === 'education' ? DUMMY_DATA.education : [];
+    const itemsToRender = isDummy ? dummyItems : section.items;
+
+    if (!itemsToRender.length) {
       return <p className="text-gray-400 italic" style={{ fontSize: fontSize.itemBody }}>Add items to this section</p>;
     }
 
     // Elegant template - centered with refined typography
     if (isElegant) {
-      return section.items.map((item) => (
-        <div key={item.id} className="mb-4 text-center">
-          <h3 className="font-serif font-semibold text-gray-800" style={{ fontSize: fontSize.itemTitle }}>
+      return itemsToRender.map((item) => (
+        <div key={item.id} className={cn('mb-4 text-center', isDummy && 'opacity-60')}>
+          <h3 className={cn('font-serif font-semibold', isDummy ? 'text-gray-400 italic font-normal' : 'text-gray-800')} style={{ fontSize: fontSize.itemTitle }}>
             {section.type === 'experience'
               ? item.position || <span className="text-gray-400 italic font-normal">Position</span>
               : section.type === 'education'
                 ? item.degree || <span className="text-gray-400 italic font-normal">Degree</span>
                 : item.title || <span className="text-gray-400 italic font-normal">Title</span>}
           </h3>
-          <p className="font-serif text-gray-600" style={{ fontSize: fontSize.itemSubtitle }}>
+          <p className={cn('font-serif', isDummy ? 'text-gray-400' : 'text-gray-600')} style={{ fontSize: fontSize.itemSubtitle }}>
             {section.type === 'experience'
               ? item.company || <span className="text-gray-400">Company</span>
               : section.type === 'education'
@@ -614,9 +834,12 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
             {formatDate(item.startDate, item.endDate, item.current) || 'Date'}
           </p>
           {item.description && (
-            <p className="text-gray-600 whitespace-pre-line mt-2 max-w-lg mx-auto" style={{ fontSize: fontSize.itemBody }}>
-              <RenderWithLinks text={item.description} />
-            </p>
+            <RichText
+              text={item.description}
+              className={cn('mt-2 max-w-lg mx-auto', isDummy ? 'text-gray-400' : 'text-gray-600')}
+              style={{ fontSize: fontSize.itemBody }}
+              themeColor={theme.color}
+            />
           )}
         </div>
       ));
@@ -624,10 +847,10 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
 
     // Corporate template - clean with left border accent
     if (isCorporate) {
-      return section.items.map((item) => (
-        <div key={item.id} className="mb-3 pl-3 border-l-2" style={{ borderLeftColor: theme.color + '40' }}>
+      return itemsToRender.map((item) => (
+        <div key={item.id} className={cn('mb-3 pl-3 border-l-2', isDummy && 'opacity-60')} style={{ borderLeftColor: theme.color + '40' }}>
           <div className="flex justify-between items-baseline">
-            <h3 className="font-semibold text-gray-800" style={{ fontSize: fontSize.itemTitle }}>
+            <h3 className={cn('font-semibold', isDummy ? 'text-gray-400 italic font-normal' : 'text-gray-800')} style={{ fontSize: fontSize.itemTitle }}>
               {section.type === 'experience'
                 ? item.position || <span className="text-gray-400 italic font-normal">Position</span>
                 : section.type === 'education'
@@ -639,7 +862,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
             </span>
           </div>
           <div className="flex items-center gap-2" style={{ fontSize: fontSize.itemSubtitle }}>
-            <span style={{ color: theme.color }}>
+            <span style={{ color: isDummy ? '#9ca3af' : theme.color }}>
               {section.type === 'experience'
                 ? item.company || <span className="text-gray-400">Company</span>
                 : section.type === 'education'
@@ -649,9 +872,12 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
             {item.location && <span className="text-gray-400">· {item.location}</span>}
           </div>
           {item.description && (
-            <p className="text-gray-600 whitespace-pre-line mt-1.5" style={{ fontSize: fontSize.itemBody }}>
-              <RenderWithLinks text={item.description} />
-            </p>
+            <RichText
+              text={item.description}
+              className={cn('mt-1.5', isDummy ? 'text-gray-400' : 'text-gray-600')}
+              style={{ fontSize: fontSize.itemBody }}
+              themeColor={theme.color}
+            />
           )}
         </div>
       ));
@@ -659,20 +885,20 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
 
     // Creative template - bold with accent block
     if (isCreative) {
-      return section.items.map((item) => (
-        <div key={item.id} className="mb-4 relative">
+      return itemsToRender.map((item) => (
+        <div key={item.id} className={cn('mb-4 relative', isDummy && 'opacity-60')}>
           <div className="absolute left-0 top-0 bottom-0 w-1 rounded" style={{ backgroundColor: theme.color + '30' }} />
           <div className="pl-4">
             <div className="flex justify-between items-start">
               <div>
-                <h3 className="font-bold text-gray-900" style={{ fontSize: fontSize.itemTitle }}>
+                <h3 className={cn('font-bold', isDummy ? 'text-gray-400 italic font-normal' : 'text-gray-900')} style={{ fontSize: fontSize.itemTitle }}>
                   {section.type === 'experience'
                     ? item.position || <span className="text-gray-400 italic font-normal">Position</span>
                     : section.type === 'education'
                       ? item.degree || <span className="text-gray-400 italic font-normal">Degree</span>
                       : item.title || <span className="text-gray-400 italic font-normal">Title</span>}
                 </h3>
-                <p className="font-medium" style={{ fontSize: fontSize.itemSubtitle, color: theme.color }}>
+                <p className="font-medium" style={{ fontSize: fontSize.itemSubtitle, color: isDummy ? '#9ca3af' : theme.color }}>
                   {section.type === 'experience'
                     ? item.company || <span className="text-gray-400">Company</span>
                     : section.type === 'education'
@@ -688,9 +914,12 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
               </div>
             </div>
             {item.description && (
-              <p className="text-gray-600 whitespace-pre-line mt-2" style={{ fontSize: fontSize.itemBody }}>
-                <RenderWithLinks text={item.description} />
-              </p>
+              <RichText
+                text={item.description}
+                className={cn('mt-2', isDummy ? 'text-gray-400' : 'text-gray-600')}
+                style={{ fontSize: fontSize.itemBody }}
+                themeColor={theme.color}
+              />
             )}
           </div>
         </div>
@@ -699,10 +928,10 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
 
     // Modern template - clean with subtle dividers
     if (isModern) {
-      return section.items.map((item, idx) => (
-        <div key={item.id} className={cn('mb-3 pb-3', idx < section.items.length - 1 && 'border-b border-gray-100')}>
+      return itemsToRender.map((item, idx) => (
+        <div key={item.id} className={cn('mb-3 pb-3', idx < itemsToRender.length - 1 && 'border-b border-gray-100', isDummy && 'opacity-60')}>
           <div className="flex justify-between items-baseline">
-            <h3 className="font-semibold text-gray-900" style={{ fontSize: fontSize.itemTitle }}>
+            <h3 className={cn('font-semibold', isDummy ? 'text-gray-400 italic font-normal' : 'text-gray-900')} style={{ fontSize: fontSize.itemTitle }}>
               {section.type === 'experience'
                 ? item.position || <span className="text-gray-400 italic font-normal">Position</span>
                 : section.type === 'education'
@@ -714,7 +943,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
             </span>
           </div>
           <div className="flex items-center gap-2 mt-0.5" style={{ fontSize: fontSize.itemSubtitle }}>
-            <span className="text-gray-600">
+            <span className={isDummy ? 'text-gray-400' : 'text-gray-600'}>
               {section.type === 'experience'
                 ? item.company || <span className="text-gray-400">Company</span>
                 : section.type === 'education'
@@ -729,19 +958,22 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
             )}
           </div>
           {item.description && (
-            <p className="text-gray-600 whitespace-pre-line mt-1.5" style={{ fontSize: fontSize.itemBody }}>
-              <RenderWithLinks text={item.description} />
-            </p>
+            <RichText
+              text={item.description}
+              className={cn('mt-1.5', isDummy ? 'text-gray-400' : 'text-gray-600')}
+              style={{ fontSize: fontSize.itemBody }}
+              themeColor={theme.color}
+            />
           )}
         </div>
       ));
     }
 
     // Default layout for Harvard, Tech, Minimal, Bold, Neo, Portfolio
-    return section.items.map((item) => (
-      <div key={item.id} className="mb-2.5">
+    return itemsToRender.map((item) => (
+      <div key={item.id} className={cn('mb-2.5', isDummy && 'opacity-60')}>
         <div className="flex justify-between items-baseline mb-0.5">
-          <h3 className="font-bold text-gray-900" style={{ fontSize: fontSize.itemTitle }}>
+          <h3 className={cn('font-bold', isDummy ? 'text-gray-400 italic font-normal' : 'text-gray-900')} style={{ fontSize: fontSize.itemTitle }}>
             {section.type === 'experience'
               ? item.position || <span className="text-gray-400 italic font-normal">Position</span>
               : section.type === 'education'
@@ -753,7 +985,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
           </span>
         </div>
         <div className="flex justify-between items-center" style={{ fontSize: fontSize.itemSubtitle }}>
-          <span className="text-gray-600">
+          <span className={isDummy ? 'text-gray-400' : 'text-gray-600'}>
             {section.type === 'experience'
               ? item.company || <span className="text-gray-400">Company</span>
               : section.type === 'education'
@@ -763,9 +995,12 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
           {item.location && <span className="text-gray-500">{item.location}</span>}
         </div>
         {item.description && (
-          <p className="text-gray-700 whitespace-pre-line mt-1" style={{ fontSize: fontSize.itemBody }}>
-            <RenderWithLinks text={item.description} />
-          </p>
+          <RichText
+            text={item.description}
+            className={cn('mt-1', isDummy ? 'text-gray-400' : 'text-gray-700')}
+            style={{ fontSize: fontSize.itemBody }}
+            themeColor={theme.color}
+          />
         )}
       </div>
     ));
@@ -810,9 +1045,12 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
           </p>
         )}
         {item.description && (
-          <p className="text-gray-700 whitespace-pre-line mt-1" style={{ fontSize: fontSize.itemBody }}>
-            <RenderWithLinks text={item.description} />
-          </p>
+          <RichText
+            text={item.description}
+            className="text-gray-700 mt-1"
+            style={{ fontSize: fontSize.itemBody }}
+            themeColor={theme.color}
+          />
         )}
       </div>
     ));
@@ -839,13 +1077,11 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
   const renderHarvardHeader = () => (
     <div className="text-center border-b-2 border-gray-900 pb-4 mb-5">
       <h1 className="font-bold uppercase tracking-widest mb-2" style={{ fontSize: fontSize.name }}>
-        {personalInfo.fullName || <span className="text-gray-400 italic normal-case">Full Name</span>}
+        {personalInfo.fullName || <span className="text-gray-400 italic normal-case">{DUMMY_DATA.personalInfo.fullName}</span>}
       </h1>
-      {personalInfo.summary && (
-        <p className="text-gray-600 mb-2" style={{ fontSize: fontSize.summary }}>
-          {personalInfo.summary}
-        </p>
-      )}
+      <p className="text-gray-600 mb-2" style={{ fontSize: fontSize.summary }}>
+        {personalInfo.summary || <span className="text-gray-400 italic">{DUMMY_DATA.personalInfo.summary}</span>}
+      </p>
       {renderContactInfo(true, false)}
     </div>
   );
@@ -853,13 +1089,11 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
   const renderTechHeader = () => (
     <div className="mb-6">
       <h1 className="font-extrabold tracking-tight mb-1" style={{ fontSize: fontSize.name, color: theme.color }}>
-        {personalInfo.fullName || <span className="text-gray-400 italic font-normal">Full Name</span>}
+        {personalInfo.fullName || <span className="text-gray-400 italic font-normal">{DUMMY_DATA.personalInfo.fullName}</span>}
       </h1>
-      {personalInfo.summary && (
-        <p className="text-gray-500 mb-3" style={{ fontSize: fontSize.summary }}>
-          {personalInfo.summary}
-        </p>
-      )}
+      <p className="text-gray-500 mb-3" style={{ fontSize: fontSize.summary }}>
+        {personalInfo.summary || <span className="text-gray-400 italic">{DUMMY_DATA.personalInfo.summary}</span>}
+      </p>
       {renderContactInfo(false, true)}
     </div>
   );
@@ -867,13 +1101,11 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
   const renderMinimalHeader = () => (
     <div className="mb-8 text-center">
       <h1 className="font-light tracking-wide mb-2" style={{ fontSize: fontSize.name }}>
-        {personalInfo.fullName || <span className="text-gray-400 italic">Full Name</span>}
+        {personalInfo.fullName || <span className="text-gray-400 italic">{DUMMY_DATA.personalInfo.fullName}</span>}
       </h1>
-      {personalInfo.summary && (
-        <p className="text-gray-400 mb-3" style={{ fontSize: fontSize.summary }}>
-          {personalInfo.summary}
-        </p>
-      )}
+      <p className="text-gray-400 mb-3" style={{ fontSize: fontSize.summary }}>
+        {personalInfo.summary || <span className="text-gray-300 italic">{DUMMY_DATA.personalInfo.summary}</span>}
+      </p>
       {renderContactInfo(true, false)}
     </div>
   );
@@ -884,13 +1116,11 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
         className="font-black uppercase tracking-tight mb-1"
         style={{ fontSize: Math.round(fontSize.name * 1.15), color: theme.color }}
       >
-        {personalInfo.fullName || <span className="text-gray-400 italic font-normal normal-case">Full Name</span>}
+        {personalInfo.fullName || <span className="text-gray-400 italic font-normal normal-case">{DUMMY_DATA.personalInfo.fullName}</span>}
       </h1>
-      {personalInfo.summary && (
-        <p className="text-gray-600 font-medium mb-3" style={{ fontSize: fontSize.summary }}>
-          {personalInfo.summary}
-        </p>
-      )}
+      <p className="text-gray-600 font-medium mb-3" style={{ fontSize: fontSize.summary }}>
+        {personalInfo.summary || <span className="text-gray-400 italic font-normal">{DUMMY_DATA.personalInfo.summary}</span>}
+      </p>
       {renderContactInfo(false, true)}
     </div>
   );
@@ -900,14 +1130,12 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
       <div className="flex items-center gap-2 mb-2">
         <div className="w-3 h-3" style={{ backgroundColor: theme.color }} />
         <h1 className="font-bold tracking-tight" style={{ fontSize: fontSize.name }}>
-          {personalInfo.fullName || <span className="text-gray-400 italic font-normal">Full Name</span>}
+          {personalInfo.fullName || <span className="text-gray-400 italic font-normal">{DUMMY_DATA.personalInfo.fullName}</span>}
         </h1>
       </div>
-      {personalInfo.summary && (
-        <p className="text-gray-500 mb-3" style={{ fontSize: fontSize.summary }}>
-          {personalInfo.summary}
-        </p>
-      )}
+      <p className="text-gray-500 mb-3" style={{ fontSize: fontSize.summary }}>
+        {personalInfo.summary || <span className="text-gray-400 italic">{DUMMY_DATA.personalInfo.summary}</span>}
+      </p>
       {renderContactInfo(false, true)}
     </div>
   );
@@ -918,13 +1146,11 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
   const renderCorporateHeader = () => (
     <div className="mb-6 bg-gray-50 p-5 border-l-4" style={{ borderLeftColor: theme.color }}>
       <h1 className="font-semibold tracking-normal mb-1" style={{ fontSize: fontSize.name, color: '#1f2937' }}>
-        {personalInfo.fullName || <span className="text-gray-400 italic font-normal">Full Name</span>}
+        {personalInfo.fullName || <span className="text-gray-400 italic font-normal">{DUMMY_DATA.personalInfo.fullName}</span>}
       </h1>
-      {personalInfo.summary && (
-        <p className="text-gray-600 mb-3 leading-relaxed" style={{ fontSize: fontSize.summary }}>
-          {personalInfo.summary}
-        </p>
-      )}
+      <p className="text-gray-600 mb-3 leading-relaxed" style={{ fontSize: fontSize.summary }}>
+        {personalInfo.summary || <span className="text-gray-400 italic">{DUMMY_DATA.personalInfo.summary}</span>}
+      </p>
       <div className="pt-3 border-t border-gray-200">
         {renderContactInfo(false, true)}
       </div>
@@ -932,46 +1158,50 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
   );
 
   // ============================================================================
-  // CREATIVE HEADER - Asymmetric layout with bold accent block
+  // CREATIVE HEADER - Asymmetric layout with bold accent block (matches PDF: 50x50)
   // ============================================================================
-  const renderCreativeHeader = () => (
-    <div className="mb-8 relative">
-      <div className="absolute top-0 left-0 w-16 h-16 opacity-20" style={{ backgroundColor: theme.color }} />
-      <div className="pl-6 pt-4">
-        <h1 className="font-black tracking-tight mb-2" style={{ fontSize: Math.round(fontSize.name * 1.1) }}>
-          <span style={{ color: theme.color }}>{(personalInfo.fullName || 'Full Name').charAt(0)}</span>
-          <span className="text-gray-900">{(personalInfo.fullName || 'Full Name').slice(1)}</span>
-        </h1>
-        {personalInfo.summary && (
-          <p className="text-gray-600 italic mb-4 max-w-md" style={{ fontSize: fontSize.summary }}>
-            &ldquo;{personalInfo.summary}&rdquo;
+  const renderCreativeHeader = () => {
+    const displayName = personalInfo.fullName || DUMMY_DATA.personalInfo.fullName;
+    const isPlaceholder = !personalInfo.fullName;
+    return (
+      <div className="mb-5 relative">
+        <div className="absolute top-0 left-0" style={{ width: 50, height: 50, backgroundColor: theme.color, opacity: 0.2 }} />
+        <div className="pl-5 pt-3">
+          <h1 className="font-bold mb-1" style={{ fontSize: Math.round(fontSize.name * 1.1) }}>
+            <span style={{ color: isPlaceholder ? '#9ca3af' : theme.color }}>{displayName.charAt(0)}</span>
+            <span className={isPlaceholder ? 'text-gray-400 italic font-normal' : 'text-gray-900'}>{displayName.slice(1)}</span>
+          </h1>
+          <p className="text-gray-600 italic mb-2" style={{ fontSize: fontSize.summary }}>
+            {personalInfo.summary ? (
+              <>&ldquo;{personalInfo.summary}&rdquo;</>
+            ) : (
+              <span className="text-gray-400">&ldquo;{DUMMY_DATA.personalInfo.summary}&rdquo;</span>
+            )}
           </p>
-        )}
-        <div className="flex flex-wrap gap-4 text-sm">
-          {renderContactInfo(false, true)}
+          <div className="flex flex-wrap gap-3">
+            {renderContactInfo(false, true)}
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // ============================================================================
-  // ELEGANT HEADER - Centered serif typography with ornamental line
+  // ELEGANT HEADER - Centered serif typography with ornamental line (matches PDF)
   // ============================================================================
   const renderElegantHeader = () => (
-    <div className="mb-8 text-center">
-      <h1 className="font-serif font-normal tracking-wide mb-3" style={{ fontSize: Math.round(fontSize.name * 1.05), letterSpacing: '0.1em' }}>
-        {personalInfo.fullName?.toUpperCase() || <span className="text-gray-400 italic normal-case">Full Name</span>}
+    <div className="mb-5 text-center">
+      <h1 className="font-serif font-normal mb-2" style={{ fontSize: Math.round(fontSize.name * 1.05), letterSpacing: '0.2em' }}>
+        {personalInfo.fullName?.toUpperCase() || <span className="text-gray-400 italic normal-case">{DUMMY_DATA.personalInfo.fullName}</span>}
       </h1>
-      <div className="flex items-center justify-center gap-4 mb-3">
-        <div className="h-px w-12 bg-gray-300" />
-        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: theme.color }} />
-        <div className="h-px w-12 bg-gray-300" />
+      <div className="flex items-center justify-center gap-3 mb-2">
+        <div style={{ width: 40, height: 1, backgroundColor: '#d1d5db' }} />
+        <div style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: theme.color }} />
+        <div style={{ width: 40, height: 1, backgroundColor: '#d1d5db' }} />
       </div>
-      {personalInfo.summary && (
-        <p className="text-gray-500 font-serif italic mb-4 max-w-lg mx-auto" style={{ fontSize: fontSize.summary }}>
-          {personalInfo.summary}
-        </p>
-      )}
+      <p className="text-gray-500 font-serif italic mb-2.5" style={{ fontSize: fontSize.summary }}>
+        {personalInfo.summary || <span className="text-gray-400">{DUMMY_DATA.personalInfo.summary}</span>}
+      </p>
       {renderContactInfo(true, false)}
     </div>
   );
@@ -984,13 +1214,11 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
       <div className="w-1 rounded-full" style={{ backgroundColor: theme.color }} />
       <div className="flex-1">
         <h1 className="font-bold tracking-tight mb-1" style={{ fontSize: fontSize.name }}>
-          {personalInfo.fullName || <span className="text-gray-400 italic font-normal">Full Name</span>}
+          {personalInfo.fullName || <span className="text-gray-400 italic font-normal">{DUMMY_DATA.personalInfo.fullName}</span>}
         </h1>
-        {personalInfo.summary && (
-          <p className="text-gray-500 mb-3 leading-relaxed" style={{ fontSize: fontSize.summary }}>
-            {personalInfo.summary}
-          </p>
-        )}
+        <p className="text-gray-500 mb-3 leading-relaxed" style={{ fontSize: fontSize.summary }}>
+          {personalInfo.summary || <span className="text-gray-400 italic">{DUMMY_DATA.personalInfo.summary}</span>}
+        </p>
         <div className="flex flex-wrap gap-x-4 gap-y-1">
           {renderContactInfo(false, true)}
         </div>
@@ -1015,35 +1243,35 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
   // ============================================================================
 
   const renderSectionTitle = (title: string) => {
-    // Neo - Geometric square accent
+    // Neo - Geometric square accent (matches PDF 10x10)
     if (isNeo) {
       return (
-        <div className="flex items-center gap-2 mb-2">
-          <div className="w-2.5 h-2.5" style={{ backgroundColor: theme.color }} />
-          <h2 className="font-bold uppercase tracking-wider text-gray-900" style={{ fontSize: fontSize.sectionHeading }}>
+        <div className="flex items-center gap-1.5 mb-2">
+          <div style={{ width: 10, height: 10, backgroundColor: theme.color }} />
+          <h2 className="font-bold uppercase tracking-wide text-gray-900" style={{ fontSize: fontSize.sectionHeading, letterSpacing: '0.05em' }}>
             {title}
           </h2>
         </div>
       );
     }
 
-    // Corporate - Professional underline with accent
+    // Corporate - Professional underline with accent (matches PDF: font-bold, #1f2937)
     if (isCorporate) {
       return (
-        <div className="mb-3 pb-1 border-b-2 border-gray-200">
-          <h2 className="font-semibold text-gray-800 tracking-normal" style={{ fontSize: fontSize.sectionHeading }}>
+        <div className="mb-2 pb-1 border-b-2 border-gray-200">
+          <h2 className="font-bold" style={{ fontSize: fontSize.sectionHeading, color: '#1f2937' }}>
             {title}
           </h2>
         </div>
       );
     }
 
-    // Creative - Bold with accent color background
+    // Creative - Bold with accent color background (matches PDF)
     if (isCreative) {
       return (
-        <div className="mb-3 flex items-center gap-2">
-          <div className="px-2 py-0.5" style={{ backgroundColor: theme.color + '20' }}>
-            <h2 className="font-bold uppercase tracking-wide" style={{ fontSize: fontSize.sectionHeading, color: theme.color }}>
+        <div className="mb-2 flex">
+          <div className="px-1.5 py-0.5" style={{ backgroundColor: theme.color + '30' }}>
+            <h2 className="font-bold uppercase" style={{ fontSize: fontSize.sectionHeading, color: theme.color, letterSpacing: '0.05em' }}>
               {title}
             </h2>
           </div>
@@ -1051,28 +1279,28 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
       );
     }
 
-    // Elegant - Serif with decorative elements
+    // Elegant - Serif with decorative elements (matches PDF)
     if (isElegant) {
       return (
-        <div className="mb-3 text-center">
-          <h2 className="font-serif font-normal tracking-widest text-gray-700 uppercase" style={{ fontSize: Math.round(fontSize.sectionHeading * 0.9), letterSpacing: '0.15em' }}>
+        <div className="mb-2 text-center">
+          <h2 className="font-serif font-normal text-gray-500 uppercase" style={{ fontSize: Math.round(fontSize.sectionHeading * 0.9), letterSpacing: '0.2em' }}>
             {title}
           </h2>
-          <div className="flex items-center justify-center gap-2 mt-1">
-            <div className="h-px w-8" style={{ backgroundColor: theme.color + '60' }} />
-            <div className="w-1 h-1 rounded-full" style={{ backgroundColor: theme.color }} />
-            <div className="h-px w-8" style={{ backgroundColor: theme.color + '60' }} />
+          <div className="flex items-center justify-center gap-1.5 mt-1">
+            <div style={{ width: 30, height: 1, backgroundColor: theme.color + '60' }} />
+            <div style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: theme.color }} />
+            <div style={{ width: 30, height: 1, backgroundColor: theme.color + '60' }} />
           </div>
         </div>
       );
     }
 
-    // Modern - Clean with vertical accent bar
+    // Modern - Clean with vertical accent bar (matches PDF 2x14)
     if (isModern) {
       return (
-        <div className="mb-2 flex items-center gap-2">
-          <div className="w-0.5 h-4 rounded-full" style={{ backgroundColor: theme.color }} />
-          <h2 className="font-semibold text-gray-900 tracking-tight" style={{ fontSize: fontSize.sectionHeading }}>
+        <div className="mb-2 flex items-center gap-1.5">
+          <div style={{ width: 2, height: 14, backgroundColor: theme.color, borderRadius: 1 }} />
+          <h2 className="font-bold text-gray-900" style={{ fontSize: fontSize.sectionHeading }}>
             {title}
           </h2>
         </div>
@@ -1088,28 +1316,31 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
       );
     }
 
-    // Minimal - Simple and light
+    // Minimal - Simple and light (matches PDF: font-bold, color #9ca3af)
     if (isMinimal) {
       return (
-        <h2 className="font-medium mb-2 uppercase tracking-widest text-gray-500" style={{ fontSize: Math.round(fontSize.sectionHeading * 0.85) }}>
+        <h2 className="font-bold mb-1.5 uppercase text-gray-400" style={{ fontSize: Math.round(fontSize.sectionHeading * 0.85), letterSpacing: '0.15em' }}>
           {title}
         </h2>
       );
     }
 
-    // Bold - Strong colored title
+    // Bold - Strong with accent bar (matches PDF)
     if (isBold) {
       return (
-        <h2 className="font-black mb-2 uppercase tracking-wider" style={{ fontSize: fontSize.sectionHeading, color: theme.color }}>
-          {title}
-        </h2>
+        <div className="flex items-center gap-1.5 mb-2">
+          <div className="w-[3px] h-3.5" style={{ backgroundColor: theme.color }} />
+          <h2 className="font-bold uppercase" style={{ fontSize: fontSize.sectionHeading, color: '#1f2937' }}>
+            {title}
+          </h2>
+        </div>
       );
     }
 
-    // Tech (default) - Accent colored
+    // Tech (default) - Accent colored (matches PDF: no uppercase, no tracking)
     return (
       <h2
-        className="font-bold mb-2 uppercase tracking-wider"
+        className="font-bold mb-2"
         style={{
           color: theme.color,
           fontSize: fontSize.sectionHeading,
@@ -1132,13 +1363,11 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
       <div className="flex h-full">
         <div className="w-1/3 p-6 bg-gray-50 border-r border-gray-200">
           <h1 className="font-bold mb-1" style={{ fontSize: fontSize.name }}>
-            {personalInfo.fullName || <span className="text-gray-400 italic font-normal">Full Name</span>}
+            {personalInfo.fullName || <span className="text-gray-400 italic font-normal">{DUMMY_DATA.personalInfo.fullName}</span>}
           </h1>
-          {personalInfo.summary && (
-            <p className="mb-4" style={{ fontSize: fontSize.summary, color: theme.color }}>
-              {personalInfo.summary}
-            </p>
-          )}
+          <p className="mb-4" style={{ fontSize: fontSize.summary, color: personalInfo.summary ? theme.color : '#9ca3af' }}>
+            {personalInfo.summary || <span className="italic">{DUMMY_DATA.personalInfo.summary}</span>}
+          </p>
 
           <div className="space-y-2 mb-6">{renderContactInfo(false, true)}</div>
 
@@ -1232,7 +1461,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
   // ============================================================================
 
   const renderElegantLayout = () => (
-    <div ref={contentRef} className="w-full h-full px-12 py-10 font-serif">
+    <div ref={contentRef} className="w-full h-full px-12 py-10 font-serif" style={{ backgroundColor: '#fdfbf7' }}>
       {renderElegantHeader()}
       <div className="max-w-2xl mx-auto space-y-8">
         {visibleSections.map((section) => (

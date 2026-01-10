@@ -1,747 +1,1567 @@
-﻿'use client';
+﻿"use client";
 
-import React from 'react';
+import React from "react";
 import {
   Document,
   Page,
-  View,
   Text,
-  Link,
+  View,
   StyleSheet,
-  pdf,
+  Link,
   Svg,
   Path,
-} from '@react-pdf/renderer';
-import {
-  ResumeData,
-  PAGE_SIZES,
-  GLOBAL_FONT_SCALES,
-  DEFAULT_TYPOGRAPHY,
-} from '@/lib/schema';
+  pdf,
+} from "@react-pdf/renderer";
+import type { Style } from "@react-pdf/types";
+import type { ResumeData, Section, SectionItem, TemplateType } from "@/lib/schema";
+import { GLOBAL_FONT_SCALES, DEFAULT_TYPOGRAPHY } from "@/lib/schema";
 
-// ============================================================================
-// FONT CONFIGURATION
-// ============================================================================
-
-const FONTS = {
-  sansSerif: 'Helvetica',
-  sansSerifBold: 'Helvetica-Bold',
-  serif: 'Times-Roman',
-  serifBold: 'Times-Bold',
+// Font family mapping for templates
+const TEMPLATE_FONTS: Record<TemplateType, string> = {
+  harvard: 'Times-Roman',    // Serif - classic academic style
+  tech: 'Helvetica',         // Sans - modern tech style
+  minimal: 'Helvetica',      // Sans - clean minimal
+  bold: 'Helvetica',         // Sans - strong presence
+  neo: 'Helvetica',          // Sans - contemporary
+  portfolio: 'Helvetica',    // Sans - creative portfolio
+  corporate: 'Helvetica',    // Sans - professional business
+  creative: 'Helvetica',     // Sans - artistic style
+  elegant: 'Times-Roman',    // Serif - refined typography
+  modern: 'Helvetica',       // Sans - sleek modern
 };
 
-// Typography size scale for PDF
-const TYPO_SIZE_MAP = {
-  sm: { name: 20, headers: 10, body: 9 },
-  md: { name: 24, headers: 12, body: 10 },
-  lg: { name: 28, headers: 14, body: 11 },
-  xl: { name: 32, headers: 16, body: 12 },
+// Get the appropriate font family for a template
+const getTemplateFont = (template: TemplateType): string => {
+  return TEMPLATE_FONTS[template] || 'Helvetica';
 };
 
-// ============================================================================
-// SVG ICONS - Lucide icon paths for PDF export
-// ============================================================================
+// =====================================================
+// SHARED TYPOGRAPHY CONFIGURATION (Matches PreviewCanvas)
+// =====================================================
 
-interface IconProps {
-  size?: number;
-  color?: string;
-}
-
-const EmailIcon: React.FC<IconProps> = ({ size = 10, color = '#6b7280' }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24">
-    <Path
-      d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
-      stroke={color}
-      strokeWidth={2}
-      fill="none"
-    />
-    <Path d="M22 6l-10 7L2 6" stroke={color} strokeWidth={2} fill="none" />
-  </Svg>
-);
-
-const PhoneIcon: React.FC<IconProps> = ({ size = 10, color = '#6b7280' }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24">
-    <Path
-      d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"
-      stroke={color}
-      strokeWidth={2}
-      fill="none"
-    />
-  </Svg>
-);
-
-const LocationIcon: React.FC<IconProps> = ({ size = 10, color = '#6b7280' }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24">
-    <Path
-      d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"
-      stroke={color}
-      strokeWidth={2}
-      fill="none"
-    />
-    <Path
-      d="M12 10a3 3 0 100-6 3 3 0 000 6z"
-      stroke={color}
-      strokeWidth={2}
-      fill="none"
-    />
-  </Svg>
-);
-
-const LinkedInIcon: React.FC<IconProps> = ({ size = 10, color = '#6b7280' }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24">
-    <Path
-      d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"
-      stroke={color}
-      strokeWidth={2}
-      fill="none"
-    />
-    <Path d="M2 9h4v12H2z" stroke={color} strokeWidth={2} fill="none" />
-    <Path
-      d="M4 6a2 2 0 100-4 2 2 0 000 4z"
-      stroke={color}
-      strokeWidth={2}
-      fill="none"
-    />
-  </Svg>
-);
-
-const GitHubIcon: React.FC<IconProps> = ({ size = 10, color = '#6b7280' }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24">
-    <Path
-      d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22"
-      stroke={color}
-      strokeWidth={2}
-      fill="none"
-    />
-  </Svg>
-);
-
-const GlobeIcon: React.FC<IconProps> = ({ size = 10, color = '#6b7280' }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24">
-    <Path
-      d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"
-      stroke={color}
-      strokeWidth={2}
-      fill="none"
-    />
-    <Path d="M2 12h20" stroke={color} strokeWidth={2} fill="none" />
-    <Path
-      d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"
-      stroke={color}
-      strokeWidth={2}
-      fill="none"
-    />
-  </Svg>
-);
-
-const LinkIcon: React.FC<IconProps> = ({ size = 10, color = '#6b7280' }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24">
-    <Path
-      d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"
-      stroke={color}
-      strokeWidth={2}
-      fill="none"
-    />
-    <Path
-      d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"
-      stroke={color}
-      strokeWidth={2}
-      fill="none"
-    />
-  </Svg>
-);
-
-// ============================================================================
-// HELPER FUNCTIONS
-// ============================================================================
-
-// Format URL for display (remove http/https prefix)
-const formatUrlDisplay = (url: string): string => {
-  return url.replace(/^https?:\/\//, '').replace(/\/$/, '');
+// Typography pixel sizes - MUST match PreviewCanvas TYPO_PX
+const TYPO_PX = {
+  sm: { name: 18, headers: 11, body: 9 },
+  md: { name: 22, headers: 13, body: 10 },
+  lg: { name: 26, headers: 15, body: 11 },
+  xl: { name: 30, headers: 17, body: 12 },
 };
 
-// Ensure URL has protocol
-const ensureProtocol = (url: string): string => {
-  if (url.startsWith('http://') || url.startsWith('https://')) {
-    return url;
-  }
-  return `https://${url}`;
-};
-
-// ============================================================================
-// DATE FORMATTER
-// ============================================================================
-
-const formatDate = (
-  start?: string,
-  end?: string,
-  current?: boolean
-): string => {
+// Date formatting helper - matches PreviewCanvas
+const formatDate = (start?: string, end?: string, current?: boolean): string => {
   if (!start) return '';
-
   const formatMonth = (dateStr: string) => {
     const [year, month] = dateStr.split('-');
     if (!year || !month) return dateStr;
     const date = new Date(parseInt(year), parseInt(month) - 1);
     return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
   };
-
   const startFormatted = formatMonth(start);
   const endFormatted = current ? 'Present' : end ? formatMonth(end) : '';
-
   return endFormatted ? `${startFormatted} - ${endFormatted}` : startFormatted;
 };
 
-// ============================================================================
-// PDF DOCUMENT COMPONENT
-// ============================================================================
+// Helper to compute font sizes from theme
+const getFontSizes = (data: ResumeData) => {
+  const typography = data.theme.typography || DEFAULT_TYPOGRAPHY;
+  const scale = GLOBAL_FONT_SCALES[data.theme.fontSize] || 1;
 
-interface ResumePDFProps {
-  data: ResumeData;
-}
-
-export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ data }) => {
-  const { personalInfo, sections, theme } = data;
-  const pageSize = PAGE_SIZES[theme.pageSize];
-  
-  // Template checks (all 10 templates)
-  const isHarvard = theme.template === 'harvard';
-  const isTech = theme.template === 'tech';
-  const isMinimal = theme.template === 'minimal';
-  const isBold = theme.template === 'bold';
-  const isNeo = theme.template === 'neo';
-  const isPortfolio = theme.template === 'portfolio';
-  const isCorporate = theme.template === 'corporate';
-  const isCreative = theme.template === 'creative';
-  const isElegant = theme.template === 'elegant';
-  const isModern = theme.template === 'modern';
-  
-  // Font family (Harvard and Elegant use serif)
-  const fontFamily = (isHarvard || isElegant) ? FONTS.serif : FONTS.sansSerif;
-  const fontFamilyBold = (isHarvard || isElegant) ? FONTS.serifBold : FONTS.sansSerifBold;
-  const typography = theme.typography || DEFAULT_TYPOGRAPHY;
-  const scale = GLOBAL_FONT_SCALES[theme.fontSize];
-
-  // Consistent font sizes - properly scaled
-  const fontSize = {
-    name: Math.round(TYPO_SIZE_MAP[typography.name].name * scale),
-    summary: Math.round(TYPO_SIZE_MAP[typography.headers].headers * scale),
-    contact: Math.round(TYPO_SIZE_MAP[typography.body].body * scale),
+  return {
+    name: Math.round(TYPO_PX[typography.name].name * scale),
+    summary: Math.round(TYPO_PX[typography.headers].headers * scale),
+    contact: Math.round(TYPO_PX[typography.body].body * scale),
     sectionHeading: Math.round(14 * scale),
-    itemTitle: Math.round(12 * scale),
-    itemSubtitle: Math.round(10 * scale),
-    itemBody: Math.round(9 * scale),
-    itemDate: Math.round(8 * scale),
+    itemTitle: Math.round(13 * scale),
+    itemSubtitle: Math.round(11 * scale),
+    itemBody: Math.round(10 * scale),
+    itemDate: Math.round(9 * scale),
   };
+};
 
-  const iconSize = Math.round(fontSize.contact * 1.2);
-  const iconColor = '#6b7280';
-
-  const styles = StyleSheet.create({
+// Get base page styles with template-specific font
+const getPageStyles = (template: TemplateType) => {
+  const fontFamily = getTemplateFont(template);
+  return StyleSheet.create({
     page: {
-      fontFamily,
-      padding: isPortfolio ? 0 : (isCorporate || isModern ? 35 : 40),
-      fontSize: fontSize.itemBody,
-      color: '#1f2937',
-      backgroundColor: '#ffffff',
-    },
-    header: {
-      marginBottom: isCreative ? 20 : 16,
-      paddingBottom: isTech ? 14 : 12,
-      borderBottomWidth: isBold ? 3 : (isTech || isModern ? 2 : (isCorporate ? 1.5 : 2)),
-      borderBottomColor: theme.color,
-      textAlign: isMinimal ? 'center' : 'left',
-      backgroundColor: isTech ? `${theme.color}15` : 'transparent',
-      padding: isTech ? 12 : 0,
-    },
-    name: {
-      fontSize: isBold ? Math.round(fontSize.name * 1.15) : (isElegant || isCreative ? Math.round(fontSize.name * 1.1) : fontSize.name),
-      fontFamily: fontFamilyBold,
-      color: (isTech || isModern) ? '#1f2937' : theme.color,
-      marginBottom: 4,
-      letterSpacing: isElegant ? 2 : (isCorporate ? 1 : 0),
-    },
-    summary: {
-      fontSize: fontSize.summary,
-      color: '#6b7280',
-      marginBottom: 8,
-    },
-    contactRow: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: 14,
-      justifyContent: isMinimal ? 'center' : 'flex-start',
-    },
-    contactItemWrapper: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 4,
-    },
-    contactItem: {
-      fontSize: fontSize.contact,
-      color: '#4b5563',
-    },
-    contactLink: {
-      fontSize: fontSize.contact,
-      color: theme.color,
-      textDecoration: 'none',
-    },
-    linksRow: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: 12,
-      marginTop: 6,
-      justifyContent: isMinimal ? 'center' : 'flex-start',
-    },
-    link: {
-      fontSize: fontSize.itemDate,
-      color: theme.color,
-      textDecoration: 'none',
-    },
-    section: {
-      marginBottom: 12,
-    },
-    sectionTitle: {
-      fontSize: fontSize.sectionHeading,
-      fontFamily: fontFamilyBold,
-      color: (isNeo || isModern) ? '#111827' : theme.color,
-      marginBottom: isCreative ? 10 : 8,
-      textTransform: (isCorporate || isElegant) ? 'capitalize' : 'uppercase',
-      letterSpacing: isElegant ? 2 : (isCorporate ? 0.5 : 1),
-      borderBottomWidth: isHarvard ? 1 : (isCorporate ? 0.5 : 0),
-      borderBottomColor: isCorporate ? theme.color : '#d1d5db',
-      paddingBottom: (isHarvard || isCorporate) ? 2 : 0,
-    },
-    sectionTitleNeoWrap: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginBottom: 8,
-    },
-    sectionTitleNeoBar: {
-      width: 10,
-      height: 10,
-      backgroundColor: theme.color,
-      marginRight: 6,
-    },
-    item: {
-      marginBottom: 10,
-    },
-    itemHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'flex-start',
-      marginBottom: 2,
-    },
-    itemTitle: {
-      fontSize: fontSize.itemTitle,
-      fontFamily: fontFamilyBold,
-      color: '#1f2937',
-    },
-    itemSubtitle: {
-      fontSize: fontSize.itemSubtitle,
-      color: '#6b7280',
-    },
-    itemLocation: {
-      fontSize: fontSize.itemDate,
-      color: '#9ca3af',
-      marginTop: 1,
-    },
-    itemDate: {
-      fontSize: fontSize.itemDate,
-      color: '#9ca3af',
-    },
-    itemDescription: {
-      fontSize: fontSize.itemBody,
-      color: '#4b5563',
+      padding: 40,
+      fontSize: 10,
+      fontFamily: fontFamily,
       lineHeight: 1.4,
-      marginTop: 3,
-    },
-    skillsContainer: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: 5,
-    },
-    skillTag: {
-      fontSize: fontSize.itemDate,
-      backgroundColor: `${theme.color}20`,
-      color: theme.color,
-      paddingVertical: 2,
-      paddingHorizontal: 6,
-      borderRadius: isNeo ? 0 : 10,
-    },
-    skillWithLevel: {
-      fontSize: fontSize.itemDate,
-      backgroundColor: '#f3f4f6',
-      color: '#374151',
-      paddingVertical: 2,
-      paddingHorizontal: 6,
-      borderRadius: 3,
-      flexDirection: 'row',
-    },
-    skillLevelText: {
-      fontSize: 6,
-      color: '#9ca3af',
-      marginLeft: 3,
-      textTransform: 'uppercase',
-    },
-    placeholder: {
-      color: '#9ca3af',
-      fontStyle: 'italic',
-    },
-
-    // Portfolio template (two-column)
-    portfolioWrap: {
-      flexDirection: 'row',
-      width: '100%',
-      height: '100%',
-    },
-    portfolioSidebar: {
-      width: '33%',
-      padding: 28,
-      backgroundColor: '#f9fafb',
-      borderRightWidth: 1,
-      borderRightColor: '#e5e7eb',
-    },
-    portfolioMain: {
-      width: '67%',
-      padding: 28,
-    },
-    portfolioName: {
-      fontSize: isBold ? Math.round(fontSize.name * 1.15) : fontSize.name,
-      fontFamily: fontFamilyBold,
-      color: '#111827',
-      marginBottom: 6,
-    },
-    portfolioRole: {
-      fontSize: fontSize.summary,
-      color: theme.color,
-      marginBottom: 12,
+      color: "#1a1a1a",
     },
   });
+};
 
-  const visibleSections = sections.filter((s) => s.isVisible);
-  const skillsSection = visibleSections.find((s) => s.type === 'skills');
-  const mainSections = visibleSections.filter((s) => s.type !== 'skills');
+// Base styles shared across templates (non-font-specific)
+const baseStyles = StyleSheet.create({
+  section: {
+    marginBottom: 12,
+  },
+  itemContainer: {
+    marginBottom: 8,
+  },
+  bulletItem: {
+    flexDirection: "row",
+    marginBottom: 2,
+  },
+  bullet: {
+    width: 15,
+  },
+  bulletText: {
+    flex: 1,
+  },
+  link: {
+    color: "#2563eb",
+    textDecoration: "none",
+  },
+});
 
-  const renderSection = (section: any) => (
-    <View key={section.id} style={styles.section} wrap>
-      <View style={(isNeo || isModern) ? styles.sectionTitleNeoWrap : undefined}>
-        {(isNeo || isModern) ? <View style={styles.sectionTitleNeoBar} /> : null}
-        <Text style={styles.sectionTitle}>{section.title}</Text>
+// Icon components for contact info
+const EmailIcon = () => (
+  <Svg viewBox="0 0 24 24" style={{ width: 10, height: 10 }}>
+    <Path
+      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+      stroke="currentColor"
+      strokeWidth={2}
+      fill="none"
+    />
+  </Svg>
+);
+
+const PhoneIcon = () => (
+  <Svg viewBox="0 0 24 24" style={{ width: 10, height: 10 }}>
+    <Path
+      d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+      stroke="currentColor"
+      strokeWidth={2}
+      fill="none"
+    />
+  </Svg>
+);
+
+const LocationIcon = () => (
+  <Svg viewBox="0 0 24 24" style={{ width: 10, height: 10 }}>
+    <Path
+      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+      stroke="currentColor"
+      strokeWidth={2}
+      fill="none"
+    />
+    <Path
+      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+      stroke="currentColor"
+      strokeWidth={2}
+      fill="none"
+    />
+  </Svg>
+);
+
+const LinkedInIcon = () => (
+  <Svg viewBox="0 0 24 24" style={{ width: 10, height: 10 }}>
+    <Path
+      d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z"
+      stroke="currentColor"
+      strokeWidth={2}
+      fill="none"
+    />
+    <Path d="M4 2a2 2 0 100 4 2 2 0 000-4z" fill="currentColor" />
+  </Svg>
+);
+
+const GithubIcon = () => (
+  <Svg viewBox="0 0 24 24" style={{ width: 10, height: 10 }}>
+    <Path
+      d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22"
+      stroke="currentColor"
+      strokeWidth={2}
+      fill="none"
+    />
+  </Svg>
+);
+
+const WebsiteIcon = () => (
+  <Svg viewBox="0 0 24 24" style={{ width: 10, height: 10 }}>
+    <Path
+      d="M12 21a9 9 0 100-18 9 9 0 000 18zM3.6 9h16.8M3.6 15h16.8M12 3a15.3 15.3 0 014 9 15.3 15.3 0 01-4 9 15.3 15.3 0 01-4-9 15.3 15.3 0 014-9z"
+      stroke="currentColor"
+      strokeWidth={2}
+      fill="none"
+    />
+  </Svg>
+);
+
+// =====================================================
+// PDF RICH TEXT RENDERER - Markdown & Bullet Support
+// =====================================================
+
+interface PDFRichTextProps {
+  text: string;
+  fontSize?: number;
+  color?: string;
+  themeColor?: string;
+  style?: Style;
+  textStyle?: Style;
+}
+
+// Render inline markdown segments for PDF (strong/em/link) using nested <Text>.
+// NOTE: This is not HTML; it is React-PDF text nesting.
+const renderInlineMarkdownChildrenPDF = (text: string): React.ReactNode[] => {
+  if (!text) return [];
+
+  // Pattern for: **bold**, __bold__, *italic*, _italic_, ***boldItalic***, [text](url)
+  const pattern = /(\*\*\*(.+?)\*\*\*|___(.+?)___|(\*\*|__)(.+?)\4|(\*|_)([^*_]+?)\6|\[([^\]]+)\]\(([^)]+)\))/g;
+
+  const children: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  let key = 0;
+
+  while ((match = pattern.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      children.push(text.slice(lastIndex, match.index));
+    }
+
+    if (match[2] || match[3]) {
+      children.push(
+        <Text key={key++} style={{ fontWeight: "bold", fontStyle: "italic" }}>
+          {match[2] || match[3]}
+        </Text>
+      );
+    } else if (match[5]) {
+      children.push(
+        <Text key={key++} style={{ fontWeight: "bold" }}>
+          {match[5]}
+        </Text>
+      );
+    } else if (match[7]) {
+      children.push(
+        <Text key={key++} style={{ fontStyle: "italic" }}>
+          {match[7]}
+        </Text>
+      );
+    } else if (match[8] && match[9]) {
+      const href = match[9].startsWith("http") ? match[9] : `https://${match[9]}`;
+      children.push(
+        <Link key={key++} src={href} style={{ color: "#2563eb", textDecoration: "none" }}>
+          {match[8]}
+        </Link>
+      );
+    }
+
+    lastIndex = match.index + match[0].length;
+  }
+
+  if (lastIndex < text.length) {
+    children.push(text.slice(lastIndex));
+  }
+
+  return children;
+};
+
+const InlineMarkdownPDF: React.FC<{ text: string; style: Style }> = ({ text, style }) => {
+  if (!text) return null;
+  const children = renderInlineMarkdownChildrenPDF(text);
+  return <Text style={style}>{children.length > 0 ? children : text}</Text>;
+};
+
+// Main PDF rich text renderer with bullets, numbered lists, headers, and markdown
+const PDFRichText: React.FC<PDFRichTextProps> = ({
+  text,
+  fontSize = 10,
+  color = "#4b5563",
+  themeColor = "#2563eb",
+  style = {},
+  textStyle = {}
+}) => {
+  if (!text) return null;
+
+  const baseTextStyle: Style = { fontSize, color, ...textStyle };
+
+  const lines = text.split('\n');
+  const elements: React.ReactNode[] = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    // Check for headers (## or ###)
+    const headerMatch = trimmed.match(/^(#{1,6})\s+(.+)$/);
+    if (headerMatch) {
+      const level = headerMatch[1].length;
+      const headerSizes: Record<number, number> = {
+        1: fontSize * 1.4,
+        2: fontSize * 1.25,
+        3: fontSize * 1.1,
+        4: fontSize * 1.05,
+        5: fontSize,
+        6: fontSize * 0.95,
+      };
+      const headerSize = headerSizes[level] || headerSizes[3];
+      elements.push(
+        <View key={i} style={{ marginBottom: 2 }}>
+          <InlineMarkdownPDF
+            text={headerMatch[2]}
+            style={{ fontSize: headerSize, color: themeColor, fontWeight: level <= 2 ? "bold" : "bold" }}
+          />
+        </View>
+      );
+      continue;
+    }
+
+    // Check for bullet points (-, *, •)
+    const bulletMatch = trimmed.match(/^[-*•]\s+(.+)$/);
+    if (bulletMatch) {
+      elements.push(
+        <View key={i} style={{ flexDirection: "row", marginBottom: 1.5 }}>
+          <View style={{ width: 12, alignItems: "center", paddingTop: fontSize * 0.35 }}>
+            <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: themeColor }} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <InlineMarkdownPDF text={bulletMatch[1]} style={baseTextStyle} />
+          </View>
+        </View>
+      );
+      continue;
+    }
+
+    // Check for numbered lists (1., 2., etc.)
+    const numberedMatch = trimmed.match(/^(\d+)[.)]\s+(.+)$/);
+    if (numberedMatch) {
+      elements.push(
+        <View key={i} style={{ flexDirection: "row", marginBottom: 1.5 }}>
+          <Text style={{ width: 16, fontSize, color: themeColor, fontWeight: "bold" }}>
+            {numberedMatch[1]}.
+          </Text>
+          <View style={{ flex: 1 }}>
+            <InlineMarkdownPDF text={numberedMatch[2]} style={baseTextStyle} />
+          </View>
+        </View>
+      );
+      continue;
+    }
+
+    // Regular text or empty line
+    if (trimmed) {
+      elements.push(
+        <View key={i} style={{ marginBottom: 1 }}>
+          <InlineMarkdownPDF text={trimmed} style={baseTextStyle} />
+        </View>
+      );
+    } else if (line === '' && i > 0 && i < lines.length - 1) {
+      // Empty line (paragraph break)
+      elements.push(<View key={i} style={{ height: fontSize * 0.5 }} />);
+    }
+  }
+
+  return <View style={style}>{elements}</View>;
+};
+
+// =====================================================
+// TEMPLATE-SPECIFIC HEADER RENDERERS
+// =====================================================
+
+type FontSizes = ReturnType<typeof getFontSizes>;
+
+const renderHarvardHeader = (data: ResumeData, fontSize: FontSizes) => (
+  <View style={{ marginBottom: 16, borderBottom: "2 solid #1f2937", paddingBottom: 10, textAlign: "center" }}>
+    <Text style={{ fontSize: fontSize.name, fontWeight: "bold", color: "#1f2937", textAlign: "center", marginBottom: 4, textTransform: "uppercase", letterSpacing: 2 }}>
+      {data.personalInfo?.fullName || ""}
+    </Text>
+    {data.personalInfo?.summary && (
+      <PDFRichText
+        text={data.personalInfo.summary}
+        fontSize={fontSize.summary}
+        color="#4b5563"
+        themeColor={data.theme.color}
+        style={{ marginBottom: 8 }}
+      />
+    )}
+    <View style={{ flexDirection: "row", justifyContent: "center", flexWrap: "wrap", gap: 12, fontSize: fontSize.contact }}>
+      {data.personalInfo?.email && <Text style={{ color: "#4b5563" }}>{data.personalInfo.email}</Text>}
+      {data.personalInfo?.phone && <Text style={{ color: "#4b5563" }}>{data.personalInfo.phone}</Text>}
+      {data.personalInfo?.location && <Text style={{ color: "#4b5563" }}>{data.personalInfo.location}</Text>}
+    </View>
+    <View style={{ flexDirection: "row", justifyContent: "center", flexWrap: "wrap", gap: 12, fontSize: fontSize.contact, marginTop: 4 }}>
+      {data.personalInfo?.linkedin && <Link src={data.personalInfo.linkedin} style={{ color: "#4b5563" }}>LinkedIn</Link>}
+      {data.personalInfo?.github && <Link src={data.personalInfo.github} style={{ color: "#4b5563" }}>GitHub</Link>}
+      {data.personalInfo?.website && <Link src={data.personalInfo.website} style={{ color: "#4b5563" }}>Portfolio</Link>}
+    </View>
+  </View>
+);
+
+const renderTechHeader = (data: ResumeData, fontSize: FontSizes) => {
+  const color = data.theme.color;
+  return (
+    <View style={{ marginBottom: 16 }}>
+      <Text style={{ fontSize: fontSize.name, fontWeight: "bold", color: color, marginBottom: 2 }}>
+        {data.personalInfo?.fullName || ""}
+      </Text>
+      {data.personalInfo?.summary && (
+        <PDFRichText
+          text={data.personalInfo.summary}
+          fontSize={fontSize.summary}
+          color="#6b7280"
+          themeColor={color}
+          style={{ marginBottom: 8 }}
+        />
+      )}
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, fontSize: fontSize.contact }}>
+        {data.personalInfo?.email && <Text style={{ color: "#4b5563" }}>{data.personalInfo.email}</Text>}
+        {data.personalInfo?.phone && <Text style={{ color: "#4b5563" }}>{data.personalInfo.phone}</Text>}
+        {data.personalInfo?.location && <Text style={{ color: "#4b5563" }}>{data.personalInfo.location}</Text>}
       </View>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, fontSize: fontSize.contact, marginTop: 4 }}>
+        {data.personalInfo?.linkedin && <Link src={data.personalInfo.linkedin} style={{ color: color }}>LinkedIn</Link>}
+        {data.personalInfo?.github && <Link src={data.personalInfo.github} style={{ color: color }}>GitHub</Link>}
+        {data.personalInfo?.website && <Link src={data.personalInfo.website} style={{ color: color }}>Portfolio</Link>}
+      </View>
+    </View>
+  );
+};
 
-      {section.type === 'skills' ? (
-        <View style={styles.skillsContainer}>
-          {section.items[0]?.skillsWithLevels?.map((skill: any, idx: number) => (
-            <View key={`swl-${idx}`} style={styles.skillWithLevel}>
-              <Text>{skill.name}</Text>
-              <Text style={styles.skillLevelText}>{skill.level}</Text>
-            </View>
+const renderMinimalHeader = (data: ResumeData, fontSize: FontSizes) => (
+  <View style={{ marginBottom: 20, textAlign: "center" }}>
+    <Text style={{ fontSize: fontSize.name, fontWeight: "light", color: "#1f2937", textAlign: "center", marginBottom: 6, letterSpacing: 1 }}>
+      {data.personalInfo?.fullName || ""}
+    </Text>
+    {data.personalInfo?.summary && (
+      <PDFRichText
+        text={data.personalInfo.summary}
+        fontSize={fontSize.summary}
+        color="#9ca3af"
+        themeColor={data.theme.color}
+        style={{ marginBottom: 8 }}
+      />
+    )}
+    <View style={{ flexDirection: "row", justifyContent: "center", flexWrap: "wrap", gap: 12, fontSize: fontSize.contact }}>
+      {data.personalInfo?.email && <Text style={{ color: "#6b7280" }}>{data.personalInfo.email}</Text>}
+      {data.personalInfo?.phone && <Text style={{ color: "#6b7280" }}>{data.personalInfo.phone}</Text>}
+      {data.personalInfo?.location && <Text style={{ color: "#6b7280" }}>{data.personalInfo.location}</Text>}
+    </View>
+    <View style={{ flexDirection: "row", justifyContent: "center", flexWrap: "wrap", gap: 12, fontSize: fontSize.contact, marginTop: 4 }}>
+      {data.personalInfo?.linkedin && <Link src={data.personalInfo.linkedin} style={{ color: "#6b7280" }}>LinkedIn</Link>}
+      {data.personalInfo?.github && <Link src={data.personalInfo.github} style={{ color: "#6b7280" }}>GitHub</Link>}
+      {data.personalInfo?.website && <Link src={data.personalInfo.website} style={{ color: "#6b7280" }}>Portfolio</Link>}
+    </View>
+  </View>
+);
+
+const renderBoldHeader = (data: ResumeData, fontSize: FontSizes) => {
+  const color = data.theme.color;
+  return (
+    <View style={{ marginBottom: 16, borderBottom: `4 solid ${color}`, paddingBottom: 12 }}>
+      <Text style={{ fontSize: Math.round(fontSize.name * 1.15), fontWeight: "bold", color: color, marginBottom: 2, textTransform: "uppercase" }}>
+        {data.personalInfo?.fullName || ""}
+      </Text>
+      {data.personalInfo?.summary && (
+        <PDFRichText
+          text={data.personalInfo.summary}
+          fontSize={fontSize.summary}
+          color="#4b5563"
+          themeColor={color}
+          style={{ marginBottom: 8 }}
+        />
+      )}
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, fontSize: fontSize.contact }}>
+        {data.personalInfo?.email && <Text style={{ color: "#4b5563" }}>{data.personalInfo.email}</Text>}
+        {data.personalInfo?.phone && <Text style={{ color: "#4b5563" }}>{data.personalInfo.phone}</Text>}
+        {data.personalInfo?.location && <Text style={{ color: "#4b5563" }}>{data.personalInfo.location}</Text>}
+      </View>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, fontSize: fontSize.contact, marginTop: 4 }}>
+        {data.personalInfo?.linkedin && <Link src={data.personalInfo.linkedin} style={{ color: color }}>LinkedIn</Link>}
+        {data.personalInfo?.github && <Link src={data.personalInfo.github} style={{ color: color }}>GitHub</Link>}
+        {data.personalInfo?.website && <Link src={data.personalInfo.website} style={{ color: color }}>Portfolio</Link>}
+      </View>
+    </View>
+  );
+};
+
+const renderNeoHeader = (data: ResumeData, fontSize: FontSizes) => {
+  const color = data.theme.color;
+  return (
+    <View style={{ marginBottom: 16 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4 }}>
+        <View style={{ width: 12, height: 12, backgroundColor: color }} />
+        <Text style={{ fontSize: fontSize.name, fontWeight: "bold", color: "#1f2937" }}>
+          {data.personalInfo?.fullName || ""}
+        </Text>
+      </View>
+      {data.personalInfo?.summary && (
+        <PDFRichText
+          text={data.personalInfo.summary}
+          fontSize={fontSize.summary}
+          color="#6b7280"
+          themeColor={color}
+          style={{ marginBottom: 8 }}
+        />
+      )}
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, fontSize: fontSize.contact }}>
+        {data.personalInfo?.email && <Text style={{ color: "#4b5563" }}>{data.personalInfo.email}</Text>}
+        {data.personalInfo?.phone && <Text style={{ color: "#4b5563" }}>{data.personalInfo.phone}</Text>}
+        {data.personalInfo?.location && <Text style={{ color: "#4b5563" }}>{data.personalInfo.location}</Text>}
+      </View>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, fontSize: fontSize.contact, marginTop: 4 }}>
+        {data.personalInfo?.linkedin && <Link src={data.personalInfo.linkedin} style={{ color: color }}>LinkedIn</Link>}
+        {data.personalInfo?.github && <Link src={data.personalInfo.github} style={{ color: color }}>GitHub</Link>}
+        {data.personalInfo?.website && <Link src={data.personalInfo.website} style={{ color: color }}>Portfolio</Link>}
+      </View>
+    </View>
+  );
+};
+
+const renderPortfolioHeader = (data: ResumeData, fontSize: FontSizes) => {
+  const color = data.theme.color;
+  return (
+    <View style={{ marginBottom: 16, borderBottom: `2 solid ${color}`, paddingBottom: 12 }}>
+      <Text style={{ fontSize: fontSize.name, fontWeight: "bold", color: color, marginBottom: 4 }}>
+        {data.personalInfo?.fullName || ""}
+      </Text>
+      {data.personalInfo?.summary && (
+        <PDFRichText
+          text={data.personalInfo.summary}
+          fontSize={fontSize.summary}
+          color="#6b7280"
+          themeColor={color}
+          style={{ marginBottom: 8 }}
+        />
+      )}
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, fontSize: fontSize.contact }}>
+        {data.personalInfo?.email && <Text style={{ color: "#4b5563" }}>{data.personalInfo.email}</Text>}
+        {data.personalInfo?.phone && <Text style={{ color: "#4b5563" }}>{data.personalInfo.phone}</Text>}
+        {data.personalInfo?.location && <Text style={{ color: "#4b5563" }}>{data.personalInfo.location}</Text>}
+      </View>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, fontSize: fontSize.contact, marginTop: 4 }}>
+        {data.personalInfo?.linkedin && <Link src={data.personalInfo.linkedin} style={{ color: color }}>LinkedIn</Link>}
+        {data.personalInfo?.github && <Link src={data.personalInfo.github} style={{ color: color }}>GitHub</Link>}
+        {data.personalInfo?.website && <Link src={data.personalInfo.website} style={{ color: color }}>Portfolio</Link>}
+      </View>
+    </View>
+  );
+};
+
+const renderCorporateHeader = (data: ResumeData, fontSize: FontSizes) => {
+  const color = data.theme.color;
+  return (
+    <View style={{ marginBottom: 16, backgroundColor: "#f9fafb", padding: 14, borderLeft: `4 solid ${color}` }}>
+      <Text style={{ fontSize: fontSize.name, fontWeight: "bold", color: "#1f2937", marginBottom: 4 }}>
+        {data.personalInfo?.fullName || ""}
+      </Text>
+      {data.personalInfo?.summary && (
+        <PDFRichText
+          text={data.personalInfo.summary}
+          fontSize={fontSize.summary}
+          color="#4b5563"
+          themeColor={color}
+          style={{ marginBottom: 8 }}
+        />
+      )}
+      <View style={{ borderTop: "1 solid #e5e7eb", paddingTop: 8, marginTop: 4 }}>
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, fontSize: fontSize.contact }}>
+          {data.personalInfo?.email && <Text style={{ color: "#4b5563" }}>{data.personalInfo.email}</Text>}
+          {data.personalInfo?.phone && <Text style={{ color: "#4b5563" }}>{data.personalInfo.phone}</Text>}
+          {data.personalInfo?.location && <Text style={{ color: "#4b5563" }}>{data.personalInfo.location}</Text>}
+        </View>
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, fontSize: fontSize.contact, marginTop: 4 }}>
+          {data.personalInfo?.linkedin && <Link src={data.personalInfo.linkedin} style={{ color: color }}>LinkedIn</Link>}
+          {data.personalInfo?.github && <Link src={data.personalInfo.github} style={{ color: color }}>GitHub</Link>}
+          {data.personalInfo?.website && <Link src={data.personalInfo.website} style={{ color: color }}>Portfolio</Link>}
+        </View>
+      </View>
+    </View>
+  );
+};
+
+const renderCreativeHeader = (data: ResumeData, fontSize: FontSizes) => {
+  const color = data.theme.color;
+  const fullName = data.personalInfo?.fullName || "";
+  return (
+    <View style={{ marginBottom: 20, position: "relative" }}>
+      <View style={{ position: "absolute", top: 0, left: 0, width: 50, height: 50, backgroundColor: color, opacity: 0.2 }} />
+      <View style={{ paddingLeft: 20, paddingTop: 12 }}>
+        <Text style={{ fontSize: Math.round(fontSize.name * 1.1), fontWeight: "bold", marginBottom: 4 }}>
+          <Text style={{ color: color }}>{fullName.charAt(0)}</Text>
+          <Text style={{ color: "#1f2937" }}>{fullName.slice(1)}</Text>
+        </Text>
+        {data.personalInfo?.summary && (
+          <PDFRichText
+            text={`“${data.personalInfo.summary}”`}
+            fontSize={fontSize.summary}
+            color="#4b5563"
+            themeColor={color}
+            textStyle={{ fontStyle: "italic" }}
+            style={{ marginBottom: 8 }}
+          />
+        )}
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, fontSize: fontSize.contact }}>
+          {data.personalInfo?.email && <Text style={{ color: "#4b5563" }}>{data.personalInfo.email}</Text>}
+          {data.personalInfo?.phone && <Text style={{ color: "#4b5563" }}>{data.personalInfo.phone}</Text>}
+          {data.personalInfo?.location && <Text style={{ color: "#4b5563" }}>{data.personalInfo.location}</Text>}
+        </View>
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, fontSize: fontSize.contact, marginTop: 4 }}>
+          {data.personalInfo?.linkedin && <Link src={data.personalInfo.linkedin} style={{ color: color }}>LinkedIn</Link>}
+          {data.personalInfo?.github && <Link src={data.personalInfo.github} style={{ color: color }}>GitHub</Link>}
+          {data.personalInfo?.website && <Link src={data.personalInfo.website} style={{ color: color }}>Portfolio</Link>}
+        </View>
+      </View>
+    </View>
+  );
+};
+
+const renderElegantHeader = (data: ResumeData, fontSize: FontSizes) => {
+  const color = data.theme.color;
+  return (
+    <View style={{ marginBottom: 20, textAlign: "center" }}>
+      <Text style={{ fontSize: Math.round(fontSize.name * 1.05), fontWeight: "normal", color: "#1f2937", textAlign: "center", marginBottom: 8, letterSpacing: 3, textTransform: "uppercase" }}>
+        {data.personalInfo?.fullName || ""}
+      </Text>
+      <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 12, marginBottom: 8 }}>
+        <View style={{ width: 40, height: 1, backgroundColor: "#d1d5db" }} />
+        <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: color }} />
+        <View style={{ width: 40, height: 1, backgroundColor: "#d1d5db" }} />
+      </View>
+      {data.personalInfo?.summary && (
+        <PDFRichText
+          text={data.personalInfo.summary}
+          fontSize={fontSize.summary}
+          color="#6b7280"
+          themeColor={color}
+          textStyle={{ fontStyle: "italic" }}
+          style={{ marginBottom: 10 }}
+        />
+      )}
+      <View style={{ flexDirection: "row", justifyContent: "center", flexWrap: "wrap", gap: 12, fontSize: fontSize.contact }}>
+        {data.personalInfo?.email && <Text style={{ color: "#6b7280" }}>{data.personalInfo.email}</Text>}
+        {data.personalInfo?.phone && <Text style={{ color: "#6b7280" }}>{data.personalInfo.phone}</Text>}
+        {data.personalInfo?.location && <Text style={{ color: "#6b7280" }}>{data.personalInfo.location}</Text>}
+      </View>
+      <View style={{ flexDirection: "row", justifyContent: "center", flexWrap: "wrap", gap: 12, fontSize: fontSize.contact, marginTop: 4 }}>
+        {data.personalInfo?.linkedin && <Link src={data.personalInfo.linkedin} style={{ color: "#6b7280" }}>LinkedIn</Link>}
+        {data.personalInfo?.github && <Link src={data.personalInfo.github} style={{ color: "#6b7280" }}>GitHub</Link>}
+        {data.personalInfo?.website && <Link src={data.personalInfo.website} style={{ color: "#6b7280" }}>Portfolio</Link>}
+      </View>
+    </View>
+  );
+};
+
+const renderModernHeader = (data: ResumeData, fontSize: FontSizes) => {
+  const color = data.theme.color;
+  return (
+    <View style={{ marginBottom: 16, flexDirection: "row", gap: 10 }}>
+      <View style={{ width: 4, backgroundColor: color, borderRadius: 2 }} />
+      <View style={{ flex: 1 }}>
+        <Text style={{ fontSize: fontSize.name, fontWeight: "bold", color: "#1f2937", marginBottom: 2 }}>
+          {data.personalInfo?.fullName || ""}
+        </Text>
+        {data.personalInfo?.summary && (
+          <PDFRichText
+            text={data.personalInfo.summary}
+            fontSize={fontSize.summary}
+            color="#6b7280"
+            themeColor={color}
+            style={{ marginBottom: 8 }}
+          />
+        )}
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, fontSize: fontSize.contact }}>
+          {data.personalInfo?.email && <Text style={{ color: "#4b5563" }}>{data.personalInfo.email}</Text>}
+          {data.personalInfo?.phone && <Text style={{ color: "#4b5563" }}>{data.personalInfo.phone}</Text>}
+          {data.personalInfo?.location && <Text style={{ color: "#4b5563" }}>{data.personalInfo.location}</Text>}
+        </View>
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, fontSize: fontSize.contact, marginTop: 4 }}>
+          {data.personalInfo?.linkedin && <Link src={data.personalInfo.linkedin} style={{ color: color }}>LinkedIn</Link>}
+          {data.personalInfo?.github && <Link src={data.personalInfo.github} style={{ color: color }}>GitHub</Link>}
+          {data.personalInfo?.website && <Link src={data.personalInfo.website} style={{ color: color }}>Portfolio</Link>}
+        </View>
+      </View>
+    </View>
+  );
+};
+
+// =====================================================
+// TEMPLATE-SPECIFIC SECTION TITLE RENDERERS
+// =====================================================
+
+const renderSectionTitle = (title: string, template: TemplateType, color: string, sectionHeadingSize: number = 12) => {
+  switch (template) {
+    case "harvard":
+      return (
+        <Text style={{ fontSize: sectionHeadingSize, fontWeight: "bold", color: "#1f2937", borderBottom: "1 solid #1f2937", paddingBottom: 2, marginBottom: 8, textTransform: "uppercase", letterSpacing: 1 }}>
+          {title}
+        </Text>
+      );
+    case "tech":
+      return (
+        <Text style={{ fontSize: sectionHeadingSize, fontWeight: "bold", color: color, marginBottom: 8 }}>
+          {title}
+        </Text>
+      );
+    case "bold":
+      return (
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 }}>
+          <View style={{ width: 3, height: 14, backgroundColor: color }} />
+          <Text style={{ fontSize: sectionHeadingSize, fontWeight: "bold", color: "#1f2937", textTransform: "uppercase" }}>{title}</Text>
+        </View>
+      );
+    case "neo":
+      return (
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 }}>
+          <View style={{ width: 10, height: 10, backgroundColor: color }} />
+          <Text style={{ fontSize: sectionHeadingSize, fontWeight: "bold", color: "#1f2937", textTransform: "uppercase", letterSpacing: 1 }}>{title}</Text>
+        </View>
+      );
+    case "portfolio":
+      return (
+        <Text style={{ fontSize: sectionHeadingSize, fontWeight: "bold", color: color, marginBottom: 8 }}>
+          {title}
+        </Text>
+      );
+    case "corporate":
+      return (
+        <View style={{ marginBottom: 8, borderBottom: "2 solid #e5e7eb", paddingBottom: 4 }}>
+          <Text style={{ fontSize: sectionHeadingSize, fontWeight: "bold", color: "#1f2937" }}>{title}</Text>
+        </View>
+      );
+    case "creative":
+      return (
+        <View style={{ marginBottom: 8, flexDirection: "row" }}>
+          <View style={{ backgroundColor: color + "30", paddingLeft: 6, paddingRight: 6, paddingTop: 2, paddingBottom: 2 }}>
+            <Text style={{ fontSize: sectionHeadingSize, fontWeight: "bold", color: color, textTransform: "uppercase", letterSpacing: 1 }}>{title}</Text>
+          </View>
+        </View>
+      );
+    case "elegant":
+      return (
+        <View style={{ marginBottom: 8, textAlign: "center" }}>
+          <Text style={{ fontSize: Math.round(sectionHeadingSize * 0.9), fontWeight: "normal", color: "#6b7280", textAlign: "center", letterSpacing: 3, textTransform: "uppercase" }}>{title}</Text>
+          <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 6, marginTop: 4 }}>
+            <View style={{ width: 30, height: 1, backgroundColor: color + "60" }} />
+            <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: color }} />
+            <View style={{ width: 30, height: 1, backgroundColor: color + "60" }} />
+          </View>
+        </View>
+      );
+    case "modern":
+      return (
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 }}>
+          <View style={{ width: 2, height: 14, backgroundColor: color, borderRadius: 1 }} />
+          <Text style={{ fontSize: sectionHeadingSize, fontWeight: "bold", color: "#1f2937" }}>{title}</Text>
+        </View>
+      );
+    case "minimal":
+    default:
+      return (
+        <Text style={{ fontSize: Math.round(sectionHeadingSize * 0.85), fontWeight: "bold", color: "#9ca3af", marginBottom: 6, textTransform: "uppercase", letterSpacing: 2 }}>
+          {title}
+        </Text>
+      );
+  }
+};
+
+// =====================================================
+// TEMPLATE-SPECIFIC SKILLS RENDERERS
+// =====================================================
+
+const renderSkills = (skills: string[], template: TemplateType, color: string) => {
+  if (!skills || skills.length === 0) return null;
+
+  switch (template) {
+    case "elegant":
+      return (
+        <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center" }}>
+          {skills.map((skill, idx) => (
+            <Text key={idx} style={{ fontSize: 9, color: "#6b7280" }}>
+              {skill}{idx < skills.length - 1 ? " · " : ""}
+            </Text>
           ))}
-          {section.items[0]?.skills?.map((skill: string, idx: number) => (
-            <Text key={`s-${idx}`} style={styles.skillTag}>
+        </View>
+      );
+
+    case "corporate":
+      return (
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+          {skills.map((skill, idx) => (
+            <Text key={idx} style={{ fontSize: 9, backgroundColor: "#f3f4f6", padding: "3 8", borderRadius: 3, color: "#374151" }}>
               {skill}
             </Text>
           ))}
         </View>
-      ) : section.type === 'custom' && section.fieldDefinitions?.length ? (
-        section.items.length > 0 ? (
-          section.items.map((item: any) => {
-            const getFieldValue = (fieldId: string) => {
-              const field = (item.customFields || []).find((cf: any) => cf.fieldId === fieldId);
-              return field?.value;
-            };
-            const fieldDefs = section.fieldDefinitions || [];
-            const titleField = fieldDefs.find((f: any) => f.type === 'text');
-            const dateField = fieldDefs.find((f: any) => f.type === 'date' || f.type === 'dateRange');
-            const linkField = fieldDefs.find((f: any) => f.type === 'link');
-            const tagsField = fieldDefs.find((f: any) => f.type === 'tags');
-            const textareaField = fieldDefs.find((f: any) => f.type === 'textarea');
+      );
 
-            const title = titleField ? getFieldValue(titleField.id) : '';
-            const linkValue = linkField ? (getFieldValue(linkField.id) as string) : '';
-            const tagsValue = tagsField ? (getFieldValue(tagsField.id) as string[]) : [];
-            const description = textareaField ? (getFieldValue(textareaField.id) as string) : '';
+    case "creative":
+      return (
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+          {skills.map((skill, idx) => (
+            <Text key={idx} style={{ fontSize: 9, backgroundColor: color + "15", color: color, padding: "3 8", borderRadius: 4, fontWeight: "bold" }}>
+              {skill}
+            </Text>
+          ))}
+        </View>
+      );
 
-            let dateDisplay = '';
-            if (dateField) {
-              const dateValue = getFieldValue(dateField.id) as string;
-              if (dateField.type === 'dateRange' && dateValue) {
-                const [start, end] = dateValue.split('|');
-                dateDisplay = formatDate(start, end);
-              } else if (dateValue) {
-                dateDisplay = formatDate(dateValue);
-              }
-            }
-
-            return (
-              <View key={item.id} style={styles.item} wrap>
-                <View style={styles.itemHeader}>
-                  <View style={{ flex: 1 }}>
-                    {linkValue ? (
-                      <Link src={ensureProtocol(linkValue)} style={[styles.itemTitle, { color: theme.color }]}
-                      >
-                        {title || 'Title'}
-                      </Link>
-                    ) : (
-                      <Text style={styles.itemTitle}>{title || 'Title'}</Text>
-                    )}
-                    {fieldDefs
-                      .filter((f: any) => f.type === 'text' && f !== titleField)
-                      .map((f: any) => {
-                        const val = getFieldValue(f.id) as string;
-                        return val ? (
-                          <Text key={f.id} style={styles.itemSubtitle}>
-                            {val}
-                          </Text>
-                        ) : null;
-                      })}
-                  </View>
-                  {dateDisplay && <Text style={styles.itemDate}>{dateDisplay}</Text>}
-                </View>
-
-                {tagsValue && tagsValue.length > 0 && (
-                  <View style={[styles.skillsContainer, { marginTop: 4 }]}>
-                    {tagsValue.map((tag: string, idx: number) => (
-                      <Text key={idx} style={styles.skillTag}>
-                        {tag}
-                      </Text>
-                    ))}
-                  </View>
-                )}
-
-                {description && <Text style={styles.itemDescription}>{description}</Text>}
-              </View>
-            );
-          })
-        ) : null
-      ) : section.items.length > 0 ? (
-        section.items.map((item: any) => (
-          <View key={item.id} style={styles.item} wrap>
-            <View style={styles.itemHeader}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.itemTitle}>
-                  {section.type === 'experience'
-                    ? item.position || 'Position Title'
-                    : section.type === 'education'
-                      ? item.degree || 'Degree / Field of Study'
-                      : item.title || 'Title'}
-                </Text>
-                <Text style={styles.itemSubtitle}>
-                  {section.type === 'experience'
-                    ? item.company || 'Company Name'
-                    : section.type === 'education'
-                      ? item.institution || 'Institution Name'
-                      : item.subtitle || ''}
-                </Text>
-                {item.location && <Text style={styles.itemLocation}>{item.location}</Text>}
-              </View>
-              {(item.startDate || section.type === 'experience' || section.type === 'education') && (
-                <Text style={styles.itemDate}>
-                  {formatDate(item.startDate, item.endDate, item.current) || 'Date Range'}
-                </Text>
-              )}
+    case "modern":
+      return (
+        <View style={{ flexDirection: "column", gap: 4 }}>
+          {skills.map((skill, idx) => (
+            <View key={idx} style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: color }} />
+              <Text style={{ fontSize: 9, color: "#374151" }}>{skill}</Text>
             </View>
-            {item.description && (
-              <Text style={styles.itemDescription}>
-                {item.description}
-              </Text>
+          ))}
+        </View>
+      );
+
+    case "bold":
+    case "tech":
+      return (
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+          {skills.map((skill, idx) => (
+            <Text key={idx} style={{ fontSize: 9, backgroundColor: color + "20", color: color, padding: "3 8", borderRadius: 3 }}>
+              {skill}
+            </Text>
+          ))}
+        </View>
+      );
+
+    case "neo":
+      return (
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+          {skills.map((skill, idx) => (
+            <Text key={idx} style={{ fontSize: 9, backgroundColor: color + "20", color: color, padding: "3 8" }}>
+              {skill}
+            </Text>
+          ))}
+        </View>
+      );
+
+    case "portfolio":
+      return (
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+          {skills.map((skill, idx) => (
+            <Text key={idx} style={{ fontSize: 9, backgroundColor: color + "20", color: color, padding: "3 8", borderRadius: 4 }}>
+              {skill}
+            </Text>
+          ))}
+        </View>
+      );
+
+    case "harvard":
+      return (
+        <Text style={{ fontSize: 9, color: "#374151" }}>
+          {skills.join(", ")}
+        </Text>
+      );
+
+    case "minimal":
+    default:
+      return (
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+          {skills.map((skill, idx) => (
+            <Text key={idx} style={{ fontSize: 9, backgroundColor: color + "20", color: color, padding: "3 8", borderRadius: 3 }}>
+              {skill}
+            </Text>
+          ))}
+        </View>
+      );
+  }
+};
+
+// =====================================================
+// TEMPLATE-SPECIFIC ITEM RENDERERS (Experience/Education)
+// =====================================================
+
+const getTemplateColors = (template: TemplateType, color: string) => {
+  switch (template) {
+    case "harvard": return { title: "#1f2937", subtitle: "#4b5563", date: "#6b7280" };
+    case "tech": return { title: "#0f172a", subtitle: color, date: "#64748b" };
+    case "bold": return { title: "#0f172a", subtitle: color, date: "#94a3b8" };
+    case "neo": return { title: "#1f2937", subtitle: color, date: "#9ca3af" };
+    case "portfolio": return { title: "#1f2937", subtitle: color, date: "#9ca3af" };
+    case "corporate": return { title: "#1f2937", subtitle: "#4b5563", date: "#6b7280" };
+    case "creative": return { title: color, subtitle: "#6b7280", date: "#9ca3af" };
+    case "elegant": return { title: "#1f2937", subtitle: "#6b7280", date: "#9ca3af" };
+    case "modern": return { title: "#1f2937", subtitle: color, date: "#9ca3af" };
+    case "minimal":
+    default: return { title: "#1f2937", subtitle: "#4b5563", date: "#9ca3af" };
+  }
+};
+
+const renderExperienceItem = (item: SectionItem, template: TemplateType, color: string) => {
+  const colors = getTemplateColors(template, color);
+  const dateStr = formatDate(item.startDate, item.endDate, item.current);
+
+  return (
+    <View style={{ marginBottom: 10 }}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 2 }}>
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontSize: 11, fontWeight: "bold", color: colors.title }}>{item.position || item.title || ""}</Text>
+          <Text style={{ fontSize: 10, color: colors.subtitle }}>{item.company || item.subtitle || ""}</Text>
+        </View>
+        <Text style={{ fontSize: 9, color: colors.date, fontStyle: "italic" }}>{dateStr}</Text>
+      </View>
+      {item.description && (
+        <PDFRichText
+          text={item.description}
+          fontSize={9}
+          color="#4b5563"
+          themeColor={color}
+          style={{ marginTop: 4 }}
+        />
+      )}
+    </View>
+  );
+};
+
+const renderEducationItem = (item: SectionItem, template: TemplateType, color: string) => {
+  const colors = getTemplateColors(template, color);
+  const dateStr = formatDate(item.startDate, item.endDate, item.current);
+
+  return (
+    <View style={{ marginBottom: 10 }}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 2 }}>
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontSize: 11, fontWeight: "bold", color: colors.title }}>{item.degree || item.title || ""}</Text>
+          <Text style={{ fontSize: 10, color: colors.subtitle }}>{item.institution || item.subtitle || ""}</Text>
+        </View>
+        <Text style={{ fontSize: 9, color: colors.date, fontStyle: "italic" }}>{dateStr}</Text>
+      </View>
+      {item.description && (
+        <PDFRichText
+          text={item.description}
+          fontSize={9}
+          color="#4b5563"
+          themeColor={color}
+          style={{ marginTop: 4 }}
+        />
+      )}
+    </View>
+  );
+};
+
+const renderCustomItem = (item: SectionItem, template: TemplateType, color: string) => {
+  const colors = getTemplateColors(template, color);
+
+  return (
+    <View style={{ marginBottom: 8 }}>
+      {item.title && <Text style={{ fontSize: 11, fontWeight: "bold", color: colors.title }}>{item.title}</Text>}
+      {item.subtitle && <Text style={{ fontSize: 10, color: colors.subtitle }}>{item.subtitle}</Text>}
+      {item.description && (
+        <PDFRichText
+          text={item.description}
+          fontSize={9}
+          color="#4b5563"
+          themeColor={color}
+          style={{ marginTop: 2 }}
+        />
+      )}
+    </View>
+  );
+};
+
+// =====================================================
+// SECTION RENDERER
+// =====================================================
+
+const renderSection = (section: Section, template: TemplateType, color: string) => {
+  if (!section.isVisible) return null;
+
+  // Filter items to only include those with real content (not placeholders)
+  const realItems = (section.items || []).filter(item => {
+    const hasTitle = isRealContent(item.title) || isRealContent(item.position) || isRealContent(item.degree);
+    const hasSubtitle = isRealContent(item.subtitle) || isRealContent(item.company) || isRealContent(item.institution);
+    const hasDescription = isRealContent(item.description);
+    const hasSkills = item.skills && item.skills.length > 0 && item.skills.some(s => isRealContent(s));
+    return hasTitle || hasSubtitle || hasDescription || hasSkills;
+  });
+
+  // Core sections (experience, education, skills) always show header even if empty
+  const isCoreSection = ['experience', 'education', 'skills'].includes(section.type);
+
+  // For non-core sections (projects, certifications, custom), hide entirely if no real content
+  if (!isCoreSection && realItems.length === 0) {
+    return null;
+  }
+
+  switch (section.type) {
+    case "experience":
+      return (
+        <View style={baseStyles.section} key={section.id}>
+          {renderSectionTitle(section.title, template, color)}
+          {realItems.length > 0 ? (
+            realItems.map((item) => (
+              <View key={item.id}>
+                {renderExperienceItem(item, template, color)}
+              </View>
+            ))
+          ) : (
+            <View style={{ height: 20 }} /> // Empty space placeholder
+          )}
+        </View>
+      );
+
+    case "education":
+      return (
+        <View style={baseStyles.section} key={section.id}>
+          {renderSectionTitle(section.title, template, color)}
+          {realItems.length > 0 ? (
+            realItems.map((item) => (
+              <View key={item.id}>
+                {renderEducationItem(item, template, color)}
+              </View>
+            ))
+          ) : (
+            <View style={{ height: 20 }} />
+          )}
+        </View>
+      );
+
+    case "skills":
+      const skillsItem = section.items?.[0];
+      const allSkills = skillsItem?.skills || [];
+      const realSkills = allSkills.filter(s => isRealContent(s));
+      return (
+        <View style={baseStyles.section} key={section.id}>
+          {renderSectionTitle(section.title, template, color)}
+          {realSkills.length > 0 ? (
+            renderSkills(realSkills, template, color)
+          ) : (
+            <View style={{ height: 20 }} />
+          )}
+        </View>
+      );
+
+    case "projects":
+    case "certifications":
+    case "custom":
+    default:
+      return (
+        <View style={baseStyles.section} key={section.id}>
+          {renderSectionTitle(section.title, template, color)}
+          {realItems.map((item) => (
+            <View key={item.id}>
+              {renderCustomItem(item, template, color)}
+            </View>
+          ))}
+        </View>
+      );
+  }
+};
+
+// =====================================================
+// MAIN RESUME PDF COMPONENT
+// =====================================================
+
+interface ResumePDFProps {
+  data: ResumeData;
+  template: TemplateType;
+}
+
+// Helper to check if content is real (not placeholder)
+const isRealContent = (value: string | undefined | null): boolean => {
+  if (!value || value.trim() === '') return false;
+  const placeholders = [
+    'your name', 'full name', 'your title', 'job title',
+    'your email', 'your phone', 'your location', 'city, country',
+    'write a short', 'professional summary', 'add your',
+    'xyz company', 'company name', 'position title',
+    'university name', 'degree name', 'field of study',
+    'skill name', 'project name', 'certification name',
+    'describe your', 'brief description', 'example', 'sample',
+    'lorem ipsum', 'your.email@example', '+1 234 567'
+  ];
+  const lower = value.toLowerCase().trim();
+  return !placeholders.some(p => lower.includes(p) || lower === p);
+};
+
+// Helper to get real skills only
+const getRealSkills = (section: Section): string[] => {
+  const skillsItem = section.items?.[0];
+  const allSkills = skillsItem?.skills || [];
+  return allSkills.filter(s => isRealContent(s));
+};
+
+const ResumePDF: React.FC<ResumePDFProps> = ({ data, template }) => {
+  const color = data.theme.color;
+
+  // Compute font sizes based on theme (matches PreviewCanvas)
+  const fontSize = getFontSizes(data);
+
+  // Get all visible sections - we'll render headers for core sections even if empty
+  const visibleSections = data.sections.filter((s) => s.isVisible);
+
+  // Check if personal info has real content
+  const hasRealName = isRealContent(data.personalInfo?.fullName);
+  const hasRealSummary = isRealContent(data.personalInfo?.summary);
+  const hasRealEmail = isRealContent(data.personalInfo?.email);
+  const hasRealPhone = isRealContent(data.personalInfo?.phone);
+  const hasRealLocation = isRealContent(data.personalInfo?.location);
+
+  // Render header based on template
+  const renderHeader = () => {
+    switch (template) {
+      case "harvard": return renderHarvardHeader(data, fontSize);
+      case "tech": return renderTechHeader(data, fontSize);
+      case "minimal": return renderMinimalHeader(data, fontSize);
+      case "bold": return renderBoldHeader(data, fontSize);
+      case "neo": return renderNeoHeader(data, fontSize);
+      case "portfolio": return renderPortfolioHeader(data, fontSize);
+      case "corporate": return renderCorporateHeader(data, fontSize);
+      case "creative": return renderCreativeHeader(data, fontSize);
+      case "elegant": return renderElegantHeader(data, fontSize);
+      case "modern": return renderModernHeader(data, fontSize);
+      default: return renderMinimalHeader(data, fontSize);
+    }
+  };
+
+  // Get page style based on template
+  const getPageStyle = () => {
+    const pageStyles = getPageStyles(template);
+    const base = { ...pageStyles.page };
+    if (template === "elegant") {
+      return { ...base, backgroundColor: "#fdfbf7" };
+    }
+    return base;
+  };
+
+  // Local section renderer that uses fontSize
+  const renderSectionLocal = (section: Section) => {
+    if (!section.isVisible) return null;
+
+    // Filter items to only include those with real content (not placeholders)
+    const realItems = (section.items || []).filter(item => {
+      const hasTitle = isRealContent(item.title) || isRealContent(item.position) || isRealContent(item.degree);
+      const hasSubtitle = isRealContent(item.subtitle) || isRealContent(item.company) || isRealContent(item.institution);
+      const hasDescription = isRealContent(item.description);
+      const hasSkills = item.skills && item.skills.length > 0 && item.skills.some(s => isRealContent(s));
+      return hasTitle || hasSubtitle || hasDescription || hasSkills;
+    });
+
+    // Core sections (experience, education, skills) always show header even if empty
+    const isCoreSection = ['experience', 'education', 'skills'].includes(section.type);
+
+    // For non-core sections (projects, certifications, custom), hide entirely if no real content
+    if (!isCoreSection && realItems.length === 0) {
+      return null;
+    }
+
+    const colors = getTemplateColors(template, color);
+
+    switch (section.type) {
+      case "experience":
+        return (
+          <View style={baseStyles.section} key={section.id}>
+            {renderSectionTitle(section.title, template, color, fontSize.sectionHeading)}
+            {realItems.length > 0 ? (
+              realItems.map((item) => (
+                <View key={item.id} style={{ marginBottom: 10 }}>
+                  <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 2 }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: fontSize.itemTitle, fontWeight: "bold", color: colors.title }}>{item.position || item.title || ""}</Text>
+                      <Text style={{ fontSize: fontSize.itemSubtitle, color: colors.subtitle }}>{item.company || item.subtitle || ""}</Text>
+                    </View>
+                    <Text style={{ fontSize: fontSize.itemDate, color: colors.date, fontStyle: "italic" }}>
+                      {formatDate(item.startDate, item.endDate, item.current)}
+                    </Text>
+                  </View>
+                  {item.description && (
+                    <PDFRichText
+                      text={item.description}
+                      fontSize={fontSize.itemBody}
+                      color="#4b5563"
+                      themeColor={color}
+                      style={{ marginTop: 4 }}
+                    />
+                  )}
+                </View>
+              ))
+            ) : (
+              <View style={{ height: 20 }} />
             )}
           </View>
-        ))
-      ) : null}
+        );
+
+      case "education":
+        return (
+          <View style={baseStyles.section} key={section.id}>
+            {renderSectionTitle(section.title, template, color, fontSize.sectionHeading)}
+            {realItems.length > 0 ? (
+              realItems.map((item) => (
+                <View key={item.id} style={{ marginBottom: 10 }}>
+                  <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 2 }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: fontSize.itemTitle, fontWeight: "bold", color: colors.title }}>{item.degree || item.title || ""}</Text>
+                      <Text style={{ fontSize: fontSize.itemSubtitle, color: colors.subtitle }}>{item.institution || item.subtitle || ""}</Text>
+                    </View>
+                    <Text style={{ fontSize: fontSize.itemDate, color: colors.date, fontStyle: "italic" }}>
+                      {formatDate(item.startDate, item.endDate)}
+                    </Text>
+                  </View>
+                  {item.description && (
+                    <PDFRichText
+                      text={item.description}
+                      fontSize={fontSize.itemBody}
+                      color="#4b5563"
+                      themeColor={color}
+                      style={{ marginTop: 4 }}
+                    />
+                  )}
+                </View>
+              ))
+            ) : (
+              <View style={{ height: 20 }} />
+            )}
+          </View>
+        );
+
+      case "skills":
+        const skillsItem = section.items?.[0];
+        const allSkills = skillsItem?.skills || [];
+        const realSkills = allSkills.filter(s => isRealContent(s));
+        return (
+          <View style={baseStyles.section} key={section.id}>
+            {renderSectionTitle(section.title, template, color, fontSize.sectionHeading)}
+            {realSkills.length > 0 ? (
+              renderSkills(realSkills, template, color)
+            ) : (
+              <View style={{ height: 20 }} />
+            )}
+          </View>
+        );
+
+      case "projects":
+      case "certifications":
+      case "custom":
+      default:
+        return (
+          <View style={baseStyles.section} key={section.id}>
+            {renderSectionTitle(section.title, template, color, fontSize.sectionHeading)}
+            {realItems.map((item) => (
+              <View key={item.id} style={{ marginBottom: 8 }}>
+                {item.title && <Text style={{ fontSize: fontSize.itemTitle, fontWeight: "bold", color: colors.title }}>{item.title}</Text>}
+                {item.subtitle && <Text style={{ fontSize: fontSize.itemSubtitle, color: colors.subtitle }}>{item.subtitle}</Text>}
+                {item.description && (
+                  <PDFRichText
+                    text={item.description}
+                    fontSize={fontSize.itemBody}
+                    color="#4b5563"
+                    themeColor={color}
+                    style={{ marginTop: 2 }}
+                  />
+                )}
+              </View>
+            ))}
+          </View>
+        );
+    }
+  };
+
+  // =====================================================
+  // PORTFOLIO LAYOUT - Two column with skills sidebar
+  // =====================================================
+  const renderPortfolioLayout = () => {
+    const skillsSection = visibleSections.find((s) => s.type === 'skills');
+    const mainSections = visibleSections.filter((s) => s.type !== 'skills');
+    const realSkills = skillsSection ? getRealSkills(skillsSection) : [];
+
+    return (
+      <View style={{ flexDirection: "row", flex: 1 }}>
+        {/* Left sidebar */}
+        <View style={{ width: "33%", backgroundColor: "#f9fafb", borderRight: "1 solid #e5e7eb", padding: 20 }}>
+          {hasRealName && (
+            <Text style={{ fontSize: fontSize.name, fontWeight: "bold", marginBottom: 4 }}>
+              {data.personalInfo.fullName}
+            </Text>
+          )}
+          {hasRealSummary && (
+            <Text style={{ fontSize: fontSize.summary, color: color, marginBottom: 12 }}>
+              {data.personalInfo.summary}
+            </Text>
+          )}
+          {/* Contact info */}
+          <View style={{ marginBottom: 16 }}>
+            {hasRealEmail && <Text style={{ fontSize: fontSize.contact, color: "#4b5563", marginBottom: 2 }}>{data.personalInfo.email}</Text>}
+            {hasRealPhone && <Text style={{ fontSize: fontSize.contact, color: "#4b5563", marginBottom: 2 }}>{data.personalInfo.phone}</Text>}
+            {hasRealLocation && <Text style={{ fontSize: fontSize.contact, color: "#4b5563", marginBottom: 2 }}>{data.personalInfo.location}</Text>}
+            {data.personalInfo?.linkedin && <Link src={data.personalInfo.linkedin} style={{ fontSize: fontSize.contact, color: color }}>LinkedIn</Link>}
+            {data.personalInfo?.github && <Link src={data.personalInfo.github} style={{ fontSize: fontSize.contact, color: color, marginTop: 2 }}>GitHub</Link>}
+          </View>
+          {/* Skills in sidebar - always show header if section is visible */}
+          {skillsSection && (
+            <View>
+              {renderSectionTitle("Skills", template, color, fontSize.sectionHeading)}
+              {realSkills.length > 0 ? renderSkills(realSkills, template, color) : <View style={{ height: 16 }} />}
+            </View>
+          )}
+        </View>
+        {/* Main content */}
+        <View style={{ width: "67%", padding: 20 }}>
+          {mainSections.map((section) => renderSectionLocal(section))}
+        </View>
+      </View>
+    );
+  };
+
+  // =====================================================
+  // CORPORATE LAYOUT - Sections in bordered cards
+  // =====================================================
+  const renderCorporateLayout = () => (
+    <View style={{ padding: 30 }}>
+      {renderHeader()}
+      <View style={{ marginTop: 16 }}>
+        {visibleSections.map((section) => (
+          <View key={section.id} style={{ backgroundColor: "#fafafa", border: "1 solid #f0f0f0", borderRadius: 4, padding: 12, marginBottom: 12 }}>
+            {renderSectionTitle(section.title, template, color, fontSize.sectionHeading)}
+            {renderSectionContent(section, template, color)}
+          </View>
+        ))}
+      </View>
     </View>
   );
 
-  return (
-    <Document>
-      <Page size={[pageSize.width, pageSize.height]} style={styles.page} wrap>
-        {isPortfolio ? (
-          <View style={styles.portfolioWrap}>
-            <View style={styles.portfolioSidebar}>
-              <Text style={styles.portfolioName}>{personalInfo.fullName || 'Full Name'}</Text>
-              {personalInfo.summary ? <Text style={styles.portfolioRole}>{personalInfo.summary}</Text> : null}
+  // =====================================================
+  // CREATIVE LAYOUT - Asymmetric grid
+  // =====================================================
+  const renderCreativeLayout = () => {
+    const skillsSection = visibleSections.find((s) => s.type === 'skills');
+    const experienceSection = visibleSections.find((s) => s.type === 'experience');
+    const otherSections = visibleSections.filter((s) => s.type !== 'skills' && s.type !== 'experience');
+    const realSkills = skillsSection ? getRealSkills(skillsSection) : [];
 
-              <View style={styles.contactRow}>
-                {personalInfo.email && (
-                  <View style={styles.contactItemWrapper}>
-                    <EmailIcon size={iconSize} color={iconColor} />
-                    <Link src={`mailto:${personalInfo.email}`} style={styles.contactLink}>
-                      {personalInfo.email}
-                    </Link>
-                  </View>
-                )}
-                {personalInfo.phone && (
-                  <View style={styles.contactItemWrapper}>
-                    <PhoneIcon size={iconSize} color={iconColor} />
-                    <Link src={`tel:${personalInfo.phone.replace(/\s/g, '')}`} style={styles.contactLink}>
-                      {personalInfo.phone}
-                    </Link>
-                  </View>
-                )}
-                {personalInfo.location && (
-                  <View style={styles.contactItemWrapper}>
-                    <LocationIcon size={iconSize} color={iconColor} />
-                    <Text style={styles.contactItem}>{personalInfo.location}</Text>
-                  </View>
-                )}
-                {personalInfo.linkedin && (
-                  <View style={styles.contactItemWrapper}>
-                    <LinkedInIcon size={iconSize} color={iconColor} />
-                    <Link src={ensureProtocol(personalInfo.linkedin)} style={styles.contactLink}>
-                      {formatUrlDisplay(personalInfo.linkedin)}
-                    </Link>
-                  </View>
-                )}
-                {personalInfo.github && (
-                  <View style={styles.contactItemWrapper}>
-                    <GitHubIcon size={iconSize} color={iconColor} />
-                    <Link src={ensureProtocol(personalInfo.github)} style={styles.contactLink}>
-                      {formatUrlDisplay(personalInfo.github)}
-                    </Link>
-                  </View>
-                )}
-                {personalInfo.website && (
-                  <View style={styles.contactItemWrapper}>
-                    <GlobeIcon size={iconSize} color={iconColor} />
-                    <Link src={ensureProtocol(personalInfo.website)} style={styles.contactLink}>
-                      {formatUrlDisplay(personalInfo.website)}
-                    </Link>
-                  </View>
-                )}
+    return (
+      <View style={{ padding: 24 }}>
+        {renderHeader()}
+        <View style={{ flexDirection: "row", marginTop: 16 }}>
+          {/* Left column - 60% */}
+          <View style={{ width: "60%", paddingRight: 16 }}>
+            {experienceSection && (
+              <View style={{ marginBottom: 16 }}>
+                {renderSectionTitle(experienceSection.title, template, color, fontSize.sectionHeading)}
+                {renderSectionContent(experienceSection, template, color)}
               </View>
+            )}
+            {otherSections.map((section) => (
+              <View key={section.id} style={{ marginBottom: 12 }}>
+                {renderSectionTitle(section.title, template, color, fontSize.sectionHeading)}
+                {renderSectionContent(section, template, color)}
+              </View>
+            ))}
+          </View>
+          {/* Right column - 40% with accent background */}
+          <View style={{ width: "40%", backgroundColor: color + "10", borderRadius: 6, padding: 12 }}>
+            {skillsSection && (
+              <View>
+                {renderSectionTitle("Skills", template, color, fontSize.sectionHeading)}
+                {realSkills.length > 0 ? renderSkills(realSkills, template, color) : <View style={{ height: 16 }} />}
+              </View>
+            )}
+          </View>
+        </View>
+      </View>
+    );
+  };
 
-              {personalInfo.links.length > 0 && (
-                <View style={styles.linksRow}>
-                  {personalInfo.links.map((link) => (
-                    <View key={link.id} style={styles.contactItemWrapper}>
-                      <LinkIcon size={iconSize} color={iconColor} />
-                      <Link src={ensureProtocol(link.url) || '#'} style={styles.link}>
-                        {link.label || formatUrlDisplay(link.url) || 'Link'}
-                      </Link>
-                    </View>
-                  ))}
+  // =====================================================
+  // ELEGANT LAYOUT - Centered with generous spacing
+  // =====================================================
+  const renderElegantLayout = () => (
+    <View style={{ paddingHorizontal: 50, paddingVertical: 40 }}>
+      {renderHeader()}
+      <View style={{ marginTop: 24 }}>
+        {visibleSections.map((section) => (
+          <View key={section.id} style={{ marginBottom: 20, textAlign: "center" }}>
+            {renderSectionTitle(section.title, template, color, fontSize.sectionHeading)}
+            {renderSectionContent(section, template, color)}
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+
+  // =====================================================
+  // MODERN LAYOUT - Accent bar + sidebar
+  // =====================================================
+  const renderModernLayout = () => {
+    const skillsSection = visibleSections.find((s) => s.type === 'skills');
+    const mainSections = visibleSections.filter((s) => s.type !== 'skills');
+    const realSkills = skillsSection ? getRealSkills(skillsSection) : [];
+
+    return (
+      <View style={{ flexDirection: "row", flex: 1 }}>
+        {/* Thin accent bar */}
+        <View style={{ width: 4, backgroundColor: color }} />
+        {/* Main content area */}
+        <View style={{ flex: 1, padding: 30 }}>
+          {renderHeader()}
+          <View style={{ flexDirection: "row", marginTop: 16 }}>
+            {/* Main content - 66% */}
+            <View style={{ width: "66%", paddingRight: 16 }}>
+              {mainSections.map((section) => (
+                <View key={section.id} style={{ borderLeft: "2 solid #f0f0f0", paddingLeft: 12, marginBottom: 14 }}>
+                  {renderSectionTitle(section.title, template, color, fontSize.sectionHeading)}
+                  {renderSectionContent(section, template, color)}
+                </View>
+              ))}
+            </View>
+            {/* Skills sidebar - 34% */}
+            <View style={{ width: "34%" }}>
+              {skillsSection && (
+                <View style={{ backgroundColor: "#f9fafb", padding: 12, borderRadius: 6 }}>
+                  {renderSectionTitle("Skills", template, color, fontSize.sectionHeading)}
+                  {realSkills.length > 0 ? renderSkills(realSkills, template, color) : <View style={{ height: 16 }} />}
                 </View>
               )}
-
-              {skillsSection ? (
-                <View style={[styles.section, { marginTop: 14 }]}>
-                  <View style={isNeo ? styles.sectionTitleNeoWrap : undefined}>
-                    {isNeo ? <View style={styles.sectionTitleNeoBar} /> : null}
-                    <Text style={styles.sectionTitle}>{skillsSection.title}</Text>
-                  </View>
-                  <View style={styles.skillsContainer}>
-                    {skillsSection.items[0]?.skillsWithLevels?.map((skill, idx) => (
-                      <View key={`swl-${idx}`} style={styles.skillWithLevel}>
-                        <Text>{skill.name}</Text>
-                        <Text style={styles.skillLevelText}>{skill.level}</Text>
-                      </View>
-                    ))}
-                    {skillsSection.items[0]?.skills?.map((skill, idx) => (
-                      <Text key={`s-${idx}`} style={styles.skillTag}>
-                        {skill}
-                      </Text>
-                    ))}
-                  </View>
-                </View>
-              ) : null}
-            </View>
-
-            <View style={styles.portfolioMain}>
-              {mainSections.map(renderSection)}
             </View>
           </View>
-        ) : (
-          <>
-            {/* Header */}
-            <View style={styles.header}>
-              <Text style={styles.name}>{personalInfo.fullName || 'Full Name'}</Text>
-              {personalInfo.summary && <Text style={styles.summary}>{personalInfo.summary}</Text>}
+        </View>
+      </View>
+    );
+  };
 
-              {/* Contact Info - with SVG icons and clickable links */}
-              <View style={styles.contactRow}>
-                {personalInfo.email && (
-                  <View style={styles.contactItemWrapper}>
-                    <EmailIcon size={iconSize} color={iconColor} />
-                    <Link src={`mailto:${personalInfo.email}`} style={styles.contactLink}>
-                      {personalInfo.email}
-                    </Link>
-                  </View>
-                )}
-                {personalInfo.phone && (
-                  <View style={styles.contactItemWrapper}>
-                    <PhoneIcon size={iconSize} color={iconColor} />
-                    <Link src={`tel:${personalInfo.phone.replace(/\s/g, '')}`} style={styles.contactLink}>
-                      {personalInfo.phone}
-                    </Link>
-                  </View>
-                )}
-                {personalInfo.location && (
-                  <View style={styles.contactItemWrapper}>
-                    <LocationIcon size={iconSize} color={iconColor} />
-                    <Text style={styles.contactItem}>{personalInfo.location}</Text>
-                  </View>
-                )}
-                {personalInfo.linkedin && (
-                  <View style={styles.contactItemWrapper}>
-                    <LinkedInIcon size={iconSize} color={iconColor} />
-                    <Link src={ensureProtocol(personalInfo.linkedin)} style={styles.contactLink}>
-                      {formatUrlDisplay(personalInfo.linkedin)}
-                    </Link>
-                  </View>
-                )}
-                {personalInfo.github && (
-                  <View style={styles.contactItemWrapper}>
-                    <GitHubIcon size={iconSize} color={iconColor} />
-                    <Link src={ensureProtocol(personalInfo.github)} style={styles.contactLink}>
-                      {formatUrlDisplay(personalInfo.github)}
-                    </Link>
-                  </View>
-                )}
-                {personalInfo.website && (
-                  <View style={styles.contactItemWrapper}>
-                    <GlobeIcon size={iconSize} color={iconColor} />
-                    <Link src={ensureProtocol(personalInfo.website)} style={styles.contactLink}>
-                      {formatUrlDisplay(personalInfo.website)}
-                    </Link>
-                  </View>
-                )}
+  // =====================================================
+  // STANDARD LAYOUT (Harvard, Tech, Minimal, Bold, Neo)
+  // =====================================================
+  const renderStandardLayout = () => (
+    <View style={{ padding: 40 }}>
+      {renderHeader()}
+      {visibleSections.map((section) => renderSectionLocal(section))}
+    </View>
+  );
+
+  // Helper to filter items with real content
+  const filterRealItems = (items: SectionItem[]) => {
+    return items.filter(item => {
+      const hasTitle = isRealContent(item.title) || isRealContent(item.position) || isRealContent(item.degree);
+      const hasSubtitle = isRealContent(item.subtitle) || isRealContent(item.company) || isRealContent(item.institution);
+      const hasDescription = isRealContent(item.description);
+      return hasTitle || hasSubtitle || hasDescription;
+    });
+  };
+
+  // Helper to render section content without wrapper
+  const renderSectionContent = (section: Section, tmpl: TemplateType, clr: string) => {
+    const realItems = filterRealItems(section.items || []);
+    const isCoreSection = ['experience', 'education', 'skills'].includes(section.type);
+    const colors = getTemplateColors(tmpl, clr);
+
+    switch (section.type) {
+      case "experience":
+        if (realItems.length === 0) return isCoreSection ? <View style={{ height: 16 }} /> : null;
+        return realItems.map((item) => (
+          <View key={item.id} style={{ marginBottom: 10 }}>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 2 }}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: fontSize.itemTitle, fontWeight: "bold", color: colors.title }}>{item.position || item.title || ""}</Text>
+                <Text style={{ fontSize: fontSize.itemSubtitle, color: colors.subtitle }}>{item.company || item.subtitle || ""}</Text>
               </View>
-
-              {/* Additional Links */}
-              {personalInfo.links.length > 0 && (
-                <View style={styles.linksRow}>
-                  {personalInfo.links.map((link) => (
-                    <View key={link.id} style={styles.contactItemWrapper}>
-                      <LinkIcon size={iconSize} color={iconColor} />
-                      <Link src={ensureProtocol(link.url) || '#'} style={styles.link}>
-                        {link.label || formatUrlDisplay(link.url) || 'Link'}
-                      </Link>
-                    </View>
-                  ))}
-                </View>
-              )}
+              <Text style={{ fontSize: fontSize.itemDate, color: colors.date, fontStyle: "italic" }}>
+                {formatDate(item.startDate, item.endDate, item.current)}
+              </Text>
             </View>
+            {item.description && (
+              <PDFRichText
+                text={item.description}
+                fontSize={fontSize.itemBody}
+                color="#4b5563"
+                themeColor={clr}
+                style={{ marginTop: 4 }}
+              />
+            )}
+          </View>
+        ));
+      case "education":
+        if (realItems.length === 0) return isCoreSection ? <View style={{ height: 16 }} /> : null;
+        return realItems.map((item) => (
+          <View key={item.id} style={{ marginBottom: 10 }}>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 2 }}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: fontSize.itemTitle, fontWeight: "bold", color: colors.title }}>{item.degree || item.title || ""}</Text>
+                <Text style={{ fontSize: fontSize.itemSubtitle, color: colors.subtitle }}>{item.institution || item.subtitle || ""}</Text>
+              </View>
+              <Text style={{ fontSize: fontSize.itemDate, color: colors.date, fontStyle: "italic" }}>
+                {formatDate(item.startDate, item.endDate)}
+              </Text>
+            </View>
+            {item.description && (
+              <PDFRichText
+                text={item.description}
+                fontSize={fontSize.itemBody}
+                color="#4b5563"
+                themeColor={clr}
+                style={{ marginTop: 4 }}
+              />
+            )}
+          </View>
+        ));
+      case "skills":
+        const skills = section.items[0]?.skills || [];
+        const realSkills = skills.filter(s => isRealContent(s));
+        if (realSkills.length === 0) return isCoreSection ? <View style={{ height: 16 }} /> : null;
+        return renderSkills(realSkills, tmpl, clr);
+      default:
+        if (realItems.length === 0) return null;
+        return realItems.map((item) => (
+          <View key={item.id} style={{ marginBottom: 8 }}>
+            {item.title && <Text style={{ fontSize: fontSize.itemTitle, fontWeight: "bold", color: colors.title }}>{item.title}</Text>}
+            {item.subtitle && <Text style={{ fontSize: fontSize.itemSubtitle, color: colors.subtitle }}>{item.subtitle}</Text>}
+            {item.description && (
+              <PDFRichText
+                text={item.description}
+                fontSize={fontSize.itemBody}
+                color="#4b5563"
+                themeColor={clr}
+                style={{ marginTop: 2 }}
+              />
+            )}
+          </View>
+        ));
+    }
+  };
 
-            {/* Sections */}
-            {visibleSections.map(renderSection)}
-          </>
-        )}
+  // Select layout based on template
+  const renderLayout = () => {
+    switch (template) {
+      case "portfolio": return renderPortfolioLayout();
+      case "corporate": return renderCorporateLayout();
+      case "creative": return renderCreativeLayout();
+      case "elegant": return renderElegantLayout();
+      case "modern": return renderModernLayout();
+      default: return renderStandardLayout();
+    }
+  };
+
+  // Get template-specific page styles with proper font family
+  const pageStyles = getPageStyles(template);
+  const templateFont = getTemplateFont(template);
+
+  // Base page style with font family
+  const pageStyle: Style = {
+    ...pageStyles.page,
+    ...(template === "elegant" ? { backgroundColor: "#fdfbf7" } : {}),
+  };
+
+  return (
+    <Document>
+      <Page size="A4" style={pageStyle}>
+        <View style={{ fontFamily: templateFont }}>
+          {renderLayout()}
+        </View>
       </Page>
     </Document>
   );
 };
 
-// ============================================================================
-// PDF EXPORT FUNCTION
-// ============================================================================
+// Named export for compatibility with PDFViewer
+export const ResumePDFDocument: React.FC<{ data: ResumeData }> = ({ data }) => {
+  return <ResumePDF data={data} template={data.theme.template} />;
+};
 
-export async function exportToPDF(data: ResumeData): Promise<Blob> {
-  const blob = await pdf(<ResumePDFDocument data={data} />).toBlob();
+// Export PDF to blob for download
+export const exportToPDF = async (data: ResumeData): Promise<Blob> => {
+  const doc = <ResumePDFDocument data={data} />;
+  const blob = await pdf(doc).toBlob();
   return blob;
-}
+};
 
-export function downloadPDF(blob: Blob, filename: string = 'resume.pdf') {
+// Download PDF from blob
+export const downloadPDF = (blob: Blob, filename = 'resume.pdf'): void => {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
@@ -750,4 +1570,6 @@ export function downloadPDF(blob: Blob, filename: string = 'resume.pdf') {
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
-}
+};
+
+export default ResumePDF;

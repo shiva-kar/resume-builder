@@ -1,4 +1,36 @@
 # Changelog
+
+## [3.1.0] - 2026-01-10
+
+### Added
+- Improved resume preview experience with enhanced template consistency
+- Multiple professional templates with unified Preview/PDF rendering
+- OpenAI-based PDF scanning (AI enhancement integration)
+- YouTube integration features
+- Auto-generate resume feature for HR teams (community contribution)
+
+### Fixed
+- Preview and PDF section title styling now consistent across all 10 templates
+- Bold template accent bar rendering
+- Neo template geometric square sizing
+- Elegant template decorative elements (lines and dots)
+- Modern template vertical bar dimensions
+- Creative template accent block sizing
+- Harvard template skills rendering (now matches PDF comma-separated format)
+- Tech, Minimal, Corporate section title typography
+
+### Known Issues
+- PDF export does not fully match preview layout in some edge cases
+- Font families and weights may differ slightly between Preview and PDF
+- Markdown formatting (bold/italic) may not export correctly in all scenarios
+- Bullet lists may lose formatting in certain templates
+- Some templates have minor layout mismatches
+
+### Notes
+This release is open for community contributions to improve PDF export accuracy, typography consistency, and layout reliability.
+
+---
+
 ## [3.0.0] - 2026-01-09
 
 ### Added
