@@ -74,6 +74,7 @@ import {
   SkillsForm,
   CustomSectionForm,
   PersonalInfoForm,
+  AutoGenerateForm,
 } from '@/components/editor';
 import { exportToPDF, downloadPDF } from '@/components/pdf';
 import { PreviewCanvas } from '@/components/pdf/PreviewCanvas';
@@ -669,6 +670,9 @@ export default function ResumeBuilderPage() {
           )}>
             {/* Design Settings */}
             <DesignSettingsPanel />
+
+            {/* Auto Generate */}
+            <AutoGenerateForm />
 
             {/* Section Manager */}
             <SectionManagerPanel />

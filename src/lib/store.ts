@@ -92,6 +92,7 @@ interface ResumeStore {
   // Utility Actions
   resetStore: () => void;
   importData: (data: ResumeData) => void;
+  autoGenerateResume: (data: ResumeData) => void;
 }
 
 // ============================================================================
@@ -551,6 +552,7 @@ export const useResumeStore = create<ResumeStore>()(
       resetStore: () => set({ data: createEmptyState() }),
 
       importData: (data) => set({ data }),
+      autoGenerateResume: (data) => set({ data }),
     }),
     {
       name: 'resume-builder-storage-v2',
