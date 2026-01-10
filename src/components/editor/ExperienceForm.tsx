@@ -24,7 +24,7 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ section }) => {
             <div className="flex-1 space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <FormInput
-                  placeholder="Position Title"
+                  placeholder="e.g. Software Engineer, Marketing Manager"
                   value={item.position || ''}
                   onChange={(e) =>
                     updateSectionItem(section.id, item.id, {
@@ -33,7 +33,7 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ section }) => {
                   }
                 />
                 <FormInput
-                  placeholder="Company Name"
+                  placeholder="e.g. Google, Microsoft, Startup Inc."
                   value={item.company || ''}
                   onChange={(e) =>
                     updateSectionItem(section.id, item.id, {
@@ -92,7 +92,9 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ section }) => {
               </div>
 
               <FormTextarea
-                placeholder="Description of your role, responsibilities, and achievements..."
+                placeholder="• Led development of feature X that improved Y by Z%
+• Collaborated with cross-functional teams to...
+• Built and deployed scalable solutions..."
                 value={item.description || ''}
                 onChange={(e) =>
                   updateSectionItem(section.id, item.id, {

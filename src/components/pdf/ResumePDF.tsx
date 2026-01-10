@@ -203,13 +203,22 @@ interface ResumePDFProps {
 export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ data }) => {
   const { personalInfo, sections, theme } = data;
   const pageSize = PAGE_SIZES[theme.pageSize];
+  
+  // Template checks (all 10 templates)
   const isHarvard = theme.template === 'harvard';
+  const isTech = theme.template === 'tech';
   const isMinimal = theme.template === 'minimal';
   const isBold = theme.template === 'bold';
   const isNeo = theme.template === 'neo';
   const isPortfolio = theme.template === 'portfolio';
-  const fontFamily = isHarvard ? FONTS.serif : FONTS.sansSerif;
-  const fontFamilyBold = isHarvard ? FONTS.serifBold : FONTS.sansSerifBold;
+  const isCorporate = theme.template === 'corporate';
+  const isCreative = theme.template === 'creative';
+  const isElegant = theme.template === 'elegant';
+  const isModern = theme.template === 'modern';
+  
+  // Font family (Harvard and Elegant use serif)
+  const fontFamily = (isHarvard || isElegant) ? FONTS.serif : FONTS.sansSerif;
+  const fontFamilyBold = (isHarvard || isElegant) ? FONTS.serifBold : FONTS.sansSerifBold;
   const typography = theme.typography || DEFAULT_TYPOGRAPHY;
   const scale = GLOBAL_FONT_SCALES[theme.fontSize];
 
@@ -231,23 +240,26 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ data }) => {
   const styles = StyleSheet.create({
     page: {
       fontFamily,
-      padding: isPortfolio ? 0 : 40,
+      padding: isPortfolio ? 0 : (isCorporate || isModern ? 35 : 40),
       fontSize: fontSize.itemBody,
       color: '#1f2937',
       backgroundColor: '#ffffff',
     },
     header: {
-      marginBottom: 16,
-      paddingBottom: 12,
-      borderBottomWidth: isBold ? 3 : 2,
+      marginBottom: isCreative ? 20 : 16,
+      paddingBottom: isTech ? 14 : 12,
+      borderBottomWidth: isBold ? 3 : (isTech || isModern ? 2 : (isCorporate ? 1.5 : 2)),
       borderBottomColor: theme.color,
       textAlign: isMinimal ? 'center' : 'left',
+      backgroundColor: isTech ? `${theme.color}15` : 'transparent',
+      padding: isTech ? 12 : 0,
     },
     name: {
-      fontSize: isBold ? Math.round(fontSize.name * 1.15) : fontSize.name,
+      fontSize: isBold ? Math.round(fontSize.name * 1.15) : (isElegant || isCreative ? Math.round(fontSize.name * 1.1) : fontSize.name),
       fontFamily: fontFamilyBold,
-      color: theme.color,
+      color: (isTech || isModern) ? '#1f2937' : theme.color,
       marginBottom: 4,
+      letterSpacing: isElegant ? 2 : (isCorporate ? 1 : 0),
     },
     summary: {
       fontSize: fontSize.summary,
@@ -292,13 +304,13 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ data }) => {
     sectionTitle: {
       fontSize: fontSize.sectionHeading,
       fontFamily: fontFamilyBold,
-      color: isNeo ? '#111827' : theme.color,
-      marginBottom: 8,
-      textTransform: 'uppercase',
-      letterSpacing: 1,
-      borderBottomWidth: isHarvard ? 1 : 0,
-      borderBottomColor: '#d1d5db',
-      paddingBottom: isHarvard ? 2 : 0,
+      color: (isNeo || isModern) ? '#111827' : theme.color,
+      marginBottom: isCreative ? 10 : 8,
+      textTransform: (isCorporate || isElegant) ? 'capitalize' : 'uppercase',
+      letterSpacing: isElegant ? 2 : (isCorporate ? 0.5 : 1),
+      borderBottomWidth: isHarvard ? 1 : (isCorporate ? 0.5 : 0),
+      borderBottomColor: isCorporate ? theme.color : '#d1d5db',
+      paddingBottom: (isHarvard || isCorporate) ? 2 : 0,
     },
     sectionTitleNeoWrap: {
       flexDirection: 'row',
@@ -413,8 +425,8 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ data }) => {
 
   const renderSection = (section: any) => (
     <View key={section.id} style={styles.section} wrap>
-      <View style={isNeo ? styles.sectionTitleNeoWrap : undefined}>
-        {isNeo ? <View style={styles.sectionTitleNeoBar} /> : null}
+      <View style={(isNeo || isModern) ? styles.sectionTitleNeoWrap : undefined}>
+        {(isNeo || isModern) ? <View style={styles.sectionTitleNeoBar} /> : null}
         <Text style={styles.sectionTitle}>{section.title}</Text>
       </View>
 
@@ -431,9 +443,6 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ data }) => {
               {skill}
             </Text>
           ))}
-          {!section.items[0]?.skills?.length && !section.items[0]?.skillsWithLevels?.length && (
-            <Text style={[styles.skillTag, styles.placeholder]}>Add your skills</Text>
-          )}
         </View>
       ) : section.type === 'custom' && section.fieldDefinitions?.length ? (
         section.items.length > 0 ? (
@@ -505,9 +514,7 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ data }) => {
               </View>
             );
           })
-        ) : (
-          <Text style={[styles.itemDescription, styles.placeholder]}>Add items to this section</Text>
-        )
+        ) : null
       ) : section.items.length > 0 ? (
         section.items.map((item: any) => (
           <View key={item.id} style={styles.item} wrap>
@@ -535,17 +542,14 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ data }) => {
                 </Text>
               )}
             </View>
-            {(item.description || section.type === 'experience') && (
-              <Text style={[styles.itemDescription, ...(item.description ? [] : [styles.placeholder])]}
-              >
-                {item.description || 'Description of your role and achievements...'}
+            {item.description && (
+              <Text style={styles.itemDescription}>
+                {item.description}
               </Text>
             )}
           </View>
         ))
-      ) : (
-        <Text style={[styles.itemDescription, styles.placeholder]}>Add items to this section</Text>
-      )}
+      ) : null}
     </View>
   );
 
@@ -638,9 +642,6 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ data }) => {
                         {skill}
                       </Text>
                     ))}
-                    {!skillsSection.items[0]?.skills?.length && !skillsSection.items[0]?.skillsWithLevels?.length && (
-                      <Text style={[styles.skillTag, styles.placeholder]}>Add your skills</Text>
-                    )}
                   </View>
                 </View>
               ) : null}
