@@ -1,10 +1,12 @@
-﻿# Resume Builder - Changelog
+﻿# Resume Builder - Updates
 
 All notable changes to this project will be documented in this file.
 
+> **Note**: This project uses Alpha/Beta versioning. Earlier versions were Alpha builds for testing. The first public Beta release is **Beta 0.1**. No stable (1.0) release yet.
+
 ---
 
-## [3.0.0] - 2026-01-09
+## [Beta 0.1] - 2026-01-09
 
 ### Added
 - Add MIT License to the project
@@ -17,7 +19,7 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## [2.5.0] - 2024-12-19
+## [Alpha 0.7] - 2024-12-19
 
 ### Added
 - **SVG Icons in PDF Export**: Replaced text labels (Email:, Phone:, etc.) with actual SVG icons in exported PDF using @react-pdf/renderer's Svg and Path components
@@ -35,7 +37,8 @@ All notable changes to this project will be documented in this file.
 - Icon size scales dynamically with font size settings for visual consistency
 
 ---
-## [2.4.0] - 2024-12-19
+
+## [Alpha 0.6] - 2024-12-19
 
 ### Fixed
 - **PDF Contact Labels**: Added text-based labels (Email:, Phone:, LinkedIn:, GitHub:, Web:, Location:, Link:) before contact info in exported PDF since @react-pdf/renderer doesn't support SVG icons
@@ -47,7 +50,8 @@ All notable changes to this project will be documented in this file.
 - Additional links in PDF now also show "Link:" prefix for consistency
 
 ---
-## [2.3.0] - 2024-12-19
+
+## [Alpha 0.5] - 2024-12-19
 
 ### Added
 - **Custom Section Field Types**: Custom sections now support multiple field types:
@@ -83,7 +87,7 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## [2.2.0] - 2024-12-18
+## [Alpha 0.4] - 2024-12-18
 
 ### Added
 - **Zoom & Pan Controls**: Added zoom in/out buttons, percentage display, and reset button to preview
@@ -102,7 +106,7 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## [2.1.0] - 2024-12-17
+## [Alpha 0.3] - 2024-12-17
 
 ### Added
 - **Dark Mode Toggle**: System-wide dark mode support with toggle button
@@ -119,7 +123,7 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## [2.0.0] - 2024-12-16
+## [Alpha 0.2] - 2024-12-16
 
 ### Added
 - **Link Icon Auto-Detection**: Automatically detects platform from URL and shows appropriate icon
@@ -137,7 +141,7 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## [1.0.0] - 2024-12-15
+## [Alpha 0.1] - 2024-12-15
 
 ### Initial Release
 - **Three Templates**: Harvard (classic serif), Tech (modern sans-serif), Minimal (clean centered)
