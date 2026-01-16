@@ -71,6 +71,7 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
             {...attributes}
             {...listeners}
             className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors p-1 rounded-none hover:bg-muted"
+            aria-label="Drag to reorder section"
           >
             <GripVertical className="w-5 h-5" />
           </button>
@@ -96,6 +97,8 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
                 : 'hover:bg-muted text-muted-foreground'
             )}
             title="Font size settings"
+            aria-label="Toggle font size settings"
+            aria-expanded={showSettings}
           >
             <Settings2 className="w-4 h-4" />
           </button>
@@ -109,6 +112,8 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
                 : 'text-muted-foreground hover:bg-muted'
             )}
             title={section.isVisible ? 'Hide section' : 'Show section'}
+            aria-label={section.isVisible ? 'Hide section from preview' : 'Show section in preview'}
+            aria-pressed={section.isVisible}
           >
             {section.isVisible ? (
               <Eye className="w-4 h-4" />
@@ -121,6 +126,7 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
             onClick={() => removeSection(section.id)}
             className="p-2 hover:bg-destructive/10 rounded-none transition-colors text-destructive"
             title="Remove section"
+            aria-label="Remove this section"
           >
             <Trash2 className="w-4 h-4" />
           </button>
@@ -128,6 +134,8 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
           <button
             onClick={() => setIsExpanded(!isExpanded)}
             className="p-2 hover:bg-muted rounded-none transition-colors text-muted-foreground"
+            aria-label={isExpanded ? 'Collapse section' : 'Expand section'}
+            aria-expanded={isExpanded}
           >
             {isExpanded ? (
               <ChevronUp className="w-4 h-4" />

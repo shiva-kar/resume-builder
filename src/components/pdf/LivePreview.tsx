@@ -33,10 +33,16 @@ import {
   Section,
 } from '@/lib/schema';
 import { cn } from '@/lib/utils';
+import {
+  formatDateRange as formatDate,
+  ensureProtocol,
+  formatUrlDisplay,
+  isUrl,
+  TYPOGRAPHY_PX as TYPO_PX,
+} from '@/lib/formatting';
+import { getTemplateBackground } from '@/lib/templates';
 
-// ============================================================================
-// ICON MAPPING
-// ============================================================================
+// Icon mapping
 
 const PreviewIcons: Record<LinkIconType | string, React.FC<{ className?: string; style?: React.CSSProperties }>> = {
   linkedin: Linkedin,
@@ -51,43 +57,6 @@ const PreviewIcons: Record<LinkIconType | string, React.FC<{ className?: string;
   stackoverflow: Layers,
   portfolio: Globe,
   website: Link2,
-};
-
-// ============================================================================
-// HELPER FUNCTIONS
-// ============================================================================
-
-const formatDate = (start?: string, end?: string, current?: boolean): string => {
-  if (!start) return '';
-  const formatMonth = (dateStr: string) => {
-    const [year, month] = dateStr.split('-');
-    if (!year || !month) return dateStr;
-    const date = new Date(parseInt(year), parseInt(month) - 1);
-    return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-  };
-  const startFormatted = formatMonth(start);
-  const endFormatted = current ? 'Present' : end ? formatMonth(end) : '';
-  return endFormatted ? `${startFormatted} - ${endFormatted}` : startFormatted;
-};
-
-// Ensure URL has protocol
-const ensureProtocol = (url: string): string => {
-  if (!url) return '';
-  if (/^https?:\/\//i.test(url)) return url;
-  if (url.includes('@') && !url.includes('/')) return `mailto:${url}`;
-  return `https://${url}`;
-};
-
-// Format URL for display (strip protocol)
-const formatUrlDisplay = (url: string): string => {
-  if (!url) return '';
-  return url.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '');
-};
-
-// Detect if a string is a URL
-const isUrl = (str: string): boolean => {
-  if (!str) return false;
-  return /^(https?:\/\/|www\.)|(\.(com|org|net|io|dev|me|co|app|design))/i.test(str);
 };
 
 // Render text with clickable links
@@ -125,17 +94,7 @@ const RenderWithLinks: React.FC<{ text: string; className?: string; style?: Reac
   );
 };
 
-// Typography pixel sizes
-const TYPO_PX = {
-  sm: { name: 18, headers: 11, body: 9 },
-  md: { name: 22, headers: 13, body: 10 },
-  lg: { name: 26, headers: 15, body: 11 },
-  xl: { name: 30, headers: 17, body: 12 },
-};
-
-// ============================================================================
-// CONTACT ITEM COMPONENT
-// ============================================================================
+// Contact item component
 
 interface ContactItemProps {
   icon?: React.FC<{ className?: string; style?: React.CSSProperties }>;
@@ -1080,12 +1039,9 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ data, className }) => 
     );
   };
 
-  // ============================================================================
-  // ELEGANT LAYOUT - Centered serif with generous spacing
-  // ============================================================================
-
+  // Elegant layout - Centered serif with generous spacing
   const renderElegantLayout = () => (
-    <div ref={contentRef} className="w-full h-full px-12 py-10 font-serif">
+    <div ref={contentRef} className="w-full h-full px-12 py-10 font-serif" style={{ backgroundColor: getTemplateBackground('elegant') }}>
       {renderElegantHeader()}
       <div className="max-w-2xl mx-auto space-y-8">
         {visibleSections.map((section) => (
@@ -1100,9 +1056,7 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ data, className }) => 
     </div>
   );
 
-  // ============================================================================
-  // MODERN LAYOUT - Clean lines with accent bars
-  // ============================================================================
+  // Modern layout - Clean lines with accent bars
 
   const renderModernLayout = () => {
     const skillsSection = visibleSections.find((s) => s.type === 'skills');
@@ -1249,12 +1203,13 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ data, className }) => 
         onWheel={handleWheel}
       >
         <div
-          className="mx-auto bg-white border border-border shadow-sm overflow-hidden origin-center transition-transform duration-75"
+          className="mx-auto border border-border shadow-sm overflow-hidden origin-center transition-transform duration-75"
           style={{
             width: '100%',
             maxWidth: '595px',
             aspectRatio: aspectRatio,
             transform: `scale(${zoom}) translate(${pan.x / zoom}px, ${pan.y / zoom}px)`,
+            backgroundColor: getTemplateBackground(theme.template),
           }}
         >
           {renderLayout()}

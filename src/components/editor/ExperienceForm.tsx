@@ -109,6 +109,7 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ section }) => {
             <button
               onClick={() => removeSectionItem(section.id, item.id)}
               className="p-2 hover:bg-destructive/10 rounded-none transition-colors text-destructive ml-2"
+              aria-label="Remove this experience entry"
             >
               <Trash2 className="w-4 h-4" />
             </button>

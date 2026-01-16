@@ -111,9 +111,10 @@ export const SkillsForm: React.FC<SkillsFormProps> = ({ section }) => {
                   }
                   className={cn(
                     'flex-1 px-2 py-1 rounded-none border-none bg-transparent',
-                    'text-sm text-foreground focus:outline-none'
+                    'text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20'
                   )}
                   placeholder="e.g. Python, Project Management"
+                  aria-label="Skill name"
                 />
                 <select
                   value={skill.level}
@@ -122,6 +123,7 @@ export const SkillsForm: React.FC<SkillsFormProps> = ({ section }) => {
                       level: e.target.value as SkillLevel,
                     })
                   }
+                  aria-label={`Proficiency level for ${skill.name}`}
                   className={cn(
                     'px-2 py-1 rounded-none text-xs font-medium border-none',
                     levelColors[skill.level]
@@ -136,6 +138,7 @@ export const SkillsForm: React.FC<SkillsFormProps> = ({ section }) => {
                 <button
                   onClick={() => removeSkillWithLevel(section.id, skillsItem.id, idx)}
                   className="p-1 hover:bg-destructive/10 rounded-none text-destructive"
+                  aria-label={`Remove ${skill.name} skill`}
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -165,6 +168,7 @@ export const SkillsForm: React.FC<SkillsFormProps> = ({ section }) => {
                 <button
                   onClick={() => removeSkill(idx)}
                   className="hover:bg-background rounded-none p-0.5 transition-colors"
+                  aria-label={`Remove ${skill} skill`}
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -186,6 +190,7 @@ export const SkillsForm: React.FC<SkillsFormProps> = ({ section }) => {
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="e.g. JavaScript, Leadership, AWS..."
+            aria-label="New skill name"
             className={cn(
               'flex-1 px-3 py-2 rounded-none',
               'border border-border bg-background',
@@ -196,6 +201,7 @@ export const SkillsForm: React.FC<SkillsFormProps> = ({ section }) => {
           <select
             value={selectedLevel}
             onChange={(e) => setSelectedLevel(e.target.value as SkillLevel)}
+            aria-label="Skill proficiency level"
             className={cn(
               'px-3 py-2 rounded-none border border-border bg-background',
               'text-sm focus:outline-none focus:ring-2 focus:ring-primary/20'

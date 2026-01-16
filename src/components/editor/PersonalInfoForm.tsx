@@ -84,12 +84,14 @@ export const PersonalInfoForm: React.FC = () => {
               placeholder="Your Full Name"
               value={personalInfo.fullName}
               onChange={(e) => updatePersonalInfo({ fullName: e.target.value })}
+              autoComplete="name"
             />
             <FormInput
               label="Job Title / Headline"
               placeholder="e.g. Senior Software Engineer"
               value={personalInfo.summary || ''}
               onChange={(e) => updatePersonalInfo({ summary: e.target.value })}
+              autoComplete="organization-title"
             />
           </div>
 
@@ -101,6 +103,7 @@ export const PersonalInfoForm: React.FC = () => {
               placeholder="your.email@example.com"
               value={personalInfo.email}
               onChange={(e) => updatePersonalInfo({ email: e.target.value })}
+              autoComplete="email"
             />
             <FormInput
               label="Phone"
@@ -108,6 +111,7 @@ export const PersonalInfoForm: React.FC = () => {
               placeholder="+1 (555) 000-0000"
               value={personalInfo.phone}
               onChange={(e) => updatePersonalInfo({ phone: e.target.value })}
+              autoComplete="tel"
             />
           </div>
 
@@ -118,12 +122,15 @@ export const PersonalInfoForm: React.FC = () => {
               placeholder="City, Country"
               value={personalInfo.location}
               onChange={(e) => updatePersonalInfo({ location: e.target.value })}
+              autoComplete="address-level2"
             />
             <FormInput
               label="Website"
+              type="url"
               placeholder="yourportfolio.com"
               value={personalInfo.website || ''}
               onChange={(e) => updatePersonalInfo({ website: e.target.value })}
+              autoComplete="url"
             />
           </div>
 
@@ -159,6 +166,7 @@ export const PersonalInfoForm: React.FC = () => {
                   'text-xs text-primary hover:text-primary/80',
                   'flex items-center gap-1 transition-colors'
                 )}
+                aria-label="Add a new link"
               >
                 <Plus className="w-3 h-3" />
                 Add Link
@@ -188,6 +196,7 @@ export const PersonalInfoForm: React.FC = () => {
                           'cursor-pointer text-transparent'
                         )}
                         title="Select icon"
+                        aria-label="Select link icon type"
                       >
                         {Object.entries(LINK_ICONS).map(([key, { label }]) => (
                           <option key={key} value={key} className="text-foreground bg-background">
@@ -195,7 +204,7 @@ export const PersonalInfoForm: React.FC = () => {
                           </option>
                         ))}
                       </select>
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none" aria-hidden="true">
                         <IconComponent className="w-5 h-5 text-muted-foreground" />
                       </div>
                     </div>
@@ -206,12 +215,15 @@ export const PersonalInfoForm: React.FC = () => {
                       value={link.url}
                       onChange={(e) => handleUrlChange(link.id, e.target.value)}
                       className="flex-1"
+                      type="url"
+                      autoComplete="url"
                     />
 
                     {/* Delete Button */}
                     <button
                       onClick={() => removeLink(link.id)}
                       className="p-2 hover:bg-destructive/10 rounded-none transition-colors text-destructive"
+                      aria-label="Remove this link"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>

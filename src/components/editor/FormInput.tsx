@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useCallback } from 'react';
+import React, { useRef, useCallback, useId } from 'react';
 import { List, Bold, Italic, Type } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -10,16 +10,23 @@ interface FormInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 }
 
 export const FormInput = React.forwardRef<HTMLInputElement, FormInputProps>(
-  ({ label, error, className, ...props }, ref) => {
+  ({ label, error, className, id: providedId, ...props }, ref) => {
+    const generatedId = useId();
+    const inputId = providedId || generatedId;
+
     return (
       <div className="space-y-1.5">
         {label && (
-          <label className="text-sm font-medium text-muted-foreground">
+          <label
+            htmlFor={inputId}
+            className="text-sm font-medium text-muted-foreground"
+          >
             {label}
           </label>
         )}
         <input
           ref={ref}
+          id={inputId}
           className={cn(
             'w-full px-3 py-2 border border-border rounded-none',
             'bg-background text-foreground',
@@ -31,7 +38,7 @@ export const FormInput = React.forwardRef<HTMLInputElement, FormInputProps>(
           )}
           {...props}
         />
-        {error && <p className="text-xs text-destructive">{error}</p>}
+        {error && <p className="text-xs text-destructive" role="alert">{error}</p>}
       </div>
     );
   }
@@ -51,8 +58,10 @@ interface FormTextareaProps
 export const FormTextarea = React.forwardRef<
   HTMLTextAreaElement,
   FormTextareaProps
->(({ label, error, autoResize = true, showBulletHelper = true, showRichTextToolbar = true, className, onChange, value, ...props }, ref) => {
+>(({ label, error, autoResize = true, showBulletHelper = true, showRichTextToolbar = true, className, onChange, value, id: providedId, ...props }, ref) => {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const generatedId = useId();
+  const textareaId = providedId || generatedId;
 
   // Combine refs
   const setRefs = useCallback((node: HTMLTextAreaElement | null) => {
@@ -182,6 +191,7 @@ export const FormTextarea = React.forwardRef<
       type="button"
       onClick={onClick}
       title={label}
+      aria-label={label}
       className={cn(
         'p-1 rounded hover:bg-muted transition-colors',
         'text-muted-foreground hover:text-foreground'
@@ -195,24 +205,28 @@ export const FormTextarea = React.forwardRef<
     <div className="space-y-1.5">
       <div className="flex justify-between items-center">
         {label && (
-          <label className="text-sm font-medium text-muted-foreground">
+          <label
+            htmlFor={textareaId}
+            className="text-sm font-medium text-muted-foreground"
+          >
             {label}
           </label>
         )}
         {(showBulletHelper || showRichTextToolbar) && (
-          <div className="flex items-center gap-0.5 bg-muted/30 rounded px-1 py-0.5">
+          <div className="flex items-center gap-0.5 bg-muted/30 rounded px-1 py-0.5" role="toolbar" aria-label="Text formatting">
             {showRichTextToolbar && (
               <>
                 <ToolbarButton onClick={addBold} icon={<Bold className="w-3.5 h-3.5" />} label="Bold (**text**)" />
                 <ToolbarButton onClick={addItalic} icon={<Italic className="w-3.5 h-3.5" />} label="Italic (_text_)" />
                 <ToolbarButton onClick={addHeader} icon={<Type className="w-3.5 h-3.5" />} label="Header (## text)" />
-                <div className="w-px h-4 bg-border mx-1" />
+                <div className="w-px h-4 bg-border mx-1" aria-hidden="true" />
               </>
             )}
             {showBulletHelper && (
               <button
                 type="button"
                 onClick={addBullet}
+                aria-label="Add bullet point"
                 className={cn(
                   'text-xs flex items-center gap-1 px-1.5 py-0.5 rounded',
                   'text-muted-foreground hover:text-foreground hover:bg-muted',
@@ -228,6 +242,7 @@ export const FormTextarea = React.forwardRef<
       </div>
       <textarea
         ref={setRefs}
+        id={textareaId}
         value={value}
         className={cn(
           'w-full px-3 py-2 border border-border rounded-none',
@@ -241,7 +256,7 @@ export const FormTextarea = React.forwardRef<
         onChange={handleChange}
         {...props}
       />
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      {error && <p className="text-xs text-destructive" role="alert">{error}</p>}
     </div>
   );
 });
@@ -255,16 +270,23 @@ interface FormSelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> 
 }
 
 export const FormSelect = React.forwardRef<HTMLSelectElement, FormSelectProps>(
-  ({ label, error, options, className, ...props }, ref) => {
+  ({ label, error, options, className, id: providedId, ...props }, ref) => {
+    const generatedId = useId();
+    const selectId = providedId || generatedId;
+
     return (
       <div className="space-y-1.5">
         {label && (
-          <label className="text-sm font-medium text-muted-foreground">
+          <label
+            htmlFor={selectId}
+            className="text-sm font-medium text-muted-foreground"
+          >
             {label}
           </label>
         )}
         <select
           ref={ref}
+          id={selectId}
           className={cn(
             'w-full px-3 py-2 border border-border rounded-none',
             'bg-background text-foreground',
@@ -281,7 +303,7 @@ export const FormSelect = React.forwardRef<HTMLSelectElement, FormSelectProps>(
             </option>
           ))}
         </select>
-        {error && <p className="text-xs text-destructive">{error}</p>}
+        {error && <p className="text-xs text-destructive" role="alert">{error}</p>}
       </div>
     );
   }
@@ -295,11 +317,15 @@ interface FormCheckboxProps
 }
 
 export const FormCheckbox = React.forwardRef<HTMLInputElement, FormCheckboxProps>(
-  ({ label, className, ...props }, ref) => {
+  ({ label, className, id: providedId, ...props }, ref) => {
+    const generatedId = useId();
+    const checkboxId = providedId || generatedId;
+
     return (
-      <label className="flex items-center gap-2 cursor-pointer">
+      <label htmlFor={checkboxId} className="flex items-center gap-2 cursor-pointer">
         <input
           ref={ref}
+          id={checkboxId}
           type="checkbox"
           className={cn(
             'w-4 h-4 rounded-none border-border',

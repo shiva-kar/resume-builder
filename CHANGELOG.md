@@ -1,6 +1,12 @@
 # Changelog
 
-## [3.1.1] - 2026-01-10
+All notable changes to Resume Builder will be documented in this file.
+
+> **Note**: This project uses Alpha/Beta versioning. Earlier versions were Alpha builds for testing. The first public Beta release is **Beta 0.1**. No stable (1.0) release yet.
+
+---
+
+## [Beta 0.3] - 2026-01-10
 
 ### Added
 - Multi-LLM support with 40+ AI models across 4 providers
@@ -15,7 +21,7 @@
 
 ---
 
-## [3.1.0] - 2026-01-10
+## [Beta 0.2] - 2026-01-10
 
 ### Added
 - Improved resume preview experience with enhanced template consistency
@@ -46,7 +52,7 @@ This release is open for community contributions to improve PDF export accuracy,
 
 ---
 
-## [3.0.0] - 2026-01-09
+## [Beta 0.1] - 2026-01-09
 
 ### Added
 - Add MIT License to the project
@@ -59,15 +65,7 @@ This release is open for community contributions to improve PDF export accuracy,
 
 ---
 
-
-All notable changes to Resume Builder will be documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
----
-
-## [2.5.0] - 2024-12-19
+## [Alpha 0.7] - 2024-12-19
 
 ### Added
 - **SVG Icons in PDF Export**: Professional icon set with 7 custom SVG components
@@ -87,7 +85,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [2.4.0] - 2024-12-19
+## [Alpha 0.6] - 2024-12-19
 
 ### Fixed
 - PDF Contact Labels: Added text-based labels before contact info
@@ -99,7 +97,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [2.3.0] - 2024-12-19
+## [Alpha 0.5] - 2024-12-19
 
 ### Added
 - Custom Section Field Types: text, textarea, date, dateRange, link, tags
@@ -107,7 +105,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [2.2.0] - 2024-12-18
+## [Alpha 0.4] - 2024-12-18
 
 ### Added
 - Drag & Drop section reordering with @dnd-kit
@@ -116,7 +114,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [2.1.0] - 2024-12-17
+## [Alpha 0.3] - 2024-12-17
 
 ### Added
 - Real-time PDF preview with @react-pdf/renderer
@@ -125,7 +123,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [2.0.0] - 2024-12-16
+## [Alpha 0.2] - 2024-12-16
 
 ### Added
 - Complete UI redesign with bento grid layout
@@ -134,10 +132,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.0.0] - 2024-12-15
+## [Alpha 0.1] - 2024-12-15
 
 ### Added
 - Initial release
 - Basic resume builder functionality
 - Personal info, experience, education sections
 - PDF export capability
+
+---
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).

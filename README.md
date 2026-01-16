@@ -1,6 +1,7 @@
 # Resume Builder
 
-[![Version](https://img.shields.io/badge/Version-3.1.0-blue?style=for-the-badge)](https://github.com/shiva-kar/resume-builder/releases)
+[![Version](https://img.shields.io/badge/Version-Beta%200.3-blue?style=for-the-badge)](https://github.com/shiva-kar/resume-builder/releases)
+[![Status](https://img.shields.io/badge/Status-Beta-orange?style=for-the-badge)](https://github.com/shiva-kar/resume-builder/releases)
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-green?style=for-the-badge&logo=github)](https://shiva-kar.github.io/resume-builder/)
 [![Next.js](https://img.shields.io/badge/Next.js-14-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
@@ -8,7 +9,9 @@
 [![Electron](https://img.shields.io/badge/Electron-39-47848F?style=for-the-badge&logo=electron)](https://www.electronjs.org/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
-A sophisticated, SaaS-level resume and portfolio builder featuring real-time DOM preview, 10 professional templates, drag-and-drop sections, and cross-platform desktop support.
+A resume builder with real-time preview, 10 templates, drag-and-drop sections, and desktop support.
+
+> **Built with AI assistance.** See [AI_WORKFLOW.md](AI_WORKFLOW.md) for details.
 
 ---
 
@@ -28,8 +31,8 @@ A sophisticated, SaaS-level resume and portfolio builder featuring real-time DOM
 | Platform | Download | Description |
 |----------|----------|-------------|
 | 🌐 **Web App** | [Launch Online](https://shiva-kar.github.io/resume-builder/) | No installation required |
-| 🖥️ **Windows Installer** | [Resume-Builder-3.1.0-win.exe](https://github.com/shiva-kar/resume-builder/releases/latest) | Full installation with uninstaller |
-| 🖥️ **Windows Portable** | [Resume-Builder-3.1.0-Portable.exe](https://github.com/shiva-kar/resume-builder/releases/latest) | No installation, run anywhere |
+| 🖥️ **Windows Installer** | [Resume-Builder-Beta-0.3-win.exe](https://github.com/shiva-kar/resume-builder/releases/latest) | Full installation with uninstaller |
+| 🖥️ **Windows Portable** | [Resume-Builder-Beta-0.3-Portable.exe](https://github.com/shiva-kar/resume-builder/releases/latest) | No installation, run anywhere |
 | 📦 **Source Code** | [Clone Repository](https://github.com/shiva-kar/resume-builder) | Build from source |
 
 ---
@@ -78,6 +81,33 @@ A sophisticated, SaaS-level resume and portfolio builder featuring real-time DOM
 - Offline functionality
 - Fast startup
 - Portable version available
+
+---
+
+## 🧠 How This Was Built
+
+I built this project using AI tools (like GitHub Copilot and Claude) inside VS Code. Instead of writing every line manually, I:
+
+- Wrote clear prompts to describe what I needed
+- Let AI generate code, then reviewed and tested it
+- Fixed issues by explaining the problem to AI
+- Learned from the code AI produced
+
+This is how I approach most of my projects — using AI as a tool to build things faster while learning along the way.
+
+---
+
+## ⚙️ Development Approach
+
+I'm a student learning to code, and I use AI tools to help me build projects that would otherwise take much longer.
+
+My workflow:
+- Describe what I want to build
+- Get AI to generate code
+- Test and fix any issues
+- Learn from the process
+
+This project is a good example of what's possible when you combine basic programming knowledge with AI assistance.
 
 ---
 
@@ -144,13 +174,13 @@ npm run electron:build:portable
 # Full release (prompts for confirmation)
 npm run release
 
-# Quick patch release (3.0.0 → 3.0.1)
+# Quick patch release (Beta 0.3 → Beta 0.4)
 npm run release:quick
 
-# Minor release (3.0.0 → 3.1.0)
+# Minor release (Beta 0.2 → Beta 0.3)
 npm run release:minor
 
-# Major release (3.0.0 → 4.0.0)
+# Major release (Beta → Stable 1.0)
 npm run release:major
 ```
 
@@ -244,54 +274,49 @@ Create custom sections with various field types:
 
 ---
 
+## � Release Status
+
+This project is currently in **Beta**.
+
+| Phase | Versions | Status |
+|-------|----------|--------|
+| **Alpha** | Alpha 0.1 - Alpha 0.7 | ✅ Completed |
+| **Beta** | Beta 0.1 - Beta 0.3 | 🚧 Current |
+| **Stable** | 1.0+ | ⏳ Planned |
+
+Earlier versions were released as **Alpha** builds for testing and experimentation.
+
+The first public Beta release is **Beta 0.1**.
+
+No stable (1.0) release yet.
+
+---
+
 ## 📜 Changelog
 
-### [3.0.0] - 2026-01-10
+See [CHANGELOG.md](CHANGELOG.md) for full version history.
 
-#### 🎉 Major Release
+### Recent Releases
 
-- **10 Unique Template Renderers** - Harvard, Tech, Minimal, Bold, Neo, Portfolio, Corporate, Creative, Elegant, Modern
-- **Dark Mode Theme Selector** - Redesigned with unique visual identities per template
-- **Release Automation** - Fully automated CI/CD pipeline with GitHub Actions
-- **Source Code Link** - Added to app footer
-- **Windows Desktop App** - Electron-based with installer and portable versions
+#### [Beta 0.3] - 2026-01-10
+- Multi-LLM support with 40+ AI models across 4 providers
+- OpenAI, Anthropic, Groq, and Mistral integration
+- Corrected model names with verified API model IDs
 
-### [2.5.0] - 2024-12-19
+#### [Beta 0.2] - 2026-01-10
+- Improved template consistency between Preview and PDF
+- Auto-generate resume feature for HR teams
+- Fixed rendering across all 10 templates
 
-- **SVG Icons in PDF Export** - Professional icon set with 7 custom SVG components
-- **Dark Mode Theme Selector** - Template-specific colors and glow effects
-- **PDF Contact Improvements** - Clickable links with proper protocols
+#### [Beta 0.1] - 2026-01-09
+- First Beta release
+- Electron desktop app support
+- MIT License added
 
-### [2.4.0] - 2024-12-19
-
-- **PDF Contact Labels** - Text labels before contact info
-- **Custom Section Dropdown** - Fixed off-screen positioning
-
-### [2.3.0] - 2024-12-19
-
-- **Custom Section Field Types** - text, textarea, date, dateRange, link, tags
-- **Field Templates** - Basic, Project, Certification presets
-
-### [2.2.0] - 2024-12-18
-
-- **Drag & Drop** - Section reordering with @dnd-kit
-- **Per-Section Font Controls** - Individual typography settings
-- **Page Sizes** - A4, Letter, Legal options
-
-### [2.1.0] - 2024-12-17
-
-- **Real-time Preview** - @react-pdf/renderer integration
-- **Dark/Light Mode** - Theme support
-- **Persistent State** - Zustand with localStorage
-
-### [2.0.0] - 2024-12-16
-
-- **UI Redesign** - Bento grid layout with glassmorphism
-- **Multiple Templates** - Professional template options
-
-### [1.0.0] - 2024-12-15
-
-- **Initial Release** - Basic resume builder with PDF export
+#### [Alpha 0.7] - 2024-12-19
+- SVG Icons in PDF Export
+- 10 Unique Template Renderers
+- Dark Mode Theme Selector
 
 ---
 
@@ -310,7 +335,7 @@ Create custom sections with various field types:
 
 ---
 
-## ⚠️ Known Issues (v3.1.0)
+## ⚠️ Known Issues (Beta)
 
 | Issue | Description |
 |-------|-------------|
