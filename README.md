@@ -9,13 +9,9 @@
 [![Electron](https://img.shields.io/badge/Electron-39-47848F?style=for-the-badge&logo=electron)](https://www.electronjs.org/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
-[![AI Assisted](https://img.shields.io/badge/🧠_AI--Assisted_Development-purple?style=for-the-badge)](AI_WORKFLOW.md)
-[![Prompt Driven](https://img.shields.io/badge/⚙️_Prompt--Driven_Workflow-blueviolet?style=for-the-badge)](AI_WORKFLOW.md)
-[![System Oriented](https://img.shields.io/badge/🧩_System--Oriented_Engineering-darkblue?style=for-the-badge)](AI_WORKFLOW.md)
+A resume builder with real-time preview, 10 templates, drag-and-drop sections, and desktop support.
 
-A sophisticated, SaaS-level resume and portfolio builder featuring real-time DOM preview, 10 professional templates, drag-and-drop sections, and cross-platform desktop support.
-
-> **Built using an AI-assisted, prompt-driven development workflow.** See [AI_WORKFLOW.md](AI_WORKFLOW.md) for details.
+> **Built with AI assistance.** See [AI_WORKFLOW.md](AI_WORKFLOW.md) for details.
 
 ---
 
@@ -88,44 +84,30 @@ A sophisticated, SaaS-level resume and portfolio builder featuring real-time DOM
 
 ---
 
-## 🧠 Project Philosophy
+## 🧠 How This Was Built
 
-This project was developed using an AI-assisted, prompt-driven workflow inside VS Code, focusing on:
+I built this project using AI tools (like GitHub Copilot and Claude) inside VS Code. Instead of writing every line manually, I:
 
-| Principle | Description |
-|-----------|-------------|
-| **Clear System Instructions** | Precise, unambiguous directives for AI models |
-| **Iterative Refinement** | Continuous improvement through feedback loops |
-| **Multi-Model Reasoning** | Leveraging different AI capabilities strategically |
-| **Structured Problem Decomposition** | Breaking complex tasks into manageable steps |
-| **Output Verification** | Systematic validation of generated code |
-| **Rapid Prototyping** | Quick iteration from concept to implementation |
+- Wrote clear prompts to describe what I needed
+- Let AI generate code, then reviewed and tested it
+- Fixed issues by explaining the problem to AI
+- Learned from the code AI produced
 
-Rather than relying on traditional manual coding alone, the development process emphasized:
-
-- Precise prompt design
-- Constraint-based instructions
-- Automated refactoring
-- System-level debugging via AI
-- Tool orchestration
-
-This reflects a modern, AI-first development methodology where problem framing and instruction quality drive results.
+This is how I approach most of my projects — using AI as a tool to build things faster while learning along the way.
 
 ---
 
 ## ⚙️ Development Approach
 
-The core strength behind this project is not a single framework or language, but the ability to communicate complex technical intent to AI systems clearly and effectively.
+I'm a student learning to code, and I use AI tools to help me build projects that would otherwise take much longer.
 
-The workflow involved:
+My workflow:
+- Describe what I want to build
+- Get AI to generate code
+- Test and fix any issues
+- Learn from the process
 
-- **Translating product requirements** into structured prompts
-- **Debugging through reasoning chains** rather than trial-and-error
-- **Guiding AI models** through architectural decisions
-- **Refining outputs** through constraint-based instructions
-- **Managing multi-step system behavior** across features
-
-This demonstrates how strong prompt engineering and AI orchestration can be used to build real, production-level software.
+This project is a good example of what's possible when you combine basic programming knowledge with AI assistance.
 
 ---
 
@@ -370,8 +352,6 @@ We are actively working on improving these areas and welcome community contribut
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-> **Note**: This project follows an AI-assisted development workflow. See [AI_WORKFLOW.md](AI_WORKFLOW.md) for contribution guidelines that align with the project's methodology.
-
 ### Priority Areas for Contribution
 
 We especially welcome contributions for:
@@ -415,8 +395,4 @@ Copyright (c) 2025-2026 **Shiva Kar**
 
 <p align="center">
   Made with ❤️ by <a href="https://github.com/shiva-kar">Shiva Kar</a>
-</p>
-
-<p align="center">
-  <em>🧠 Built using AI-assisted, prompt-driven development</em>
 </p>
