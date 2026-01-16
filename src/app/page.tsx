@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -123,7 +123,7 @@ interface DesignSettingsPanelProps {
   onPreviewColorChange?: (color: string | null) => void;
 }
 
-const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = ({ onPreviewColorChange }) => {
+const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPreviewColorChange }) => {
   const theme = useTheme();
   const { updateTheme, updateTypography } = useResumeStore();
   const [isOpen, setIsOpen] = useState(true);
@@ -459,13 +459,15 @@ const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = ({ onPreviewColo
       )}
     </div>
   );
-};
+});
+
+DesignSettingsPanel.displayName = 'DesignSettingsPanel';
 
 // ============================================================================
 // SECTION MANAGER PANEL
 // ============================================================================
 
-const SectionManagerPanel: React.FC = () => {
+const SectionManagerPanel: React.FC = memo(() => {
   const sections = useSections();
   const { addSection, addCustomSection, removeSection, toggleSectionVisibility } = useResumeStore();
   const [isOpen, setIsOpen] = useState(false);
@@ -589,7 +591,9 @@ const SectionManagerPanel: React.FC = () => {
       )}
     </div>
   );
-};
+});
+
+SectionManagerPanel.displayName = 'SectionManagerPanel';
 
 // ============================================================================
 // MAIN PAGE COMPONENT
@@ -622,17 +626,17 @@ export default function ResumeBuilderPage() {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  // Handle drag end
-  const handleDragEnd = (event: DragEndEvent) => {
+  // Handle drag end - memoized for stable reference
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
       reorderSections(active.id as string, over.id as string);
     }
-  };
+  }, [reorderSections]);
 
   // Handle PDF export using @react-pdf/renderer.
   // NOTE: This does not capture the Preview DOM/Tailwind CSS; it renders a separate PDF component tree.
-  const handleExport = async () => {
+  const handleExport = useCallback(async () => {
     setIsExporting(true);
     try {
       const blob = await exportToPDF(data);
@@ -645,7 +649,7 @@ export default function ResumeBuilderPage() {
     } finally {
       setIsExporting(false);
     }
-  };
+  }, [data]);
 
   // Hydration fix
   useEffect(() => {
@@ -697,6 +701,7 @@ export default function ResumeBuilderPage() {
                 onClick={toggleDarkMode}
                 className="p-2.5 hover:bg-muted rounded-lg transition-all duration-200 btn-press"
                 title={isDarkMode ? 'Light Mode' : 'Dark Mode'}
+                aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
               >
                 {isDarkMode ? (
                   <Sun className="w-[18px] h-[18px] text-amber-500" />
@@ -714,6 +719,7 @@ export default function ResumeBuilderPage() {
                 }}
                 className="p-2.5 hover:bg-muted rounded-lg transition-all duration-200 text-muted-foreground hover:text-foreground btn-press"
                 title="Start Fresh"
+                aria-label="Reset and start fresh"
               >
                 <RotateCcw className="w-[18px] h-[18px]" />
               </button>
@@ -743,6 +749,8 @@ export default function ResumeBuilderPage() {
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="lg:hidden p-2 hover:bg-muted rounded-lg transition-colors"
+              aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={mobileMenuOpen}
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -755,6 +763,7 @@ export default function ResumeBuilderPage() {
                 <button
                   onClick={toggleDarkMode}
                   className="p-2.5 border border-border rounded-lg hover:bg-muted transition-colors"
+                  aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
                 >
                   {isDarkMode ? <Sun className="w-5 h-5 text-amber-500" /> : <Moon className="w-5 h-5 text-slate-500" />}
                 </button>
@@ -878,6 +887,7 @@ export default function ResumeBuilderPage() {
                   <button
                     onClick={() => setMobilePreview(false)}
                     className="lg:hidden p-1.5 hover:bg-background rounded-md text-foreground transition-colors"
+                    aria-label="Close preview"
                   >
                     <X className="w-4 h-4" />
                   </button>

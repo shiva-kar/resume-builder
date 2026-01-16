@@ -15,53 +15,15 @@ import {
 import type { Style } from "@react-pdf/types";
 import type { ResumeData, Section, SectionItem, TemplateType } from "@/lib/schema";
 import { GLOBAL_FONT_SCALES, DEFAULT_TYPOGRAPHY } from "@/lib/schema";
-
-// Font family mapping for templates
-const TEMPLATE_FONTS: Record<TemplateType, string> = {
-  harvard: 'Times-Roman',    // Serif - classic academic style
-  tech: 'Helvetica',         // Sans - modern tech style
-  minimal: 'Helvetica',      // Sans - clean minimal
-  bold: 'Helvetica',         // Sans - strong presence
-  neo: 'Helvetica',          // Sans - contemporary
-  portfolio: 'Helvetica',    // Sans - creative portfolio
-  corporate: 'Helvetica',    // Sans - professional business
-  creative: 'Helvetica',     // Sans - artistic style
-  elegant: 'Times-Roman',    // Serif - refined typography
-  modern: 'Helvetica',       // Sans - sleek modern
-};
+import { formatDateRange as formatDate, TYPOGRAPHY_PX as TYPO_PX } from "@/lib/formatting";
+import { TEMPLATE_FONTS, getTemplateBackground } from "@/lib/templates";
 
 // Get the appropriate font family for a template
 const getTemplateFont = (template: TemplateType): string => {
   return TEMPLATE_FONTS[template] || 'Helvetica';
 };
 
-// =====================================================
-// SHARED TYPOGRAPHY CONFIGURATION (Matches PreviewCanvas)
-// =====================================================
-
-// Typography pixel sizes - MUST match PreviewCanvas TYPO_PX
-const TYPO_PX = {
-  sm: { name: 18, headers: 11, body: 9 },
-  md: { name: 22, headers: 13, body: 10 },
-  lg: { name: 26, headers: 15, body: 11 },
-  xl: { name: 30, headers: 17, body: 12 },
-};
-
-// Date formatting helper - matches PreviewCanvas
-const formatDate = (start?: string, end?: string, current?: boolean): string => {
-  if (!start) return '';
-  const formatMonth = (dateStr: string) => {
-    const [year, month] = dateStr.split('-');
-    if (!year || !month) return dateStr;
-    const date = new Date(parseInt(year), parseInt(month) - 1);
-    return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-  };
-  const startFormatted = formatMonth(start);
-  const endFormatted = current ? 'Present' : end ? formatMonth(end) : '';
-  return endFormatted ? `${startFormatted} - ${endFormatted}` : startFormatted;
-};
-
-// Helper to compute font sizes from theme
+// Compute font sizes from theme settings
 const getFontSizes = (data: ResumeData) => {
   const typography = data.theme.typography || DEFAULT_TYPOGRAPHY;
   const scale = GLOBAL_FONT_SCALES[data.theme.fontSize] || 1;
@@ -1111,16 +1073,6 @@ const ResumePDF: React.FC<ResumePDFProps> = ({ data, template }) => {
     }
   };
 
-  // Get page style based on template
-  const getPageStyle = () => {
-    const pageStyles = getPageStyles(template);
-    const base = { ...pageStyles.page };
-    if (template === "elegant") {
-      return { ...base, backgroundColor: "#fdfbf7" };
-    }
-    return base;
-  };
-
   // Local section renderer that uses fontSize
   const renderSectionLocal = (section: Section) => {
     if (!section.isVisible) return null;
@@ -1530,17 +1482,26 @@ const ResumePDF: React.FC<ResumePDFProps> = ({ data, template }) => {
   // Get template-specific page styles with proper font family
   const pageStyles = getPageStyles(template);
   const templateFont = getTemplateFont(template);
+  const templateBackground = getTemplateBackground(template);
 
   // Base page style with font family
   const pageStyle: Style = {
     ...pageStyles.page,
-    ...(template === "elegant" ? { backgroundColor: "#fdfbf7" } : {}),
   };
 
   return (
     <Document>
       <Page size="A4" style={pageStyle}>
-        <View style={{ fontFamily: templateFont }}>
+        {/* Full-page background wrapper for template-specific colors */}
+        <View style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: templateBackground
+        }} />
+        <View style={{ fontFamily: templateFont, position: 'relative' }}>
           {renderLayout()}
         </View>
       </Page>

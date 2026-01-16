@@ -69,13 +69,15 @@ const FieldEditor: React.FC<{
         type="text"
         value={field.label}
         onChange={(e) => updateFieldDefinition(sectionId, field.id, { label: e.target.value })}
-        className="flex-1 min-w-0 text-sm bg-transparent border-none outline-none"
+        className="flex-1 min-w-0 text-sm bg-transparent border-none outline-none focus:ring-2 focus:ring-primary/20 rounded-sm"
         placeholder="Field label"
+        aria-label="Field label"
       />
       <select
         value={field.type}
         onChange={(e) => updateFieldDefinition(sectionId, field.id, { type: e.target.value as CustomFieldType })}
-        className="text-xs bg-background border border-border rounded-none px-2 py-1 flex-shrink-0 max-w-[100px]"
+        className="text-xs bg-background border border-border rounded-none px-2 py-1 flex-shrink-0 max-w-[100px] focus:outline-none focus:ring-2 focus:ring-primary/20"
+        aria-label="Field type"
       >
         {CUSTOM_FIELD_TYPES.map((type) => (
           <option key={type} value={type}>
@@ -86,6 +88,7 @@ const FieldEditor: React.FC<{
       <button
         onClick={onRemove}
         className="p-1 hover:bg-destructive/10 rounded-none text-destructive transition-colors flex-shrink-0"
+        aria-label={`Remove ${field.label} field`}
       >
         <X className="w-3 h-3" />
       </button>
@@ -139,8 +142,9 @@ const TagInput: React.FC<{
         value={input}
         onChange={(e) => setInput(e.target.value)}
         onKeyDown={handleKeyDown}
-        className="flex-1 min-w-[100px] text-sm bg-transparent border-none outline-none"
+        className="flex-1 min-w-[100px] text-sm bg-transparent border-none outline-none focus:ring-2 focus:ring-primary/20 rounded-sm"
         placeholder={value.length === 0 ? placeholder : ''}
+        aria-label="Add tag"
       />
     </div>
   );
