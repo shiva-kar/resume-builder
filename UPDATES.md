@@ -6,6 +6,34 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [Beta 0.5.0] - 2026-02-21
+
+### Fixed
+- Skills not rendering in exported PDF
+- Custom sections (Certifications, Projects) not rendering in Preview
+- Certifications/Projects not auto-enabling when added via Build Your Story
+- Markdown formatting lost in PDF export
+- Portfolio template sidebar summary rendered as plain text
+- Bullet list and numbered list formatting in PDF export
+- Font mismatch between Preview and PDF across all templates
+- Template-specific layout mismatches and color inconsistencies
+
+### Improved
+- Export pipeline stability
+- Typography hierarchy consistency
+- Layout alignment across all 10 templates
+- Rich text toolbar with bold, italic, header, and bullet formatting
+- Shared formatting utilities extracted to dedicated modules
+
+### Internal
+- Extracted template config to `src/lib/templates.ts`
+- Extracted formatting utilities to `src/lib/formatting.ts`
+- Reduced code duplication across rendering paths
+- Removed unused dependencies
+- Documentation cleanup
+
+---
+
 ## [Beta 0.1] - 2026-01-09
 
 ### Added

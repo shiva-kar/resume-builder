@@ -6,6 +6,39 @@ All notable changes to Resume Builder will be documented in this file.
 
 ---
 
+## [Beta 0.5.0] - 2026-02-21
+
+### Fixed
+- Skills not rendering in exported PDF (placeholder filter was silently dropping real skills)
+- Custom sections (Certifications, Projects) not rendering in Preview
+- Certifications/Projects not auto-enabling when added via Build Your Story
+- Markdown formatting (bold, italic, headers) lost in PDF export
+- Portfolio template sidebar summary rendered as plain text instead of rich text
+- Bullet list and numbered list formatting in PDF export
+- Font mismatch between Preview and PDF across all 10 templates
+- Template-specific layout mismatches (double-padding, color inconsistencies)
+- Section visibility and content filtering for custom field-based sections
+
+### Improved
+- Export pipeline stability — all section types now render reliably
+- Typography hierarchy consistency between Preview and PDF
+- Layout alignment across Harvard, Tech, Minimal, Bold, Neo, Portfolio, Corporate, Creative, Elegant, Modern templates
+- Section rendering reliability for experience, education, skills, custom, projects, and certifications
+- Rich text toolbar in editor with bold, italic, header, and bullet formatting buttons
+- Shared formatting utilities extracted to dedicated modules
+
+### Internal
+- Extracted template fonts/backgrounds to `src/lib/templates.ts`
+- Extracted date formatting, URL utilities, markdown parsing to `src/lib/formatting.ts`
+- Reduced code duplication in `src/lib/utils.ts`
+- Added `renderSkillsWithLevels()`, `renderFullSkillsSection()`, `renderCustomSectionItem()` to PDF renderer
+- Unified custom/projects/certifications routing in Preview
+- Added `fieldDefinitions` auto-assignment for certifications and projects section types
+- Removed unused dependencies
+- Documentation cleanup
+
+---
+
 ## [Beta 0.3] - 2026-01-10
 
 ### Added

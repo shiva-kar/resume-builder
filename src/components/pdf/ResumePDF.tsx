@@ -13,9 +13,9 @@ import {
   pdf,
 } from "@react-pdf/renderer";
 import type { Style } from "@react-pdf/types";
-import type { ResumeData, Section, SectionItem, TemplateType } from "@/lib/schema";
-import { GLOBAL_FONT_SCALES, DEFAULT_TYPOGRAPHY } from "@/lib/schema";
-import { formatDateRange as formatDate, TYPOGRAPHY_PX as TYPO_PX } from "@/lib/formatting";
+import type { ResumeData, Section, SectionItem, TemplateType, CustomFieldDefinition } from "@/lib/schema";
+import { GLOBAL_FONT_SCALES, DEFAULT_TYPOGRAPHY, SkillWithLevel } from "@/lib/schema";
+import { formatDateRange as formatDate, ensureProtocol, TYPOGRAPHY_PX as TYPO_PX } from "@/lib/formatting";
 import { TEMPLATE_FONTS, getTemplateBackground } from "@/lib/templates";
 
 // Get the appropriate font family for a template
@@ -45,7 +45,7 @@ const getPageStyles = (template: TemplateType) => {
   const fontFamily = getTemplateFont(template);
   return StyleSheet.create({
     page: {
-      padding: 40,
+      padding: 0,
       fontSize: 10,
       fontFamily: fontFamily,
       lineHeight: 1.4,
@@ -573,7 +573,7 @@ const renderElegantHeader = (data: ResumeData, fontSize: FontSizes) => {
   const color = data.theme.color;
   return (
     <View style={{ marginBottom: 20, textAlign: "center" }}>
-      <Text style={{ fontSize: Math.round(fontSize.name * 1.05), fontWeight: "normal", color: "#1f2937", textAlign: "center", marginBottom: 8, letterSpacing: 3, textTransform: "uppercase" }}>
+      <Text style={{ fontSize: Math.round(fontSize.name * 1.05), fontFamily: "Times-Roman", fontWeight: "normal", color: "#1f2937", textAlign: "center", marginBottom: 8, letterSpacing: 3, textTransform: "uppercase" }}>
         {data.personalInfo?.fullName || ""}
       </Text>
       <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 12, marginBottom: 8 }}>
@@ -587,7 +587,7 @@ const renderElegantHeader = (data: ResumeData, fontSize: FontSizes) => {
           fontSize={fontSize.summary}
           color="#6b7280"
           themeColor={color}
-          textStyle={{ fontStyle: "italic" }}
+          textStyle={{ fontStyle: "italic", fontFamily: "Times-Roman" }}
           style={{ marginBottom: 10 }}
         />
       )}
@@ -693,7 +693,7 @@ const renderSectionTitle = (title: string, template: TemplateType, color: string
     case "elegant":
       return (
         <View style={{ marginBottom: 8, textAlign: "center" }}>
-          <Text style={{ fontSize: Math.round(sectionHeadingSize * 0.9), fontWeight: "normal", color: "#6b7280", textAlign: "center", letterSpacing: 3, textTransform: "uppercase" }}>{title}</Text>
+          <Text style={{ fontSize: Math.round(sectionHeadingSize * 0.9), fontFamily: "Times-Roman", fontWeight: "normal", color: "#6b7280", textAlign: "center", letterSpacing: 3, textTransform: "uppercase" }}>{title}</Text>
           <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 6, marginTop: 4 }}>
             <View style={{ width: 30, height: 1, backgroundColor: color + "60" }} />
             <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: color }} />
@@ -716,6 +716,34 @@ const renderSectionTitle = (title: string, template: TemplateType, color: string
         </Text>
       );
   }
+};
+
+// Default font sizes for standalone renderSection (no data context)
+const DEFAULT_FONT_SIZES = {
+  name: 22, summary: 13, contact: 10,
+  sectionHeading: 14, itemTitle: 13, itemSubtitle: 11,
+  itemBody: 10, itemDate: 9,
+};
+
+// =====================================================
+// HELPER FUNCTIONS
+// =====================================================
+
+// Helper to check if content is real (not placeholder)
+const isRealContent = (value: string | undefined | null): boolean => {
+  if (!value || value.trim() === '') return false;
+  const placeholders = [
+    'your name', 'full name', 'your title', 'job title',
+    'your email', 'your phone', 'your location', 'city, country',
+    'write a short', 'professional summary', 'add your',
+    'xyz company', 'company name', 'position title',
+    'university name', 'degree name', 'field of study',
+    'skill name', 'project name', 'certification name',
+    'describe your', 'brief description', 'example', 'sample',
+    'lorem ipsum', 'your.email@example', '+1 234 567'
+  ];
+  const lower = value.toLowerCase().trim();
+  return !placeholders.some(p => lower.includes(p) || lower === p);
 };
 
 // =====================================================
@@ -827,6 +855,229 @@ const renderSkills = (skills: string[], template: TemplateType, color: string) =
 };
 
 // =====================================================
+// TEMPLATE-SPECIFIC SKILLS WITH LEVELS RENDERERS
+// (Mirrors PreviewCanvas renderSkillsSection logic)
+// =====================================================
+
+const renderSkillsWithLevels = (skillsWithLevels: SkillWithLevel[], template: TemplateType, color: string) => {
+  if (!skillsWithLevels || skillsWithLevels.length === 0) return null;
+
+  switch (template) {
+    case "elegant":
+      return (
+        <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center" }}>
+          {skillsWithLevels.map((s, idx) => (
+            <Text key={idx} style={{ fontSize: 9, color: "#6b7280" }}>
+              <Text style={{ fontWeight: "bold" }}>{s.name}</Text>
+              <Text style={{ fontSize: 8, color: "#9ca3af" }}> ({s.level})</Text>
+              {idx < skillsWithLevels.length - 1 ? " · " : ""}
+            </Text>
+          ))}
+        </View>
+      );
+
+    case "corporate":
+      return (
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+          {skillsWithLevels.map((skill, idx) => (
+            <View key={idx} style={{ flexDirection: "row", alignItems: "center", backgroundColor: "#ffffff", borderWidth: 1, borderColor: "#e5e7eb", borderRadius: 3, padding: "3 8" }}>
+              <Text style={{ fontSize: 9, fontWeight: "bold", color: "#1f2937" }}>{skill.name}</Text>
+              <Text style={{ fontSize: 7, color: "#9ca3af", marginLeft: 4 }}>{skill.level}</Text>
+            </View>
+          ))}
+        </View>
+      );
+
+    case "creative":
+      return (
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+          {skillsWithLevels.map((skill, idx) => (
+            <View key={idx} style={{ flexDirection: "row", alignItems: "center", backgroundColor: color + "15", borderRadius: 4, padding: "3 8" }}>
+              <Text style={{ fontSize: 9, fontWeight: "bold", color: color }}>{skill.name}</Text>
+              <Text style={{ fontSize: 7, color: color, opacity: 0.6, marginLeft: 4 }}>• {skill.level}</Text>
+            </View>
+          ))}
+        </View>
+      );
+
+    case "modern":
+      return (
+        <View style={{ flexDirection: "column", gap: 4 }}>
+          {skillsWithLevels.map((skill, idx) => (
+            <View key={idx} style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: color }} />
+              <Text style={{ fontSize: 9, fontWeight: "bold", color: "#1f2937" }}>{skill.name}</Text>
+              <Text style={{ fontSize: 7, color: "#9ca3af" }}>{skill.level}</Text>
+            </View>
+          ))}
+        </View>
+      );
+
+    case "bold":
+    case "tech":
+    case "neo":
+    case "portfolio":
+    case "minimal":
+    default:
+      return (
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+          {skillsWithLevels.map((skill, idx) => (
+            <View key={idx} style={{ flexDirection: "row", alignItems: "center", borderWidth: 1, borderColor: "#e5e7eb", padding: "2 8", borderRadius: template === "neo" ? 0 : 3 }}>
+              <Text style={{ fontSize: 9, fontWeight: "bold", color: (template === "tech" || template === "bold") ? color : "#1f2937" }}>{skill.name}</Text>
+              <Text style={{ fontSize: 7, color: "#9ca3af", marginLeft: 4, textTransform: "uppercase" }}>{skill.level}</Text>
+            </View>
+          ))}
+        </View>
+      );
+  }
+};
+
+// Full skills section renderer that handles both skills[] and skillsWithLevels[]
+// Mirrors PreviewCanvas renderSkillsSection logic exactly
+const renderFullSkillsSection = (section: Section, template: TemplateType, color: string) => {
+  const item = section.items?.[0];
+  if (!item) return null;
+
+  // Use simple presence check (matches Preview logic — no isRealContent gate)
+  const levelSkills = (item.skillsWithLevels || []).filter(s => s.name?.trim());
+  const plainSkills = (item.skills || []).filter(s => s?.trim());
+
+  const hasSkillsWithLevels = levelSkills.length > 0;
+  const hasPlainSkills = plainSkills.length > 0;
+
+  if (!hasSkillsWithLevels && !hasPlainSkills) return null;
+
+  return (
+    <View>
+      {hasSkillsWithLevels && renderSkillsWithLevels(
+        levelSkills,
+        template,
+        color
+      )}
+      {hasPlainSkills && (
+        <View style={hasSkillsWithLevels ? { marginTop: 6 } : {}}>
+          {renderSkills(plainSkills, template, color)}
+        </View>
+      )}
+    </View>
+  );
+};
+
+// =====================================================
+// CUSTOM SECTION ITEM RENDERER
+// (Mirrors PreviewCanvas renderCustomSection logic)
+// =====================================================
+
+const renderCustomSectionItem = (
+  item: SectionItem,
+  section: Section,
+  template: TemplateType,
+  color: string,
+  fontSize: ReturnType<typeof getFontSizes>
+) => {
+  const colors = getTemplateColors(template, color);
+  const fieldDefs = section.fieldDefinitions || [];
+
+  // If no field definitions, fall back to standard item rendering
+  if (fieldDefs.length === 0) {
+    return (
+      <View key={item.id} style={{ marginBottom: 8 }}>
+        {item.title && <Text style={{ fontSize: fontSize.itemTitle, fontWeight: "bold", color: colors.title }}>{item.title}</Text>}
+        {item.subtitle && <Text style={{ fontSize: fontSize.itemSubtitle, color: colors.subtitle }}>{item.subtitle}</Text>}
+        {item.description && (
+          <PDFRichText
+            text={item.description}
+            fontSize={fontSize.itemBody}
+            color="#4b5563"
+            themeColor={color}
+            style={{ marginTop: 2 }}
+          />
+        )}
+      </View>
+    );
+  }
+
+  const getFieldValue = (fieldId: string) => {
+    const field = (item.customFields || []).find((cf) => cf.fieldId === fieldId);
+    return field?.value;
+  };
+
+  const titleField = fieldDefs.find((f) => f.type === 'text');
+  const dateField = fieldDefs.find((f) => f.type === 'date' || f.type === 'dateRange');
+  const linkField = fieldDefs.find((f) => f.type === 'link');
+  const tagsField = fieldDefs.find((f) => f.type === 'tags');
+  const textareaField = fieldDefs.find((f) => f.type === 'textarea');
+
+  const title = titleField ? (getFieldValue(titleField.id) as string) : '';
+  const linkValue = linkField ? (getFieldValue(linkField.id) as string) : '';
+  const tagsValue = tagsField ? (getFieldValue(tagsField.id) as string[]) : [];
+  const description = textareaField ? (getFieldValue(textareaField.id) as string) : '';
+
+  let dateDisplay = '';
+  if (dateField) {
+    const dateValue = getFieldValue(dateField.id) as string;
+    if (dateField.type === 'dateRange' && dateValue) {
+      const [start, end] = dateValue.split('|');
+      dateDisplay = formatDate(start, end);
+    } else if (dateValue) {
+      dateDisplay = formatDate(dateValue);
+    }
+  }
+
+  return (
+    <View key={item.id} style={{ marginBottom: 8 }}>
+      {/* Title row with date */}
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 2 }}>
+        <View style={{ flex: 1 }}>
+          {linkValue ? (
+            <Link src={ensureProtocol(linkValue)} style={{ fontSize: fontSize.itemTitle, fontWeight: "bold", color: color, textDecoration: "none" }}>
+              {title || 'Title'}
+            </Link>
+          ) : title ? (
+            <Text style={{ fontSize: fontSize.itemTitle, fontWeight: "bold", color: colors.title }}>{title}</Text>
+          ) : null}
+        </View>
+        {dateDisplay ? (
+          <Text style={{ fontSize: fontSize.itemDate, color: colors.date, fontStyle: "italic" }}>{dateDisplay}</Text>
+        ) : null}
+      </View>
+
+      {/* Additional text fields (non-title text fields) */}
+      {fieldDefs
+        .filter((f) => f.type === 'text' && f !== titleField)
+        .map((f) => {
+          const val = getFieldValue(f.id) as string;
+          return val ? (
+            <Text key={f.id} style={{ fontSize: fontSize.itemSubtitle, color: colors.subtitle }}>{val}</Text>
+          ) : null;
+        })}
+
+      {/* Tags */}
+      {tagsValue && tagsValue.length > 0 && (
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 4, marginTop: 2 }}>
+          {tagsValue.map((tag, idx) => (
+            <Text key={idx} style={{ fontSize: 8, backgroundColor: color + '20', color: color, padding: "2 6", borderRadius: template === "neo" ? 0 : 3 }}>
+              {tag}
+            </Text>
+          ))}
+        </View>
+      )}
+
+      {/* Description with rich text support */}
+      {description && (
+        <PDFRichText
+          text={description}
+          fontSize={fontSize.itemBody}
+          color="#4b5563"
+          themeColor={color}
+          style={{ marginTop: 2 }}
+        />
+      )}
+    </View>
+  );
+};
+
+// =====================================================
 // TEMPLATE-SPECIFIC ITEM RENDERERS (Experience/Education)
 // =====================================================
 
@@ -931,7 +1182,13 @@ const renderSection = (section: Section, template: TemplateType, color: string) 
     const hasSubtitle = isRealContent(item.subtitle) || isRealContent(item.company) || isRealContent(item.institution);
     const hasDescription = isRealContent(item.description);
     const hasSkills = item.skills && item.skills.length > 0 && item.skills.some(s => isRealContent(s));
-    return hasTitle || hasSubtitle || hasDescription || hasSkills;
+    const hasSkillsWithLevels = item.skillsWithLevels && item.skillsWithLevels.length > 0 && item.skillsWithLevels.some(s => isRealContent(s.name));
+    // Custom field content check
+    const hasCustomFields = item.customFields && item.customFields.some(cf => {
+      if (Array.isArray(cf.value)) return cf.value.length > 0;
+      return isRealContent(cf.value as string);
+    });
+    return hasTitle || hasSubtitle || hasDescription || hasSkills || hasSkillsWithLevels || hasCustomFields;
   });
 
   // Core sections (experience, education, skills) always show header even if empty
@@ -976,23 +1233,39 @@ const renderSection = (section: Section, template: TemplateType, color: string) 
       );
 
     case "skills":
-      const skillsItem = section.items?.[0];
-      const allSkills = skillsItem?.skills || [];
-      const realSkills = allSkills.filter(s => isRealContent(s));
       return (
         <View style={baseStyles.section} key={section.id}>
           {renderSectionTitle(section.title, template, color)}
-          {realSkills.length > 0 ? (
-            renderSkills(realSkills, template, color)
-          ) : (
+          {renderFullSkillsSection(section, template, color) || (
             <View style={{ height: 20 }} />
           )}
         </View>
       );
 
+    case "custom":
+      // Custom sections with field definitions use customFields-based rendering
+      if (section.fieldDefinitions && section.fieldDefinitions.length > 0) {
+        return (
+          <View style={baseStyles.section} key={section.id}>
+            {renderSectionTitle(section.title, template, color)}
+            {realItems.map((item) => renderCustomSectionItem(item, section, template, color, DEFAULT_FONT_SIZES))}
+          </View>
+        );
+      }
+      // Fall through to default for custom sections without field definitions
+      return (
+        <View style={baseStyles.section} key={section.id}>
+          {renderSectionTitle(section.title, template, color)}
+          {realItems.map((item) => (
+            <View key={item.id}>
+              {renderCustomItem(item, template, color)}
+            </View>
+          ))}
+        </View>
+      );
+
     case "projects":
     case "certifications":
-    case "custom":
     default:
       return (
         <View style={baseStyles.section} key={section.id}>
@@ -1015,30 +1288,6 @@ interface ResumePDFProps {
   data: ResumeData;
   template: TemplateType;
 }
-
-// Helper to check if content is real (not placeholder)
-const isRealContent = (value: string | undefined | null): boolean => {
-  if (!value || value.trim() === '') return false;
-  const placeholders = [
-    'your name', 'full name', 'your title', 'job title',
-    'your email', 'your phone', 'your location', 'city, country',
-    'write a short', 'professional summary', 'add your',
-    'xyz company', 'company name', 'position title',
-    'university name', 'degree name', 'field of study',
-    'skill name', 'project name', 'certification name',
-    'describe your', 'brief description', 'example', 'sample',
-    'lorem ipsum', 'your.email@example', '+1 234 567'
-  ];
-  const lower = value.toLowerCase().trim();
-  return !placeholders.some(p => lower.includes(p) || lower === p);
-};
-
-// Helper to get real skills only
-const getRealSkills = (section: Section): string[] => {
-  const skillsItem = section.items?.[0];
-  const allSkills = skillsItem?.skills || [];
-  return allSkills.filter(s => isRealContent(s));
-};
 
 const ResumePDF: React.FC<ResumePDFProps> = ({ data, template }) => {
   const color = data.theme.color;
@@ -1083,7 +1332,12 @@ const ResumePDF: React.FC<ResumePDFProps> = ({ data, template }) => {
       const hasSubtitle = isRealContent(item.subtitle) || isRealContent(item.company) || isRealContent(item.institution);
       const hasDescription = isRealContent(item.description);
       const hasSkills = item.skills && item.skills.length > 0 && item.skills.some(s => isRealContent(s));
-      return hasTitle || hasSubtitle || hasDescription || hasSkills;
+      const hasSkillsWithLevels = item.skillsWithLevels && item.skillsWithLevels.length > 0 && item.skillsWithLevels.some(s => isRealContent(s.name));
+      const hasCustomFields = item.customFields && item.customFields.some(cf => {
+        if (Array.isArray(cf.value)) return cf.value.length > 0;
+        return isRealContent(cf.value as string);
+      });
+      return hasTitle || hasSubtitle || hasDescription || hasSkills || hasSkillsWithLevels || hasCustomFields;
     });
 
     // Core sections (experience, education, skills) always show header even if empty
@@ -1164,23 +1418,47 @@ const ResumePDF: React.FC<ResumePDFProps> = ({ data, template }) => {
         );
 
       case "skills":
-        const skillsItem = section.items?.[0];
-        const allSkills = skillsItem?.skills || [];
-        const realSkills = allSkills.filter(s => isRealContent(s));
         return (
           <View style={baseStyles.section} key={section.id}>
             {renderSectionTitle(section.title, template, color, fontSize.sectionHeading)}
-            {realSkills.length > 0 ? (
-              renderSkills(realSkills, template, color)
-            ) : (
+            {renderFullSkillsSection(section, template, color) || (
               <View style={{ height: 20 }} />
             )}
           </View>
         );
 
+      case "custom":
+        if (section.fieldDefinitions && section.fieldDefinitions.length > 0) {
+          return (
+            <View style={baseStyles.section} key={section.id}>
+              {renderSectionTitle(section.title, template, color, fontSize.sectionHeading)}
+              {realItems.map((item) => renderCustomSectionItem(item, section, template, color, fontSize))}
+            </View>
+          );
+        }
+        return (
+          <View style={baseStyles.section} key={section.id}>
+            {renderSectionTitle(section.title, template, color, fontSize.sectionHeading)}
+            {realItems.map((item) => (
+              <View key={item.id} style={{ marginBottom: 8 }}>
+                {item.title && <Text style={{ fontSize: fontSize.itemTitle, fontWeight: "bold", color: colors.title }}>{item.title}</Text>}
+                {item.subtitle && <Text style={{ fontSize: fontSize.itemSubtitle, color: colors.subtitle }}>{item.subtitle}</Text>}
+                {item.description && (
+                  <PDFRichText
+                    text={item.description}
+                    fontSize={fontSize.itemBody}
+                    color="#4b5563"
+                    themeColor={color}
+                    style={{ marginTop: 2 }}
+                  />
+                )}
+              </View>
+            ))}
+          </View>
+        );
+
       case "projects":
       case "certifications":
-      case "custom":
       default:
         return (
           <View style={baseStyles.section} key={section.id}>
@@ -1211,7 +1489,6 @@ const ResumePDF: React.FC<ResumePDFProps> = ({ data, template }) => {
   const renderPortfolioLayout = () => {
     const skillsSection = visibleSections.find((s) => s.type === 'skills');
     const mainSections = visibleSections.filter((s) => s.type !== 'skills');
-    const realSkills = skillsSection ? getRealSkills(skillsSection) : [];
 
     return (
       <View style={{ flexDirection: "row", flex: 1 }}>
@@ -1223,9 +1500,13 @@ const ResumePDF: React.FC<ResumePDFProps> = ({ data, template }) => {
             </Text>
           )}
           {hasRealSummary && (
-            <Text style={{ fontSize: fontSize.summary, color: color, marginBottom: 12 }}>
-              {data.personalInfo.summary}
-            </Text>
+            <PDFRichText
+              text={data.personalInfo.summary}
+              fontSize={fontSize.summary}
+              color={color}
+              themeColor={color}
+              style={{ marginBottom: 12 }}
+            />
           )}
           {/* Contact info */}
           <View style={{ marginBottom: 16 }}>
@@ -1239,7 +1520,7 @@ const ResumePDF: React.FC<ResumePDFProps> = ({ data, template }) => {
           {skillsSection && (
             <View>
               {renderSectionTitle("Skills", template, color, fontSize.sectionHeading)}
-              {realSkills.length > 0 ? renderSkills(realSkills, template, color) : <View style={{ height: 16 }} />}
+              {renderFullSkillsSection(skillsSection, template, color) || <View style={{ height: 16 }} />}
             </View>
           )}
         </View>
@@ -1255,7 +1536,7 @@ const ResumePDF: React.FC<ResumePDFProps> = ({ data, template }) => {
   // CORPORATE LAYOUT - Sections in bordered cards
   // =====================================================
   const renderCorporateLayout = () => (
-    <View style={{ padding: 30 }}>
+    <View style={{ padding: 32 }}>
       {renderHeader()}
       <View style={{ marginTop: 16 }}>
         {visibleSections.map((section) => (
@@ -1275,14 +1556,13 @@ const ResumePDF: React.FC<ResumePDFProps> = ({ data, template }) => {
     const skillsSection = visibleSections.find((s) => s.type === 'skills');
     const experienceSection = visibleSections.find((s) => s.type === 'experience');
     const otherSections = visibleSections.filter((s) => s.type !== 'skills' && s.type !== 'experience');
-    const realSkills = skillsSection ? getRealSkills(skillsSection) : [];
 
     return (
       <View style={{ padding: 24 }}>
         {renderHeader()}
-        <View style={{ flexDirection: "row", marginTop: 16 }}>
+        <View style={{ flexDirection: "row", gap: 16, marginTop: 16 }}>
           {/* Left column - 60% */}
-          <View style={{ width: "60%", paddingRight: 16 }}>
+          <View style={{ width: "60%" }}>
             {experienceSection && (
               <View style={{ marginBottom: 16 }}>
                 {renderSectionTitle(experienceSection.title, template, color, fontSize.sectionHeading)}
@@ -1297,11 +1577,11 @@ const ResumePDF: React.FC<ResumePDFProps> = ({ data, template }) => {
             ))}
           </View>
           {/* Right column - 40% with accent background */}
-          <View style={{ width: "40%", backgroundColor: color + "10", borderRadius: 6, padding: 12 }}>
+          <View style={{ width: "40%", backgroundColor: color + "08", borderRadius: 6, padding: 12 }}>
             {skillsSection && (
               <View>
                 {renderSectionTitle("Skills", template, color, fontSize.sectionHeading)}
-                {realSkills.length > 0 ? renderSkills(realSkills, template, color) : <View style={{ height: 16 }} />}
+                {renderFullSkillsSection(skillsSection, template, color) || <View style={{ height: 16 }} />}
               </View>
             )}
           </View>
@@ -1314,7 +1594,7 @@ const ResumePDF: React.FC<ResumePDFProps> = ({ data, template }) => {
   // ELEGANT LAYOUT - Centered with generous spacing
   // =====================================================
   const renderElegantLayout = () => (
-    <View style={{ paddingHorizontal: 50, paddingVertical: 40 }}>
+    <View style={{ paddingHorizontal: 48, paddingVertical: 40 }}>
       {renderHeader()}
       <View style={{ marginTop: 24 }}>
         {visibleSections.map((section) => (
@@ -1333,20 +1613,19 @@ const ResumePDF: React.FC<ResumePDFProps> = ({ data, template }) => {
   const renderModernLayout = () => {
     const skillsSection = visibleSections.find((s) => s.type === 'skills');
     const mainSections = visibleSections.filter((s) => s.type !== 'skills');
-    const realSkills = skillsSection ? getRealSkills(skillsSection) : [];
 
     return (
       <View style={{ flexDirection: "row", flex: 1 }}>
         {/* Thin accent bar */}
         <View style={{ width: 4, backgroundColor: color }} />
         {/* Main content area */}
-        <View style={{ flex: 1, padding: 30 }}>
+        <View style={{ flex: 1, padding: 32 }}>
           {renderHeader()}
-          <View style={{ flexDirection: "row", marginTop: 16 }}>
+          <View style={{ flexDirection: "row", gap: 16, marginTop: 16 }}>
             {/* Main content - 66% */}
-            <View style={{ width: "66%", paddingRight: 16 }}>
+            <View style={{ width: "66%" }}>
               {mainSections.map((section) => (
-                <View key={section.id} style={{ borderLeft: "2 solid #f0f0f0", paddingLeft: 12, marginBottom: 14 }}>
+                <View key={section.id} style={{ borderLeft: "2 solid #f3f4f6", paddingLeft: 12, marginBottom: 14 }}>
                   {renderSectionTitle(section.title, template, color, fontSize.sectionHeading)}
                   {renderSectionContent(section, template, color)}
                 </View>
@@ -1357,7 +1636,7 @@ const ResumePDF: React.FC<ResumePDFProps> = ({ data, template }) => {
               {skillsSection && (
                 <View style={{ backgroundColor: "#f9fafb", padding: 12, borderRadius: 6 }}>
                   {renderSectionTitle("Skills", template, color, fontSize.sectionHeading)}
-                  {realSkills.length > 0 ? renderSkills(realSkills, template, color) : <View style={{ height: 16 }} />}
+                  {renderFullSkillsSection(skillsSection, template, color) || <View style={{ height: 16 }} />}
                 </View>
               )}
             </View>
@@ -1371,7 +1650,7 @@ const ResumePDF: React.FC<ResumePDFProps> = ({ data, template }) => {
   // STANDARD LAYOUT (Harvard, Tech, Minimal, Bold, Neo)
   // =====================================================
   const renderStandardLayout = () => (
-    <View style={{ padding: 40 }}>
+    <View style={{ padding: 32 }}>
       {renderHeader()}
       {visibleSections.map((section) => renderSectionLocal(section))}
     </View>
@@ -1383,7 +1662,13 @@ const ResumePDF: React.FC<ResumePDFProps> = ({ data, template }) => {
       const hasTitle = isRealContent(item.title) || isRealContent(item.position) || isRealContent(item.degree);
       const hasSubtitle = isRealContent(item.subtitle) || isRealContent(item.company) || isRealContent(item.institution);
       const hasDescription = isRealContent(item.description);
-      return hasTitle || hasSubtitle || hasDescription;
+      const hasSkills = item.skills && item.skills.length > 0 && item.skills.some(s => isRealContent(s));
+      const hasSkillsWithLevels = item.skillsWithLevels && item.skillsWithLevels.length > 0 && item.skillsWithLevels.some(s => isRealContent(s.name));
+      const hasCustomFields = item.customFields && item.customFields.some(cf => {
+        if (Array.isArray(cf.value)) return cf.value.length > 0;
+        return isRealContent(cf.value as string);
+      });
+      return hasTitle || hasSubtitle || hasDescription || hasSkills || hasSkillsWithLevels || hasCustomFields;
     });
   };
 
@@ -1443,10 +1728,29 @@ const ResumePDF: React.FC<ResumePDFProps> = ({ data, template }) => {
           </View>
         ));
       case "skills":
-        const skills = section.items[0]?.skills || [];
-        const realSkills = skills.filter(s => isRealContent(s));
-        if (realSkills.length === 0) return isCoreSection ? <View style={{ height: 16 }} /> : null;
-        return renderSkills(realSkills, tmpl, clr);
+        return renderFullSkillsSection(section, tmpl, clr) || (isCoreSection ? <View style={{ height: 16 }} /> : null);
+      case "custom":
+        if (section.fieldDefinitions && section.fieldDefinitions.length > 0) {
+          if (realItems.length === 0) return null;
+          return realItems.map((item) => renderCustomSectionItem(item, section, tmpl, clr, fontSize));
+        }
+        // Fall through to default for custom sections without field definitions
+        if (realItems.length === 0) return null;
+        return realItems.map((item) => (
+          <View key={item.id} style={{ marginBottom: 8 }}>
+            {item.title && <Text style={{ fontSize: fontSize.itemTitle, fontWeight: "bold", color: colors.title }}>{item.title}</Text>}
+            {item.subtitle && <Text style={{ fontSize: fontSize.itemSubtitle, color: colors.subtitle }}>{item.subtitle}</Text>}
+            {item.description && (
+              <PDFRichText
+                text={item.description}
+                fontSize={fontSize.itemBody}
+                color="#4b5563"
+                themeColor={clr}
+                style={{ marginTop: 2 }}
+              />
+            )}
+          </View>
+        ));
       default:
         if (realItems.length === 0) return null;
         return realItems.map((item) => (
