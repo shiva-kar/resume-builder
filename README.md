@@ -1,6 +1,6 @@
 # Resume Builder
 
-[![Version](https://img.shields.io/badge/Version-Beta%200.5.0-blue?style=for-the-badge)](https://github.com/shiva-kar/resume-builder/releases)
+[![Version](https://img.shields.io/badge/Version-Beta%200.4-blue?style=for-the-badge)](https://github.com/shiva-kar/resume-builder/releases)
 [![Status](https://img.shields.io/badge/Status-Beta-orange?style=for-the-badge)](https://github.com/shiva-kar/resume-builder/releases)
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-green?style=for-the-badge&logo=github)](https://shiva-kar.github.io/resume-builder/)
 [![Next.js](https://img.shields.io/badge/Next.js-14-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
@@ -174,10 +174,10 @@ npm run electron:build:portable
 # Full release (prompts for confirmation)
 npm run release
 
-# Quick patch release (Beta 0.5.0 → Beta 0.5.1)
+# Quick patch release (Beta 0.4 → Beta 0.4.1)
 npm run release:quick
 
-# Minor release (Beta 0.5.0 → Beta 0.6)
+# Minor release (Beta 0.4 → Beta 0.5)
 npm run release:minor
 
 # Major release (Beta → Stable 1.0)
@@ -281,7 +281,7 @@ This project is currently in **Beta**.
 | Phase | Versions | Status |
 |-------|----------|--------|
 | **Alpha** | Alpha 0.1 - Alpha 0.7 | ✅ Completed |
-| **Beta** | Beta 0.1 - Beta 0.5.0 | 🚧 Current |
+| **Beta** | Beta 0.1 - Beta 0.4 | 🚧 Current |
 | **Stable** | 1.0+ | ⏳ Planned |
 
 Earlier versions were released as **Alpha** builds for testing and experimentation.
@@ -298,7 +298,7 @@ See [CHANGELOG.md](CHANGELOG.md) for full version history.
 
 ### Recent Releases
 
-#### [Beta 0.5.0] - 2026-02-21
+#### [Beta 0.4] - 2026-02-21
 - Fixed skills, custom sections, and markdown not rendering in PDF export
 - Fixed certifications/projects auto-enable when added via Build Your Story
 - Export pipeline stability and typography consistency across all 10 templates

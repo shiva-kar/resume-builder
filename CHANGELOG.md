@@ -6,7 +6,7 @@ All notable changes to Resume Builder will be documented in this file.
 
 ---
 
-## [Beta 0.5.0] - 2026-02-21
+## [Beta 0.4] - 2026-02-21
 
 ### Fixed
 - Skills not rendering in exported PDF (placeholder filter was silently dropping real skills)
