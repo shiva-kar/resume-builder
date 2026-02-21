@@ -147,8 +147,18 @@ const createSection = (type: SectionType, template?: keyof typeof CUSTOM_FIELD_T
     fontSize: { ...DEFAULT_SECTION_FONT_SIZE },
   };
 
-  // Add field definitions for custom sections
-  if (type === 'custom' && template) {
+  // Add field definitions for custom sections and built-in types that use CustomSectionForm
+  if (type === 'certifications') {
+    baseSection.fieldDefinitions = CUSTOM_FIELD_TEMPLATES.certification.map((f) => ({
+      ...f,
+      id: generateId(),
+    }));
+  } else if (type === 'projects') {
+    baseSection.fieldDefinitions = CUSTOM_FIELD_TEMPLATES.project.map((f) => ({
+      ...f,
+      id: generateId(),
+    }));
+  } else if (type === 'custom' && template) {
     const templateFields = CUSTOM_FIELD_TEMPLATES[template];
     baseSection.fieldDefinitions = templateFields.map((f) => ({
       ...f,

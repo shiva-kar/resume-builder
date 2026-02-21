@@ -747,9 +747,12 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
           )}
 
           {description && (
-            <p className="text-gray-700 whitespace-pre-line mt-1" style={{ fontSize: fontSize.itemBody }}>
-              <RenderWithLinks text={description} />
-            </p>
+            <RichText
+              text={description}
+              className="text-gray-700 mt-1"
+              style={{ fontSize: fontSize.itemBody }}
+              themeColor={theme.color}
+            />
           )}
         </div>
       );
@@ -1016,10 +1019,9 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
       case 'skills':
         return renderSkillsSection(section);
       case 'custom':
-        return section.fieldDefinitions?.length ? renderCustomSection(section) : renderExperienceEducation(section);
       case 'projects':
       case 'certifications':
-        return renderProjectsCertifications(section);
+        return section.fieldDefinitions?.length ? renderCustomSection(section) : renderProjectsCertifications(section);
       default:
         return renderExperienceEducation(section);
     }
