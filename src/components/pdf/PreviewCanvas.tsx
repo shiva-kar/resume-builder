@@ -26,11 +26,12 @@ import {
 } from 'lucide-react';
 import {
   ResumeData,
-  PAGE_SIZES,
   GLOBAL_FONT_SCALES,
   LinkIconType,
   DEFAULT_TYPOGRAPHY,
   Section,
+  SectionItem,
+  SkillWithLevel,
 } from '@/lib/schema';
 import { cn } from '@/lib/utils';
 import {
@@ -39,11 +40,13 @@ import {
   formatUrlDisplay,
   isUrl,
   TYPOGRAPHY_PX as TYPO_PX,
+  parseFormattedText,
+  TextSegment,
 } from '@/lib/formatting';
 import { getTemplateBackground } from '@/lib/templates';
 
 // Icon mapping
-const PreviewIcons: Record<LinkIconType | string, React.FC<{ className?: string; style?: React.CSSProperties }>> = {
+const PreviewIcons: Record<string, React.FC<{ className?: string; style?: React.CSSProperties }>> = {
   linkedin: Linkedin,
   github: Github,
   twitter: Twitter,
@@ -58,6 +61,56 @@ const PreviewIcons: Record<LinkIconType | string, React.FC<{ className?: string;
   website: Link2,
 };
 
+const normalizeKeyPart = (value: string): string => {
+  const normalized = value.toLowerCase().replaceAll(/[^a-z0-9]+/g, '-').replaceAll(/^-+|-+$/g, '');
+  return normalized || 'item';
+};
+
+const toKeyedItems = <T,>(
+  items: T[],
+  getSeed: (item: T) => string,
+  prefix: string
+): Array<{ key: string; item: T }> => {
+  const counters = new Map<string, number>();
+  return items.map((item) => {
+    const seed = normalizeKeyPart(getSeed(item));
+    const occurrence = (counters.get(seed) ?? 0) + 1;
+    counters.set(seed, occurrence);
+    return {
+      key: `${prefix}-${seed}-${occurrence}`,
+      item,
+    };
+  });
+};
+
+type UrlToken = {
+  type: 'text' | 'url';
+  value: string;
+};
+
+const tokenizeTextWithUrls = (text: string): UrlToken[] => {
+  const pattern = /(https?:\/\/[^\s]+|www\.[^\s]+)/gi;
+  const tokens: UrlToken[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null = pattern.exec(text);
+
+  while (match) {
+    if (match.index > lastIndex) {
+      tokens.push({ type: 'text', value: text.slice(lastIndex, match.index) });
+    }
+
+    tokens.push({ type: 'url', value: match[0] });
+    lastIndex = match.index + match[0].length;
+    match = pattern.exec(text);
+  }
+
+  if (lastIndex < text.length) {
+    tokens.push({ type: 'text', value: text.slice(lastIndex) });
+  }
+
+  return tokens;
+};
+
 // Render text with clickable links
 const RenderWithLinks: React.FC<{ text: string; className?: string; style?: React.CSSProperties }> = ({
   text,
@@ -65,29 +118,28 @@ const RenderWithLinks: React.FC<{ text: string; className?: string; style?: Reac
   style,
 }) => {
   if (!text) return null;
-  const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/gi;
-  const parts = text.split(urlRegex);
-  const matches: string[] = text.match(urlRegex) || [];
+  const tokens = tokenizeTextWithUrls(text);
+  const keyedTokens = toKeyedItems(tokens, (token) => `${token.type}-${token.value}`, 'url-token');
 
   return (
     <span className={className} style={style}>
-      {parts.map((part, i) => {
-        if (matches.includes(part)) {
-          const href = ensureProtocol(part);
+      {keyedTokens.map(({ key, item: token }) => {
+        if (token.type === 'url') {
+          const href = ensureProtocol(token.value);
           return (
             <a
-              key={i}
+              key={key}
               href={href}
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-600 hover:underline"
               onClick={(e) => e.stopPropagation()}
             >
-              {formatUrlDisplay(part)}
+              {formatUrlDisplay(token.value)}
             </a>
           );
         }
-        return <span key={i}>{part}</span>;
+        return <span key={key}>{token.value}</span>;
       })}
     </span>
   );
@@ -102,133 +154,108 @@ interface RichTextProps {
   themeColor?: string;
 }
 
-// Render inline markdown segments
-const RenderInlineMarkdown: React.FC<{ text: string }> = ({ text }) => {
-  if (!text) return null;
-
-  // Pattern for: **bold**, __bold__, *italic*, _italic_, ***boldItalic***, [text](url)
-  const pattern = /(\*\*\*(.+?)\*\*\*|___(.+?)___|(\*\*|__)(.+?)\4|(\*|_)([^*_]+?)\6|\[([^\]]+)\]\(([^)]+)\))/g;
-
-  const segments: React.ReactNode[] = [];
-  let lastIndex = 0;
-  let match;
-  let key = 0;
-
-  while ((match = pattern.exec(text)) !== null) {
-    // Add text before the match
-    if (match.index > lastIndex) {
-      segments.push(<span key={key++}>{text.slice(lastIndex, match.index)}</span>);
-    }
-
-    if (match[2] || match[3]) {
-      // Bold + Italic (*** or ___)
-      segments.push(<strong key={key++} className="font-bold italic">{match[2] || match[3]}</strong>);
-    } else if (match[5]) {
-      // Bold (** or __)
-      segments.push(<strong key={key++} className="font-bold">{match[5]}</strong>);
-    } else if (match[7]) {
-      // Italic (* or _)
-      segments.push(<em key={key++} className="italic">{match[7]}</em>);
-    } else if (match[8] && match[9]) {
-      // Link [text](url)
-      segments.push(
+const renderInlineSegment = (segment: TextSegment, key: string): React.ReactNode => {
+  switch (segment.type) {
+    case 'boldItalic':
+      return <strong key={key} className="font-bold italic">{segment.content}</strong>;
+    case 'bold':
+      return <strong key={key} className="font-bold">{segment.content}</strong>;
+    case 'italic':
+      return <em key={key} className="italic">{segment.content}</em>;
+    case 'link':
+      return (
         <a
-          key={key++}
-          href={ensureProtocol(match[9])}
+          key={key}
+          href={ensureProtocol(segment.href || segment.content)}
           target="_blank"
           rel="noopener noreferrer"
           className="text-blue-600 hover:underline"
           onClick={(e) => e.stopPropagation()}
         >
-          {match[8]}
+          {segment.content}
         </a>
       );
-    }
+    default:
+      return <span key={key}>{segment.content}</span>;
+  }
+};
 
-    lastIndex = match.index + match[0].length;
+const RenderInlineMarkdown: React.FC<{ segments: TextSegment[] }> = ({ segments }) => {
+  if (!segments.length) {
+    return null;
   }
 
-  // Add remaining text
-  if (lastIndex < text.length) {
-    segments.push(<span key={key++}>{text.slice(lastIndex)}</span>);
-  }
+  const keyedSegments = toKeyedItems(
+    segments,
+    (segment) => `${segment.type}-${segment.content}-${segment.href ?? ''}`,
+    'inline-segment'
+  );
 
-  return <>{segments.length > 0 ? segments : text}</>;
+  return <>{keyedSegments.map(({ key, item }) => renderInlineSegment(item, key))}</>;
 };
 
 // Main rich text renderer with bullets, numbered lists, and markdown
 const RichText: React.FC<RichTextProps> = ({ text, className, style, themeColor }) => {
   if (!text) return null;
 
-  const lines = text.split('\n');
-  const elements: React.ReactNode[] = [];
+  const parsedLines = parseFormattedText(text);
+  const keyedLines = toKeyedItems(
+    parsedLines,
+    (line) => `${line.type}-${line.level ?? ''}-${line.number ?? ''}-${line.content}`,
+    'rich-line'
+  );
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    const trimmed = line.trim();
-
-    // Check for headers (## or ###)
-    const headerMatch = trimmed.match(/^(#{1,6})\s+(.+)$/);
-    if (headerMatch) {
-      const level = headerMatch[1].length;
-      const sizes: Record<number, string> = {
-        1: 'text-lg font-bold',
-        2: 'text-base font-bold',
-        3: 'text-sm font-semibold',
-        4: 'text-sm font-medium',
-        5: 'text-xs font-medium',
-        6: 'text-xs font-normal',
-      };
-      elements.push(
-        <div key={i} className={sizes[level] || sizes[3]} style={{ color: themeColor }}>
-          <RenderInlineMarkdown text={headerMatch[2]} />
-        </div>
-      );
-      continue;
-    }
-
-    // Check for bullet points (-, *, •)
-    const bulletMatch = trimmed.match(/^[-*•]\s+(.+)$/);
-    if (bulletMatch) {
-      elements.push(
-        <div key={i} className="flex items-start gap-2 ml-1">
-          <span className="mt-[0.4em] w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: themeColor || '#6b7280' }} />
-          <span><RenderInlineMarkdown text={bulletMatch[1]} /></span>
-        </div>
-      );
-      continue;
-    }
-
-    // Check for numbered lists (1., 2., etc.)
-    const numberedMatch = trimmed.match(/^(\d+)[.)]\s+(.+)$/);
-    if (numberedMatch) {
-      elements.push(
-        <div key={i} className="flex items-start gap-2 ml-1">
-          <span className="font-medium min-w-[1.25em] text-right flex-shrink-0" style={{ color: themeColor || '#6b7280' }}>
-            {numberedMatch[1]}.
-          </span>
-          <span><RenderInlineMarkdown text={numberedMatch[2]} /></span>
-        </div>
-      );
-      continue;
-    }
-
-    // Regular text or empty line
-    if (trimmed) {
-      elements.push(
-        <div key={i}>
-          <RenderInlineMarkdown text={trimmed} />
-        </div>
-      );
-    } else if (line === '' && i > 0 && i < lines.length - 1) {
-      // Empty line (paragraph break)
-      elements.push(<div key={i} className="h-2" />);
-    }
-  }
+  const headerStyles: Record<number, string> = {
+    1: 'text-lg font-bold',
+    2: 'text-base font-bold',
+    3: 'text-sm font-semibold',
+    4: 'text-sm font-medium',
+    5: 'text-xs font-medium',
+    6: 'text-xs font-normal',
+  };
 
   return (
     <div className={className} style={style}>
-      {elements}
+      {keyedLines.map(({ key, item: line }) => {
+        if (line.type === 'empty') {
+          return <div key={key} className="h-2" />;
+        }
+
+        if (line.type === 'header') {
+          const level = line.level ?? 3;
+          return (
+            <div key={key} className={headerStyles[level] || headerStyles[3]} style={{ color: themeColor }}>
+              <RenderInlineMarkdown segments={line.segments} />
+            </div>
+          );
+        }
+
+        if (line.type === 'bullet') {
+          return (
+            <div key={key} className="flex items-start gap-2 ml-1">
+              <span className="mt-[0.4em] w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: themeColor || '#6b7280' }} />
+              <span><RenderInlineMarkdown segments={line.segments} /></span>
+            </div>
+          );
+        }
+
+        if (line.type === 'numbered') {
+          return (
+            <div key={key} className="flex items-start gap-2 ml-1">
+              <span className="font-medium min-w-[1.25em] text-right flex-shrink-0" style={{ color: themeColor || '#6b7280' }}>
+                {line.number}.
+              </span>
+              <span><RenderInlineMarkdown segments={line.segments} /></span>
+            </div>
+          );
+        }
+
+        return (
+          <div key={key}>
+            <RenderInlineMarkdown segments={line.segments} />
+          </div>
+        );
+      })}
     </div>
   );
 };
@@ -316,9 +343,9 @@ const ContactItem: React.FC<ContactItemProps> = ({ icon: Icon, value, href, colo
   if (!value) return null;
   const displayValue = isUrl(value) ? formatUrlDisplay(value) : value;
   const content = (
-    <span className="inline-flex items-center gap-1" style={{ fontSize }}>
-      {showIcon && Icon && <Icon className="w-3 h-3 flex-shrink-0" style={{ color }} />}
-      <span>{displayValue}</span>
+    <span className={cn('contact-item', !showIcon && 'contact-item-no-icon')} style={{ fontSize }}>
+      {showIcon && Icon && <Icon className="contact-icon" style={{ color }} />}
+      <span className="contact-value">{displayValue}</span>
     </span>
   );
 
@@ -328,7 +355,7 @@ const ContactItem: React.FC<ContactItemProps> = ({ icon: Icon, value, href, colo
         href={ensureProtocol(href)}
         target="_blank"
         rel="noopener noreferrer"
-        className="hover:underline"
+        className="hover:underline contact-link"
         style={{ color: color || 'inherit' }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -341,20 +368,16 @@ const ContactItem: React.FC<ContactItemProps> = ({ icon: Icon, value, href, colo
 
 interface PreviewCanvasProps {
   data: ResumeData;
+  resumeRef?: React.MutableRefObject<HTMLDivElement | null>;
   className?: string;
 }
 
-export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className }) => {
+export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, className }) => {
   const { personalInfo, sections, theme } = data;
-  const pageSize = PAGE_SIZES[theme.pageSize];
-  const aspectRatio = pageSize.width / pageSize.height;
   const typography = theme.typography || DEFAULT_TYPOGRAPHY;
 
-  // Zoom and Pan state
-  const [zoom, setZoom] = useState(1);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
-  const [isPanning, setIsPanning] = useState(false);
-  const [startPan, setStartPan] = useState({ x: 0, y: 0 });
+  // Locked 1:1 render state to keep preview and export pixel-identical
+  const zoom = 1;
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [currentPage, setCurrentPage] = useState(0);
@@ -405,36 +428,13 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
     }
   }, [data, currentPage]);
 
-  // Zoom controls
-  const handleZoomIn = () => setZoom(Math.min(zoom + 0.25, 3));
-  const handleZoomOut = () => setZoom(Math.max(zoom - 0.25, 0.5));
-  const handleReset = () => {
-    setZoom(1);
-    setPan({ x: 0, y: 0 });
-  };
+  const handleZoomIn = () => undefined;
+  const handleZoomOut = () => undefined;
+  const handleReset = () => undefined;
 
-  // Pan handlers
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (e.button === 0 && !e.defaultPrevented) {
-      setIsPanning(true);
-      setStartPan({ x: e.clientX - pan.x, y: e.clientY - pan.y });
-    }
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (isPanning) {
-      setPan({ x: e.clientX - startPan.x, y: e.clientY - startPan.y });
-    }
-  };
-
-  const handleMouseUp = () => setIsPanning(false);
-
-  // Wheel zoom
-  const handleWheel = (e: React.WheelEvent) => {
-    if (e.ctrlKey || e.metaKey) {
-      e.preventDefault();
-      const delta = e.deltaY > 0 ? -0.1 : 0.1;
-      setZoom(Math.min(Math.max(zoom + delta, 0.5), 3));
+  const setResumeExportNode = (node: HTMLDivElement | null): void => {
+    if (resumeRef) {
+      resumeRef.current = node;
     }
   };
 
@@ -443,25 +443,43 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
   // ============================================================================
 
   const renderContactInfo = (centered = false, showIcons = true) => {
-    const items = [
+    const rawItems = [
       { icon: Mail, value: personalInfo.email, href: `mailto:${personalInfo.email}` },
-      { icon: Phone, value: personalInfo.phone, href: `tel:${personalInfo.phone?.replace(/\s/g, '')}` },
+      { icon: Phone, value: personalInfo.phone, href: `tel:${personalInfo.phone?.replaceAll(/\s/g, '')}` },
       { icon: MapPin, value: personalInfo.location, href: undefined },
       { icon: Linkedin, value: personalInfo.linkedin, href: personalInfo.linkedin },
       { icon: Github, value: personalInfo.github, href: personalInfo.github },
       { icon: Globe, value: personalInfo.website, href: personalInfo.website },
-    ].filter((item) => item.value);
+    ];
+
+    const items = rawItems.reduce<Array<{ icon: ContactItemProps['icon']; value: string; href?: string }>>(
+      (acc, item) => {
+        if (!item.value) {
+          return acc;
+        }
+
+        acc.push({
+          icon: item.icon,
+          value: item.value,
+          href: item.href,
+        });
+        return acc;
+      },
+      []
+    );
+
+    const keyedItems = toKeyedItems(items, (item) => `${item.value}-${item.href ?? ''}`, 'contact');
 
     return (
       <div
-        className={cn('flex flex-wrap gap-3 text-gray-600', centered && 'justify-center')}
+        className={cn('contact-row text-gray-600', centered && 'contact-row-centered')}
         style={{ fontSize: fontSize.contact }}
       >
-        {items.map((item, idx) => (
+        {keyedItems.map(({ key, item }) => (
           <ContactItem
-            key={idx}
+            key={key}
             icon={item.icon}
-            value={item.value!}
+            value={item.value}
             href={item.href}
             color={showIcons ? theme.color : undefined}
             fontSize={fontSize.contact}
@@ -490,171 +508,249 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
   // SECTION RENDERERS
   // ============================================================================
 
-  const renderSkillsSection = (section: Section) => {
+  const getSkillsPayload = (section: Section): {
+    skillsWithLevels: SkillWithLevel[];
+    displaySkills: string[];
+    isDummy: boolean;
+  } => {
     const item = section.items[0];
-    const hasSkills = item?.skills?.length || item?.skillsWithLevels?.length;
-    const isDummy = !hasSkills;
+    const skillsWithLevels = item?.skillsWithLevels || [];
+    const hasLevelSkills = skillsWithLevels.length > 0;
+    const hasPlainSkills = Boolean(item?.skills?.length);
+    const hasAnySkills = hasLevelSkills || hasPlainSkills;
 
-    // Use dummy skills if none exist
-    const displaySkills = hasSkills ? (item.skills || []) : DUMMY_DATA.skills;
+    return {
+      skillsWithLevels,
+      displaySkills: hasPlainSkills ? (item?.skills || []) : DUMMY_DATA.skills,
+      isDummy: !hasAnySkills,
+    };
+  };
 
-    // Elegant template - inline comma-separated list
-    if (isElegant) {
+  const renderElegantSkills = (skillsWithLevels: SkillWithLevel[], displaySkills: string[], isDummy: boolean) => {
+    if (skillsWithLevels.length > 0) {
+      const keyedLevels = toKeyedItems(skillsWithLevels, (skill) => `${skill.name}-${skill.level}`, 'skill-level');
+      const lastKey = keyedLevels.at(-1)?.key;
       return (
         <div className="text-center">
-          {item?.skillsWithLevels?.length ? (
-            <p className="text-gray-600 font-serif" style={{ fontSize: fontSize.itemBody }}>
-              {item.skillsWithLevels.map((s, i) => (
-                <span key={i}>
-                  <span className="font-medium">{s.name}</span>
-                  <span className="text-gray-400 text-[9px] ml-1">({s.level})</span>
-                  {i < item.skillsWithLevels!.length - 1 && <span className="mx-2 text-gray-300">·</span>}
-                </span>
-              ))}
-            </p>
-          ) : (
-            <p className={cn('font-serif', isDummy ? 'text-gray-400 italic' : 'text-gray-600')} style={{ fontSize: fontSize.itemBody }}>
-              {displaySkills.join(' · ')}
-            </p>
-          )}
+          <p className="text-gray-600 font-serif" style={{ fontSize: fontSize.itemBody }}>
+            {keyedLevels.map(({ key, item }) => (
+              <span key={key}>
+                <span className="font-medium">{item.name}</span>
+                <span className="text-gray-400 text-[9px] ml-1">({item.level})</span>
+                {key !== lastKey && <span className="mx-2 text-gray-300">·</span>}
+              </span>
+            ))}
+          </p>
         </div>
       );
     }
 
-    // Corporate template - clean pills with subtle border
-    if (isCorporate) {
-      return (
-        <div className="space-y-2">
-          {item?.skillsWithLevels?.length ? (
-            <div className="flex flex-wrap gap-2">
-              {item.skillsWithLevels.map((skill, idx) => (
-                <span
-                  key={idx}
-                  className="inline-flex items-center px-2.5 py-1 text-[10px] bg-white border border-gray-200 rounded"
-                >
-                  <span className="font-medium text-gray-800">{skill.name}</span>
-                  <span className="ml-1.5 text-gray-400 text-[8px]">{skill.level}</span>
-                </span>
-              ))}
-            </div>
-          ) : (
-            <div className={cn('flex flex-wrap gap-2', isDummy && 'opacity-60')}>
-              {displaySkills.map((skill, idx) => (
-                <span key={idx} className={cn('px-2.5 py-1 text-[10px] rounded', isDummy ? 'bg-gray-100 text-gray-400 italic' : 'bg-gray-100 text-gray-700')}>
-                  {skill}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    // Creative template - bold colorful tags
-    if (isCreative) {
-      return (
-        <div className="space-y-2">
-          {item?.skillsWithLevels?.length ? (
-            <div className="flex flex-wrap gap-1.5">
-              {item.skillsWithLevels.map((skill, idx) => (
-                <span
-                  key={idx}
-                  className="inline-flex items-center px-2 py-1 text-[10px] font-bold rounded"
-                  style={{ backgroundColor: theme.color + '15', color: theme.color }}
-                >
-                  {skill.name}
-                  <span className="ml-1 opacity-60 text-[8px] font-normal">• {skill.level}</span>
-                </span>
-              ))}
-            </div>
-          ) : (
-            <div className={cn('flex flex-wrap gap-1.5', isDummy && 'opacity-60')}>
-              {displaySkills.map((skill, idx) => (
-                <span
-                  key={idx}
-                  className={cn('px-2 py-1 text-[10px] rounded', isDummy ? 'font-normal italic' : 'font-bold')}
-                  style={{ backgroundColor: isDummy ? '#f3f4f6' : theme.color + '15', color: isDummy ? '#9ca3af' : theme.color }}
-                >
-                  {skill}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    // Modern template - minimal with accent dot
-    if (isModern) {
-      return (
-        <div className="space-y-1.5">
-          {item?.skillsWithLevels?.length ? (
-            item.skillsWithLevels.map((skill, idx) => (
-              <div key={idx} className="flex items-center gap-2 text-[10px]">
-                <div className="w-1 h-1 rounded-full" style={{ backgroundColor: theme.color }} />
-                <span className="font-medium text-gray-800">{skill.name}</span>
-                <span className="text-gray-400 text-[8px]">{skill.level}</span>
-              </div>
-            ))
-          ) : (
-            <div className={isDummy ? 'opacity-60' : ''}>
-              {displaySkills.map((skill, idx) => (
-                <div key={idx} className="flex items-center gap-2 text-[10px]">
-                  <div className="w-1 h-1 rounded-full" style={{ backgroundColor: isDummy ? '#9ca3af' : theme.color }} />
-                  <span className={isDummy ? 'text-gray-400 italic' : 'text-gray-700'}>{skill}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    // Harvard template - simple comma-separated text (matches PDF)
-    if (isHarvard) {
-      return (
-        <p className={cn('font-serif', isDummy ? 'text-gray-400 italic' : 'text-gray-700')} style={{ fontSize: fontSize.itemBody }}>
-          {item?.skillsWithLevels?.length
-            ? item.skillsWithLevels.map((s) => s.name).join(', ')
-            : displaySkills.join(', ')}
-        </p>
-      );
-    }
-
-    // Default rendering for other templates (Tech, Minimal, Bold, Neo, Portfolio)
     return (
-      <div className="space-y-2">
-        {item?.skillsWithLevels?.length ? (
-          <div className="flex flex-wrap gap-1.5">
-            {item.skillsWithLevels.map((skill, idx) => (
-              <span
-                key={idx}
-                className={cn(
-                  'inline-flex items-center px-2 py-0.5 text-[10px] font-medium border border-gray-200',
-                  isNeo ? 'rounded-none' : 'rounded'
-                )}
-              >
-                <span className="font-semibold" style={{ color: isTech || isBold ? theme.color : 'inherit' }}>
-                  {skill.name}
-                </span>
-                <span className="ml-1 text-gray-400 text-[8px] uppercase">{skill.level}</span>
+      <div className="text-center">
+        <p className={cn('font-serif', isDummy ? 'text-gray-400 italic' : 'text-gray-600')} style={{ fontSize: fontSize.itemBody }}>
+          {displaySkills.join(' · ')}
+        </p>
+      </div>
+    );
+  };
+
+  const renderCorporateSkills = (skillsWithLevels: SkillWithLevel[], displaySkills: string[], isDummy: boolean) => {
+    if (skillsWithLevels.length > 0) {
+      const keyedLevels = toKeyedItems(skillsWithLevels, (skill) => `${skill.name}-${skill.level}`, 'skill-level');
+      return (
+        <div className="space-y-2">
+          <div className="skills-container">
+            {keyedLevels.map(({ key, item }) => (
+              <span key={key} className="skill-chip border border-gray-200 bg-white text-[10px]">
+                <span className="font-medium text-gray-800">{item.name}</span>
+                <span className="ml-1.5 text-gray-400 text-[8px]">{item.level}</span>
               </span>
             ))}
           </div>
-        ) : null}
-        <div className={cn('flex flex-wrap gap-1.5', isDummy && 'opacity-60')}>
-          {displaySkills.map((skill, idx) => (
-            <span
-              key={idx}
-              className={cn('px-2 py-0.5 text-[10px]', isNeo ? 'rounded-none' : 'rounded-sm', isDummy && 'italic')}
-              style={{ backgroundColor: isDummy ? '#f3f4f6' : theme.color + '20', color: isDummy ? '#9ca3af' : theme.color }}
-            >
-              {skill}
+        </div>
+      );
+    }
+
+    const keyedSkills = toKeyedItems(displaySkills, (skill) => skill, 'skill');
+    return (
+      <div className="space-y-2">
+        <div className={cn('skills-container', isDummy && 'opacity-60')}>
+          {keyedSkills.map(({ key, item }) => (
+            <span key={key} className={cn('skill-chip text-[10px]', isDummy ? 'bg-gray-100 text-gray-400 italic' : 'bg-gray-100 text-gray-700')}>
+              {item}
             </span>
           ))}
         </div>
       </div>
     );
+  };
+
+  const renderCreativeSkills = (skillsWithLevels: SkillWithLevel[], displaySkills: string[], isDummy: boolean) => {
+    if (skillsWithLevels.length > 0) {
+      const keyedLevels = toKeyedItems(skillsWithLevels, (skill) => `${skill.name}-${skill.level}`, 'skill-level');
+      return (
+        <div className="space-y-2">
+          <div className="skills-container skills-container-compact">
+            {keyedLevels.map(({ key, item }) => (
+              <span key={key} className="skill-chip text-[10px] font-bold" style={{ backgroundColor: theme.color + '15', color: theme.color }}>
+                {item.name}
+                <span className="ml-1 opacity-60 text-[8px] font-normal">• {item.level}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    const keyedSkills = toKeyedItems(displaySkills, (skill) => skill, 'skill');
+    return (
+      <div className="space-y-2">
+        <div className={cn('skills-container skills-container-compact', isDummy && 'opacity-60')}>
+          {keyedSkills.map(({ key, item }) => (
+            <span
+              key={key}
+              className={cn('skill-chip text-[10px]', isDummy ? 'font-normal italic' : 'font-bold')}
+              style={{ backgroundColor: isDummy ? '#f3f4f6' : theme.color + '15', color: isDummy ? '#9ca3af' : theme.color }}
+            >
+              {item}
+            </span>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const renderModernSkills = (skillsWithLevels: SkillWithLevel[], displaySkills: string[], isDummy: boolean) => {
+    if (skillsWithLevels.length > 0) {
+      const keyedLevels = toKeyedItems(skillsWithLevels, (skill) => `${skill.name}-${skill.level}`, 'skill-level');
+      return (
+        <div className="space-y-1.5">
+          {keyedLevels.map(({ key, item }) => (
+            <div key={key} className="flex items-center gap-2 text-[10px]">
+              <div className="w-1 h-1 rounded-full" style={{ backgroundColor: theme.color }} />
+              <span className="font-medium text-gray-800">{item.name}</span>
+              <span className="text-gray-400 text-[8px]">{item.level}</span>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    const keyedSkills = toKeyedItems(displaySkills, (skill) => skill, 'skill');
+    return (
+      <div className={isDummy ? 'opacity-60' : ''}>
+        {keyedSkills.map(({ key, item }) => (
+          <div key={key} className="flex items-center gap-2 text-[10px]">
+            <div className="w-1 h-1 rounded-full" style={{ backgroundColor: isDummy ? '#9ca3af' : theme.color }} />
+            <span className={isDummy ? 'text-gray-400 italic' : 'text-gray-700'}>{item}</span>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const renderDefaultSkills = (skillsWithLevels: SkillWithLevel[], displaySkills: string[], isDummy: boolean) => {
+    const keyedLevels = toKeyedItems(skillsWithLevels, (skill) => `${skill.name}-${skill.level}`, 'skill-level');
+    const keyedSkills = toKeyedItems(displaySkills, (skill) => skill, 'skill');
+
+    return (
+      <div className="space-y-2">
+        {keyedLevels.length > 0 && (
+          <div className="skills-container skills-container-compact">
+            {keyedLevels.map(({ key, item }) => (
+              <span key={key} className={cn('skill-chip text-[10px] font-medium border border-gray-200', isNeo ? 'rounded-none' : 'rounded')}>
+                <span className="font-semibold" style={{ color: isTech || isBold ? theme.color : 'inherit' }}>
+                  {item.name}
+                </span>
+                <span className="ml-1 text-gray-400 text-[8px] uppercase">{item.level}</span>
+              </span>
+            ))}
+          </div>
+        )}
+        <div className={cn('skills-container skills-container-compact', isDummy && 'opacity-60')}>
+          {keyedSkills.map(({ key, item }) => (
+            <span
+              key={key}
+              className={cn('skill-chip text-[10px]', isNeo ? 'rounded-none' : 'rounded-sm', isDummy && 'italic')}
+              style={{ backgroundColor: isDummy ? '#f3f4f6' : theme.color + '20', color: isDummy ? '#9ca3af' : theme.color }}
+            >
+              {item}
+            </span>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const renderSkillsSection = (section: Section) => {
+    const { skillsWithLevels, displaySkills, isDummy } = getSkillsPayload(section);
+
+    switch (theme.template) {
+      case 'elegant':
+        return renderElegantSkills(skillsWithLevels, displaySkills, isDummy);
+      case 'corporate':
+        return renderCorporateSkills(skillsWithLevels, displaySkills, isDummy);
+      case 'creative':
+        return renderCreativeSkills(skillsWithLevels, displaySkills, isDummy);
+      case 'modern':
+        return renderModernSkills(skillsWithLevels, displaySkills, isDummy);
+      case 'harvard':
+        return (
+          <p className={cn('font-serif', isDummy ? 'text-gray-400 italic' : 'text-gray-700')} style={{ fontSize: fontSize.itemBody }}>
+            {skillsWithLevels.length > 0
+              ? skillsWithLevels.map((skill) => skill.name).join(', ')
+              : displaySkills.join(', ')}
+          </p>
+        );
+      default:
+        return renderDefaultSkills(skillsWithLevels, displaySkills, isDummy);
+    }
+  };
+
+  const getCustomFieldValue = (item: SectionItem, fieldId: string): unknown => {
+    const field = (item.customFields || []).find((customField) => customField.fieldId === fieldId);
+    return field?.value;
+  };
+
+  const toStringValue = (value: unknown): string => {
+    return typeof value === 'string' ? value : '';
+  };
+
+  const toStringArray = (value: unknown): string[] => {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+    return value.filter((entry): entry is string => typeof entry === 'string');
+  };
+
+  const getItemTitleContent = (sectionType: Section['type'], item: SectionItem): React.ReactNode => {
+    if (sectionType === 'experience') {
+      return item.position || <span className="text-gray-400 italic font-normal">Position</span>;
+    }
+    if (sectionType === 'education') {
+      return item.degree || <span className="text-gray-400 italic font-normal">Degree</span>;
+    }
+    return item.title || <span className="text-gray-400 italic font-normal">Title</span>;
+  };
+
+  const getItemSubtitleContent = (sectionType: Section['type'], item: SectionItem): React.ReactNode => {
+    if (sectionType === 'experience') {
+      return item.company || <span className="text-gray-400">Company</span>;
+    }
+    if (sectionType === 'education') {
+      return item.institution || <span className="text-gray-400">Institution</span>;
+    }
+    return item.subtitle || '';
+  };
+
+  const getDummyItemsBySectionType = (sectionType: Section['type']) => {
+    if (sectionType === 'experience') {
+      return DUMMY_DATA.experience;
+    }
+    if (sectionType === 'education') {
+      return DUMMY_DATA.education;
+    }
+    return [];
   };
 
   const renderCustomSection = (section: Section) => {
@@ -665,25 +761,20 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
     const fieldDefs = section.fieldDefinitions || [];
 
     return section.items.map((item) => {
-      const getFieldValue = (fieldId: string) => {
-        const field = (item.customFields || []).find((cf) => cf.fieldId === fieldId);
-        return field?.value;
-      };
-
       const titleField = fieldDefs.find((f) => f.type === 'text');
       const dateField = fieldDefs.find((f) => f.type === 'date' || f.type === 'dateRange');
       const linkField = fieldDefs.find((f) => f.type === 'link');
       const tagsField = fieldDefs.find((f) => f.type === 'tags');
       const textareaField = fieldDefs.find((f) => f.type === 'textarea');
 
-      const title = titleField ? (getFieldValue(titleField.id) as string) : '';
-      const linkValue = linkField ? (getFieldValue(linkField.id) as string) : '';
-      const tagsValue = tagsField ? (getFieldValue(tagsField.id) as string[]) : [];
-      const description = textareaField ? (getFieldValue(textareaField.id) as string) : '';
+      const title = titleField ? toStringValue(getCustomFieldValue(item, titleField.id)) : '';
+      const linkValue = linkField ? toStringValue(getCustomFieldValue(item, linkField.id)) : '';
+      const tagsValue = tagsField ? toStringArray(getCustomFieldValue(item, tagsField.id)) : [];
+      const description = textareaField ? toStringValue(getCustomFieldValue(item, textareaField.id)) : '';
 
       let dateDisplay = '';
       if (dateField) {
-        const dateValue = getFieldValue(dateField.id) as string;
+        const dateValue = toStringValue(getCustomFieldValue(item, dateField.id));
         if (dateField.type === 'dateRange' && dateValue) {
           const [start, end] = dateValue.split('|');
           dateDisplay = formatDate(start, end);
@@ -724,7 +815,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
           {fieldDefs
             .filter((f) => f.type === 'text' && f !== titleField)
             .map((f) => {
-              const val = getFieldValue(f.id) as string;
+              const val = toStringValue(getCustomFieldValue(item, f.id));
               return val ? (
                 <p key={f.id} className="text-gray-600" style={{ fontSize: fontSize.itemSubtitle }}>
                   <RenderWithLinks text={val} />
@@ -734,9 +825,9 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
 
           {tagsValue && tagsValue.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-1">
-              {tagsValue.map((tag, idx) => (
+              {toKeyedItems(tagsValue, (tag) => tag, 'custom-tag').map(({ key, item: tag }) => (
                 <span
-                  key={idx}
+                  key={key}
                   className={cn('px-1.5 py-0.5 text-[9px]', isNeo ? 'rounded-none' : 'rounded')}
                   style={{ backgroundColor: theme.color + '20', color: theme.color }}
                 >
@@ -762,7 +853,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
   const renderExperienceEducation = (section: Section) => {
     // Use dummy data if section is empty
     const isDummy = !section.items.length;
-    const dummyItems = section.type === 'experience' ? DUMMY_DATA.experience : section.type === 'education' ? DUMMY_DATA.education : [];
+    const dummyItems = getDummyItemsBySectionType(section.type);
     const itemsToRender = isDummy ? dummyItems : section.items;
 
     if (!itemsToRender.length) {
@@ -774,18 +865,10 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
       return itemsToRender.map((item) => (
         <div key={item.id} className={cn('mb-4 text-center', isDummy && 'opacity-60')}>
           <h3 className={cn('font-serif font-semibold', isDummy ? 'text-gray-400 italic font-normal' : 'text-gray-800')} style={{ fontSize: fontSize.itemTitle }}>
-            {section.type === 'experience'
-              ? item.position || <span className="text-gray-400 italic font-normal">Position</span>
-              : section.type === 'education'
-                ? item.degree || <span className="text-gray-400 italic font-normal">Degree</span>
-                : item.title || <span className="text-gray-400 italic font-normal">Title</span>}
+            {getItemTitleContent(section.type, item)}
           </h3>
           <p className={cn('font-serif', isDummy ? 'text-gray-400' : 'text-gray-600')} style={{ fontSize: fontSize.itemSubtitle }}>
-            {section.type === 'experience'
-              ? item.company || <span className="text-gray-400">Company</span>
-              : section.type === 'education'
-                ? item.institution || <span className="text-gray-400">Institution</span>
-                : item.subtitle || ''}
+            {getItemSubtitleContent(section.type, item)}
             {item.location && <span className="text-gray-400"> · {item.location}</span>}
           </p>
           <p className="text-gray-400 text-[10px] uppercase tracking-wider mt-0.5">
@@ -809,11 +892,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
         <div key={item.id} className={cn('mb-3 pl-3 border-l-2', isDummy && 'opacity-60')} style={{ borderLeftColor: theme.color + '40' }}>
           <div className="flex justify-between items-baseline">
             <h3 className={cn('font-semibold', isDummy ? 'text-gray-400 italic font-normal' : 'text-gray-800')} style={{ fontSize: fontSize.itemTitle }}>
-              {section.type === 'experience'
-                ? item.position || <span className="text-gray-400 italic font-normal">Position</span>
-                : section.type === 'education'
-                  ? item.degree || <span className="text-gray-400 italic font-normal">Degree</span>
-                  : item.title || <span className="text-gray-400 italic font-normal">Title</span>}
+              {getItemTitleContent(section.type, item)}
             </h3>
             <span className="text-gray-500 text-[10px] uppercase tracking-wide">
               {formatDate(item.startDate, item.endDate, item.current) || 'Date'}
@@ -821,11 +900,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
           </div>
           <div className="flex items-center gap-2" style={{ fontSize: fontSize.itemSubtitle }}>
             <span style={{ color: isDummy ? '#9ca3af' : theme.color }}>
-              {section.type === 'experience'
-                ? item.company || <span className="text-gray-400">Company</span>
-                : section.type === 'education'
-                  ? item.institution || <span className="text-gray-400">Institution</span>
-                  : item.subtitle || ''}
+              {getItemSubtitleContent(section.type, item)}
             </span>
             {item.location && <span className="text-gray-400">· {item.location}</span>}
           </div>
@@ -850,18 +925,10 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
             <div className="flex justify-between items-start">
               <div>
                 <h3 className={cn('font-bold', isDummy ? 'text-gray-400 italic font-normal' : 'text-gray-900')} style={{ fontSize: fontSize.itemTitle }}>
-                  {section.type === 'experience'
-                    ? item.position || <span className="text-gray-400 italic font-normal">Position</span>
-                    : section.type === 'education'
-                      ? item.degree || <span className="text-gray-400 italic font-normal">Degree</span>
-                      : item.title || <span className="text-gray-400 italic font-normal">Title</span>}
+                  {getItemTitleContent(section.type, item)}
                 </h3>
                 <p className="font-medium" style={{ fontSize: fontSize.itemSubtitle, color: isDummy ? '#9ca3af' : theme.color }}>
-                  {section.type === 'experience'
-                    ? item.company || <span className="text-gray-400">Company</span>
-                    : section.type === 'education'
-                      ? item.institution || <span className="text-gray-400">Institution</span>
-                      : item.subtitle || ''}
+                  {getItemSubtitleContent(section.type, item)}
                 </p>
               </div>
               <div className="text-right">
@@ -890,11 +957,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
         <div key={item.id} className={cn('mb-3 pb-3', idx < itemsToRender.length - 1 && 'border-b border-gray-100', isDummy && 'opacity-60')}>
           <div className="flex justify-between items-baseline">
             <h3 className={cn('font-semibold', isDummy ? 'text-gray-400 italic font-normal' : 'text-gray-900')} style={{ fontSize: fontSize.itemTitle }}>
-              {section.type === 'experience'
-                ? item.position || <span className="text-gray-400 italic font-normal">Position</span>
-                : section.type === 'education'
-                  ? item.degree || <span className="text-gray-400 italic font-normal">Degree</span>
-                  : item.title || <span className="text-gray-400 italic font-normal">Title</span>}
+              {getItemTitleContent(section.type, item)}
             </h3>
             <span className="text-gray-400 text-[10px]">
               {formatDate(item.startDate, item.endDate, item.current) || 'Date'}
@@ -902,11 +965,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
           </div>
           <div className="flex items-center gap-2 mt-0.5" style={{ fontSize: fontSize.itemSubtitle }}>
             <span className={isDummy ? 'text-gray-400' : 'text-gray-600'}>
-              {section.type === 'experience'
-                ? item.company || <span className="text-gray-400">Company</span>
-                : section.type === 'education'
-                  ? item.institution || <span className="text-gray-400">Institution</span>
-                  : item.subtitle || ''}
+              {getItemSubtitleContent(section.type, item)}
             </span>
             {item.location && (
               <>
@@ -932,11 +991,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
       <div key={item.id} className={cn('mb-2.5', isDummy && 'opacity-60')}>
         <div className="flex justify-between items-baseline mb-0.5">
           <h3 className={cn('font-bold', isDummy ? 'text-gray-400 italic font-normal' : 'text-gray-900')} style={{ fontSize: fontSize.itemTitle }}>
-            {section.type === 'experience'
-              ? item.position || <span className="text-gray-400 italic font-normal">Position</span>
-              : section.type === 'education'
-                ? item.degree || <span className="text-gray-400 italic font-normal">Degree</span>
-                : item.title || <span className="text-gray-400 italic font-normal">Title</span>}
+            {getItemTitleContent(section.type, item)}
           </h3>
           <span className="text-gray-500 italic ml-4 whitespace-nowrap" style={{ fontSize: fontSize.itemDate }}>
             {formatDate(item.startDate, item.endDate, item.current) || 'Date'}
@@ -944,11 +999,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
         </div>
         <div className="flex justify-between items-center" style={{ fontSize: fontSize.itemSubtitle }}>
           <span className={isDummy ? 'text-gray-400' : 'text-gray-600'}>
-            {section.type === 'experience'
-              ? item.company || <span className="text-gray-400">Company</span>
-              : section.type === 'education'
-                ? item.institution || <span className="text-gray-400">Institution</span>
-                : item.subtitle || ''}
+            {getItemSubtitleContent(section.type, item)}
           </span>
           {item.location && <span className="text-gray-500">{item.location}</span>}
         </div>
@@ -1135,9 +1186,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
               <span className="text-gray-400">&ldquo;{DUMMY_DATA.personalInfo.summary}&rdquo;</span>
             )}
           </p>
-          <div className="flex flex-wrap gap-3">
-            {renderContactInfo(false, true)}
-          </div>
+          {renderContactInfo(false, true)}
         </div>
       </div>
     );
@@ -1176,9 +1225,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
         <p className="text-gray-500 mb-3 leading-relaxed" style={{ fontSize: fontSize.summary }}>
           {personalInfo.summary || <span className="text-gray-400 italic">{DUMMY_DATA.personalInfo.summary}</span>}
         </p>
-        <div className="flex flex-wrap gap-x-4 gap-y-1">
-          {renderContactInfo(false, true)}
-        </div>
+        {renderContactInfo(false, true)}
       </div>
     </div>
   );
@@ -1338,7 +1385,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
 
         <div className="w-2/3 p-6">
           {mainSections.map((section) => (
-            <div key={section.id} className="mb-4">
+            <div key={section.id} className="section-block">
               {renderSectionTitle(section.title)}
               {renderSection(section)}
             </div>
@@ -1357,7 +1404,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
       {renderCorporateHeader()}
       <div className="space-y-5">
         {visibleSections.map((section) => (
-          <div key={section.id} className="bg-gray-50/50 p-4 rounded border border-gray-100">
+          <div key={section.id} className="section-block bg-gray-50/50 p-4 rounded border border-gray-100">
             {renderSectionTitle(section.title)}
             {renderSection(section)}
           </div>
@@ -1380,26 +1427,24 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
         {renderCreativeHeader()}
 
         {/* Main content in asymmetric grid */}
-        <div className="grid grid-cols-5 gap-6">
-          {/* Left column - 3/5 width */}
-          <div className="col-span-3 space-y-5">
+        <div className="main-grid">
+          <div className="left-column section">
             {experienceSection && (
-              <div>
+              <div className="section-block">
                 {renderSectionTitle(experienceSection.title)}
                 {renderSection(experienceSection)}
               </div>
             )}
             {otherSections.map((section) => (
-              <div key={section.id}>
+              <div key={section.id} className="section-block">
                 {renderSectionTitle(section.title)}
                 {renderSection(section)}
               </div>
             ))}
           </div>
 
-          {/* Right column - 2/5 width with accent background */}
-          <div className="col-span-2">
-            <div className="p-4 rounded-lg" style={{ backgroundColor: theme.color + '08' }}>
+          <div className="right-column">
+            <div className="skills-card" style={{ backgroundColor: theme.color + '08' }}>
               {skillsSection && (
                 <div>
                   {renderSectionTitle(skillsSection.title)}
@@ -1419,7 +1464,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
       {renderElegantHeader()}
       <div className="max-w-2xl mx-auto space-y-8">
         {visibleSections.map((section) => (
-          <div key={section.id}>
+          <div key={section.id} className="section-block">
             {renderSectionTitle(section.title)}
             <div className="text-center">
               {renderSection(section)}
@@ -1446,21 +1491,19 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
         <div className="flex-1 p-8">
           {renderModernHeader()}
 
-          <div className="grid grid-cols-3 gap-6">
-            {/* Main content - 2/3 */}
-            <div className="col-span-2 space-y-5">
+          <div className="main-grid">
+            <div className="left-column section">
               {mainSections.map((section) => (
-                <div key={section.id} className="border-l-2 border-gray-100 pl-4">
+                <div key={section.id} className="section-block border-l-2 border-gray-100 pl-4">
                   {renderSectionTitle(section.title)}
                   {renderSection(section)}
                 </div>
               ))}
             </div>
 
-            {/* Skills sidebar - 1/3 */}
-            <div>
+            <div className="right-column">
               {skillsSection && (
-                <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="skills-card" style={{ backgroundColor: '#f9fafb' }}>
                   {renderSectionTitle(skillsSection.title)}
                   {renderSkillsSection(skillsSection)}
                 </div>
@@ -1480,7 +1523,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
     <div ref={contentRef} className={cn('w-full h-full p-8', isHarvard || isElegant ? 'font-serif' : 'font-sans')}>
       {renderHeader()}
       {visibleSections.map((section) => (
-        <div key={section.id} className="mb-4">
+        <div key={section.id} className="section-block">
           {renderSectionTitle(section.title)}
           {renderSection(section)}
         </div>
@@ -1511,9 +1554,11 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
       <div className="flex items-center justify-between px-3 py-2 bg-background border-b border-border">
         <div className="flex items-center gap-1">
           <button
+            type="button"
             onClick={handleZoomOut}
-            className="p-1.5 hover:bg-muted rounded-none transition-colors"
-            title="Zoom Out"
+            disabled
+            className="p-1.5 rounded-none text-muted-foreground/50 cursor-not-allowed"
+            title="Zoom is locked to 100% for export consistency"
           >
             <ZoomOut className="w-4 h-4 text-muted-foreground" />
           </button>
@@ -1521,16 +1566,20 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
             {Math.round(zoom * 100)}%
           </span>
           <button
+            type="button"
             onClick={handleZoomIn}
-            className="p-1.5 hover:bg-muted rounded-none transition-colors"
-            title="Zoom In"
+            disabled
+            className="p-1.5 rounded-none text-muted-foreground/50 cursor-not-allowed"
+            title="Zoom is locked to 100% for export consistency"
           >
             <ZoomIn className="w-4 h-4 text-muted-foreground" />
           </button>
           <button
+            type="button"
             onClick={handleReset}
-            className="p-1.5 hover:bg-muted rounded-none transition-colors ml-1"
-            title="Reset View"
+            disabled
+            className="p-1.5 rounded-none text-muted-foreground/50 cursor-not-allowed ml-1"
+            title="View is already reset"
           >
             <RotateCcw className="w-4 h-4 text-muted-foreground" />
           </button>
@@ -1561,34 +1610,27 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, className })
 
         <div className="flex items-center gap-1 text-muted-foreground">
           <Move className="w-3 h-3" />
-          <span className="text-[10px]">Drag to pan</span>
+          <span className="text-[10px]">1:1 render lock</span>
         </div>
       </div>
 
       {/* Preview Area */}
       <div
         ref={containerRef}
-        className={cn(
-          'flex-1 overflow-hidden p-4 cursor-grab select-none',
-          isPanning && 'cursor-grabbing'
-        )}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        onWheel={handleWheel}
+        className="flex-1 overflow-auto p-4 w-full"
       >
-        <div
-          className="mx-auto border border-border shadow-sm overflow-hidden origin-center transition-transform duration-75"
-          style={{
-            width: '100%',
-            maxWidth: '595px',
-            aspectRatio: aspectRatio,
-            transform: `scale(${zoom}) translate(${pan.x / zoom}px, ${pan.y / zoom}px)`,
-            backgroundColor: getTemplateBackground(theme.template),
-          }}
-        >
-          {renderLayout()}
+        <div className="preview-wrapper mx-auto border border-border shadow-sm bg-white">
+          <div
+            ref={setResumeExportNode}
+            id="resume-pdf-export-container"
+            className="resume-container"
+            style={{
+              backgroundColor: getTemplateBackground(theme.template),
+              boxSizing: 'border-box',
+            }}
+          >
+            {renderLayout()}
+          </div>
         </div>
       </div>
     </div>

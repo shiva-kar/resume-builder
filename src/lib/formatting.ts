@@ -13,7 +13,7 @@
 export const formatMonth = (dateStr: string): string => {
   const [year, month] = dateStr.split('-');
   if (!year || !month) return dateStr;
-  const date = new Date(parseInt(year), parseInt(month) - 1);
+  const date = new Date(Number.parseInt(year, 10), Number.parseInt(month, 10) - 1);
   return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
 };
 
@@ -27,7 +27,12 @@ export const formatDateRange = (
 ): string => {
   if (!start) return '';
   const startFormatted = formatMonth(start);
-  const endFormatted = current ? 'Present' : end ? formatMonth(end) : '';
+  let endFormatted = '';
+  if (current) {
+    endFormatted = 'Present';
+  } else if (end) {
+    endFormatted = formatMonth(end);
+  }
   return endFormatted ? `${startFormatted} - ${endFormatted}` : startFormatted;
 };
 
@@ -58,7 +63,7 @@ export const formatUrlDisplay = (url: string): string => {
  */
 export const isUrl = (str: string): boolean => {
   if (!str) return false;
-  return /^(https?:\/\/|www\.)|(\.(com|org|net|io|dev|me|co|app|design))/i.test(str);
+  return /^(?:https?:\/\/|www\.|.*\.(?:com|org|net|io|dev|me|co|app|design)\b)/i.test(str);
 };
 
 // ============================================================================
@@ -79,11 +84,71 @@ export type ParsedLine = {
   segments: TextSegment[];
 };
 
-/**
- * Regex pattern for inline markdown: **bold**, *italic*, ***boldItalic***, [link](url)
- */
-const INLINE_MARKDOWN_PATTERN =
-  /(\*\*\*(.+?)\*\*\*|___(.+?)___|(\*\*|__)(.+?)\4|(\*|_)([^*_]+?)\6|\[([^\]]+)\]\(([^)]+)\))/g;
+type InlinePattern = {
+  type: TextSegment['type'];
+  regex: RegExp;
+};
+
+const INLINE_PATTERNS: InlinePattern[] = [
+  { type: 'boldItalic', regex: /^\*\*\*([^*]+)\*\*\*/ },
+  { type: 'boldItalic', regex: /^___([^_]+)___/ },
+  { type: 'bold', regex: /^\*\*([^*]+)\*\*/ },
+  { type: 'bold', regex: /^__([^_]+)__/ },
+  { type: 'italic', regex: /^\*([^*\n]+)\*/ },
+  { type: 'italic', regex: /^_([^_\n]+)_/ },
+  { type: 'link', regex: /^\[([^\]]+)\]\(([^)]+)\)/ },
+];
+
+const HEADER_PATTERN = /^(#{1,6})\s+(.+)$/;
+const BULLET_PATTERN = /^[-*•]\s+(.+)$/;
+const NUMBERED_PATTERN = /^(\d+)[.)]\s+(.+)$/;
+
+type InlineMatchResult = {
+  segment: TextSegment;
+  consumed: number;
+};
+
+const getInlineMatch = (remaining: string): InlineMatchResult | null => {
+  for (const pattern of INLINE_PATTERNS) {
+    const match = pattern.regex.exec(remaining);
+    if (match?.index !== 0) {
+      continue;
+    }
+
+    const fullMatch = match[0] ?? '';
+    if (pattern.type === 'link') {
+      const content = match[1] ?? '';
+      const href = match[2] ?? '';
+      return {
+        segment: { type: 'link', content, href: ensureProtocol(href) },
+        consumed: fullMatch.length,
+      };
+    }
+
+    return {
+      segment: { type: pattern.type, content: match[1] ?? '' },
+      consumed: fullMatch.length,
+    };
+  }
+
+  return null;
+};
+
+const getPlainTextChunk = (remaining: string): { text: string; consumed: number } => {
+  const nextSpecial = remaining.search(/[[*_]/);
+  if (nextSpecial === -1) {
+    return { text: remaining, consumed: remaining.length };
+  }
+
+  if (nextSpecial === 0) {
+    return { text: remaining[0], consumed: 1 };
+  }
+
+  return {
+    text: remaining.slice(0, nextSpecial),
+    consumed: nextSpecial,
+  };
+};
 
 /**
  * Parse inline markdown formatting into segments
@@ -92,34 +157,20 @@ export const parseInlineMarkdown = (text: string): TextSegment[] => {
   if (!text) return [];
 
   const segments: TextSegment[] = [];
-  let lastIndex = 0;
-  let match: RegExpExecArray | null;
+  let cursor = 0;
 
-  // Reset regex state
-  INLINE_MARKDOWN_PATTERN.lastIndex = 0;
-
-  while ((match = INLINE_MARKDOWN_PATTERN.exec(text)) !== null) {
-    // Add plain text before match
-    if (match.index > lastIndex) {
-      segments.push({ type: 'text', content: text.slice(lastIndex, match.index) });
+  while (cursor < text.length) {
+    const remaining = text.slice(cursor);
+    const inlineMatch = getInlineMatch(remaining);
+    if (inlineMatch) {
+      segments.push(inlineMatch.segment);
+      cursor += inlineMatch.consumed;
+      continue;
     }
 
-    if (match[2] || match[3]) {
-      segments.push({ type: 'boldItalic', content: match[2] || match[3] });
-    } else if (match[5]) {
-      segments.push({ type: 'bold', content: match[5] });
-    } else if (match[7]) {
-      segments.push({ type: 'italic', content: match[7] });
-    } else if (match[8] && match[9]) {
-      segments.push({ type: 'link', content: match[8], href: ensureProtocol(match[9]) });
-    }
-
-    lastIndex = match.index + match[0].length;
-  }
-
-  // Add remaining text
-  if (lastIndex < text.length) {
-    segments.push({ type: 'text', content: text.slice(lastIndex) });
+    const plainChunk = getPlainTextChunk(remaining);
+    segments.push({ type: 'text', content: plainChunk.text });
+    cursor += plainChunk.consumed;
   }
 
   return segments.length > 0 ? segments : [{ type: 'text', content: text }];
@@ -147,7 +198,7 @@ export const parseFormattedText = (text: string): ParsedLine[] => {
     }
 
     // Header (## text)
-    const headerMatch = trimmed.match(/^(#{1,6})\s+(.+)$/);
+    const headerMatch = HEADER_PATTERN.exec(trimmed);
     if (headerMatch) {
       result.push({
         type: 'header',
@@ -159,7 +210,7 @@ export const parseFormattedText = (text: string): ParsedLine[] => {
     }
 
     // Bullet point (- text, * text, • text)
-    const bulletMatch = trimmed.match(/^[-*•]\s+(.+)$/);
+    const bulletMatch = BULLET_PATTERN.exec(trimmed);
     if (bulletMatch) {
       result.push({
         type: 'bullet',
@@ -170,11 +221,11 @@ export const parseFormattedText = (text: string): ParsedLine[] => {
     }
 
     // Numbered list (1. text, 2) text)
-    const numberedMatch = trimmed.match(/^(\d+)[.)]\s+(.+)$/);
+    const numberedMatch = NUMBERED_PATTERN.exec(trimmed);
     if (numberedMatch) {
       result.push({
         type: 'numbered',
-        number: parseInt(numberedMatch[1], 10),
+        number: Number.parseInt(numberedMatch[1], 10),
         content: numberedMatch[2],
         segments: parseInlineMarkdown(numberedMatch[2]),
       });

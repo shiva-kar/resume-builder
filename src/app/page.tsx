@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback, memo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef, memo } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -35,10 +35,8 @@ import {
   Type,
   Palette,
   ChevronDown,
-  ChevronUp,
   Plus,
   Minus,
-  Link as LinkIcon,
   Sparkles,
   Layout,
   Grid3X3,
@@ -164,11 +162,37 @@ const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPrevie
     onPreviewColorChange?.(null); // End live preview (use saved color)
   };
 
+  const isPresetThemeColor = ACCENT_COLORS.some((accent) => accent.color === theme.color);
+  const isRecentThemeColor = theme.recentColors?.includes(theme.color) ?? false;
+  const isCustomThemeColor = !isPresetThemeColor && !isRecentThemeColor;
+
+  const getCustomColorBorderClass = () => {
+    if (isPickingColor) {
+      return 'border-primary ring-2 ring-primary/20';
+    }
+    if (isCustomThemeColor) {
+      return 'border-foreground';
+    }
+    return 'border-border hover:border-primary/50 bg-muted/30';
+  };
+
+  const getCustomColorButtonStyle = (): React.CSSProperties | undefined => {
+    if (isPickingColor) {
+      return { backgroundColor: tempColor };
+    }
+    if (isCustomThemeColor) {
+      return { backgroundColor: theme.color };
+    }
+    return undefined;
+  };
+
   return (
     <div className="glass rounded-lg bento-card overflow-hidden mb-4">
-      <div
+      <button
+        type="button"
         className="bg-muted/50 px-4 py-3 border-b border-border/50 flex justify-between items-center cursor-pointer select-none hover:bg-muted/70 transition-colors"
         onClick={() => setIsOpen(!isOpen)}
+        aria-expanded={isOpen}
       >
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-md bg-gradient-to-br from-violet-500/20 to-pink-500/20 flex items-center justify-center">
@@ -180,15 +204,15 @@ const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPrevie
           'w-4 h-4 text-muted-foreground transition-transform duration-200',
           isOpen && 'rotate-180'
         )} />
-      </div>
+      </button>
 
       {isOpen && (
         <div className="p-4 space-y-5 fade-in">
           {/* Template Selection */}
           <div>
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">
               Choose Your Style
-            </label>
+            </p>
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
               {[
                 { value: 'harvard', label: 'Academic', icon: BookOpen, lightBg: 'from-amber-50 to-orange-50/30', darkBg: 'dark:from-amber-950/40 dark:to-orange-950/20', iconColor: 'text-amber-600 dark:text-amber-400', accentBorder: 'border-amber-500/60' },
@@ -262,16 +286,17 @@ const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPrevie
             </div>
             {/* Template Description */}
             <p className="text-[11px] text-muted-foreground mt-2.5 italic">
-              {TEMPLATE_INFO[theme.template as keyof typeof TEMPLATE_INFO]?.description || 'Select a template style'}
+              {TEMPLATE_INFO[theme.template]?.description || 'Select a template style'}
             </p>
           </div>
 
           {/* Page Size */}
           <div>
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">
               Page Format
-            </label>
+            </p>
             <select
+              id="page-format-select"
               value={theme.pageSize}
               onChange={(e) => updateTheme({ pageSize: e.target.value as PageSize })}
               className="w-full text-sm py-2.5 px-3 rounded-lg border border-border bg-background focus-ring cursor-pointer"
@@ -286,9 +311,9 @@ const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPrevie
 
           {/* Accent Color */}
           <div>
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5 block">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5 block">
               Accent Color
-            </label>
+            </p>
             <div className="flex gap-2 flex-wrap items-center">
               {/* Preset Colors */}
               {ACCENT_COLORS.map((c) => (
@@ -339,21 +364,11 @@ const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPrevie
                   title="Pick custom color"
                   className={cn(
                     'w-8 h-8 rounded-lg border-2 border-dashed flex items-center justify-center transition-all',
-                    isPickingColor
-                      ? 'border-primary ring-2 ring-primary/20'
-                      : !ACCENT_COLORS.some(c => c.color === theme.color) && !theme.recentColors?.includes(theme.color)
-                        ? 'border-foreground'
-                        : 'border-border hover:border-primary/50 bg-muted/30'
+                    getCustomColorBorderClass()
                   )}
-                  style={
-                    isPickingColor
-                      ? { backgroundColor: tempColor }
-                      : !ACCENT_COLORS.some(c => c.color === theme.color)
-                        ? { backgroundColor: theme.color }
-                        : undefined
-                  }
+                  style={getCustomColorButtonStyle()}
                 >
-                  {(ACCENT_COLORS.some(c => c.color === theme.color) || theme.recentColors?.includes(theme.color)) && !isPickingColor && (
+                  {(isPresetThemeColor || isRecentThemeColor) && !isPickingColor && (
                     <Plus className="w-3.5 h-3.5 text-muted-foreground" />
                   )}
                 </button>
@@ -399,9 +414,9 @@ const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPrevie
 
           {/* Global Font Size */}
           <div>
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">
               Text Scale
-            </label>
+            </p>
             <div className="flex bg-muted/50 p-1 rounded-lg">
               {(['small', 'medium', 'large'] as FontSizeLevel[]).map((size) => (
                 <button
@@ -469,7 +484,7 @@ DesignSettingsPanel.displayName = 'DesignSettingsPanel';
 
 const SectionManagerPanel: React.FC = memo(() => {
   const sections = useSections();
-  const { addSection, addCustomSection, removeSection, toggleSectionVisibility } = useResumeStore();
+  const { addSection, addCustomSection, removeSection } = useResumeStore();
   const [isOpen, setIsOpen] = useState(false);
   const [customBump, setCustomBump] = useState(false);
 
@@ -487,34 +502,43 @@ const SectionManagerPanel: React.FC = memo(() => {
       type,
       ...SECTION_CONFIG[type],
       exists: existingSectionTypes.has(type),
-      allowMultiple: false,
     }));
   }, [existingSectionTypes]);
 
-  const handleToggleSection = (type: SectionType, exists: boolean, allowMultiple: boolean) => {
-    if (exists && !allowMultiple) {
-      // Remove the section
-      const sectionToRemove = sections.find(s => s.type === type);
-      if (sectionToRemove && confirm(`Remove ${SECTION_CONFIG[type].label} section?`)) {
-        removeSection(sectionToRemove.id);
-      }
-    } else {
-      // Add new section
-      addSection(type);
+  const removeSingleSection = (type: SectionType) => {
+    const sectionToRemove = sections.find((section) => section.type === type);
+    if (!sectionToRemove) {
+      return;
     }
+
+    if (confirm(`Remove ${SECTION_CONFIG[type].label} section?`)) {
+      removeSection(sectionToRemove.id);
+    }
+  };
+
+  const toggleSingleSection = (type: SectionType, exists: boolean) => {
+    if (exists) {
+      removeSingleSection(type);
+      return;
+    }
+    addSection(type);
   };
 
   const handleAddCustomSection = () => {
     addCustomSection();
     setCustomBump(true);
-    window.setTimeout(() => setCustomBump(false), 140);
+    globalThis.setTimeout(() => setCustomBump(false), 140);
   };
+
+  const customSectionLabel = customCount > 0 ? `Custom Section (${customCount})` : 'Custom Section';
 
   return (
     <div className="glass rounded-lg bento-card overflow-hidden mb-4">
-      <div
+      <button
+        type="button"
         className="bg-muted/50 px-4 py-3 border-b border-border/50 flex justify-between items-center cursor-pointer select-none hover:bg-muted/70 transition-colors"
         onClick={() => setIsOpen(!isOpen)}
+        aria-expanded={isOpen}
       >
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-md bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center">
@@ -526,7 +550,7 @@ const SectionManagerPanel: React.FC = memo(() => {
           'w-4 h-4 text-muted-foreground transition-transform duration-200',
           isOpen && 'rotate-180'
         )} />
-      </div>
+      </button>
 
       {isOpen && (
         <div className="p-4 fade-in">
@@ -551,16 +575,18 @@ const SectionManagerPanel: React.FC = memo(() => {
                 <div className="w-6 h-6 rounded-md bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
                   {SECTION_CONFIG.custom.icon}
                 </div>
-                <span className="text-foreground">{`Custom Section${customCount > 0 ? ` (${customCount})` : ''}`}</span>
+                <span className="text-foreground">{customSectionLabel}</span>
               </div>
               <Plus className="w-4 h-4 text-primary" />
             </button>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
-            {availableSections.map(({ type, label, icon, color, exists, allowMultiple }) => (
+            {availableSections.map(({ type, label, icon, color, exists }) => {
+              const ActionIcon = exists ? Minus : Plus;
+              return (
               <button
                 key={type}
-                onClick={() => handleToggleSection(type, exists, allowMultiple)}
+                onClick={() => toggleSingleSection(type, exists)}
                 className={cn(
                   'px-4 py-3 rounded-lg text-sm font-medium',
                   'flex items-center justify-between gap-2 transition-all duration-200 btn-press',
@@ -578,13 +604,10 @@ const SectionManagerPanel: React.FC = memo(() => {
                   </div>
                   <span>{label}</span>
                 </div>
-                {exists ? (
-                  allowMultiple ? <Plus className="w-4 h-4" /> : <Minus className="w-4 h-4 opacity-60" />
-                ) : (
-                  <Plus className="w-4 h-4 opacity-40" />
-                )}
+                <ActionIcon className={cn('w-4 h-4', exists ? 'opacity-60' : 'opacity-40')} />
               </button>
-            ))}
+            );
+            })}
             </div>
           </div>
         </div>
@@ -603,6 +626,7 @@ export default function ResumeBuilderPage() {
   const [mounted, setMounted] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const resumeExportRef = useRef<HTMLDivElement | null>(null);
   // Color picker preview state - allows live preview without saving
   const [previewColor, setPreviewColor] = useState<string | null>(null);
 
@@ -614,7 +638,6 @@ export default function ResumeBuilderPage() {
   const {
     data,
     reorderSections,
-    updateTheme,
     toggleDarkMode,
     setMobilePreview,
     resetStore,
@@ -634,18 +657,32 @@ export default function ResumeBuilderPage() {
     }
   }, [reorderSections]);
 
-  // Handle PDF export using @react-pdf/renderer.
-  // NOTE: This does not capture the Preview DOM/Tailwind CSS; it renders a separate PDF component tree.
+  // Export the exact live preview DOM node for deterministic preview/PDF parity.
   const handleExport = useCallback(async () => {
+    if (globalThis.window === undefined) {
+      return;
+    }
+
+    console.info('[PDF Export] Export button clicked');
     setIsExporting(true);
+
     try {
-      const blob = await exportToPDF(data);
+      const exportNode = resumeExportRef.current ?? document.getElementById('resume-pdf-export-container');
+      console.info('[PDF Export] Resume ref node', exportNode);
+
+      if (!(exportNode instanceof HTMLElement)) {
+        throw new TypeError('Resume element not found');
+      }
+
+      const blob = await exportToPDF(data, exportNode);
       const filename = data.personalInfo.fullName
-        ? data.personalInfo.fullName.replace(/\s+/g, '_') + '_Resume.pdf'
+        ? data.personalInfo.fullName.trim().split(/\s+/).join('_') + '_Resume.pdf'
         : 'Resume.pdf';
+
       downloadPDF(blob, filename);
+      console.info('[PDF Export] Download triggered', { filename, size: blob.size });
     } catch (error) {
-      console.error('Export failed:', error);
+      console.error('[PDF Export] Export failed', error);
     } finally {
       setIsExporting(false);
     }
@@ -726,6 +763,7 @@ export default function ResumeBuilderPage() {
 
               {/* Export Button */}
               <button
+                type="button"
                 onClick={handleExport}
                 disabled={isExporting}
                 className={cn(
@@ -768,6 +806,7 @@ export default function ResumeBuilderPage() {
                   {isDarkMode ? <Sun className="w-5 h-5 text-amber-500" /> : <Moon className="w-5 h-5 text-slate-500" />}
                 </button>
                 <button
+                  type="button"
                   onClick={handleExport}
                   disabled={isExporting}
                   className="flex-1 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium flex items-center justify-center gap-2 shadow-sm"
@@ -896,6 +935,7 @@ export default function ResumeBuilderPage() {
               <div className="h-[calc(100%-48px)]">
                 <PreviewCanvas
                   data={previewColor ? { ...data, theme: { ...data.theme, color: previewColor } } : data}
+                  resumeRef={resumeExportRef}
                   className="h-full"
                 />
               </div>
