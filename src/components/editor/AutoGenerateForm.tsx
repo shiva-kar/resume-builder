@@ -1,72 +1,98 @@
-import React, { useState } from 'react';
-import { Sparkles, Loader2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Sparkles, Loader2, Key } from 'lucide-react';
 import { FormTextarea } from './FormInput';
-import { generateResumeFromJobReq, LLM_MODELS, LLMProvider } from '@/lib/ai';
 import { useResumeStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 
-const DEI_OPTIONS = [
-  { id: 'female', label: 'Female' },
-  { id: 'male', label: 'Male' },
-  { id: 'ethnic_asian', label: 'Asian/Ethnic Minority' },
-  { id: 'ethnic_black', label: 'Black' },
-  { id: 'ethnic_latino', label: 'Latino/Hispanic' },
-  { id: 'disabled_physical', label: 'Physically Disabled' },
-  { id: 'disabled_mental', label: 'Mentally Disabled' },
-  { id: 'lgbt_gay', label: 'Gay/Lesbian' },
-  { id: 'lgbt_trans', label: 'Transgender' },
-  { id: 'lgbt_bisexual', label: 'Bisexual' },
-  { id: 'veteran', label: 'Veteran' },
-];
-
-const PROVIDER_LABELS: Record<LLMProvider, string> = {
-  openai: 'OpenAI',
-  anthropic: 'Anthropic (Claude)',
-  groq: 'Groq (Fast)',
-  mistral: 'Mistral AI',
-};
-
 export const AutoGenerateForm: React.FC = () => {
   const [jobReq, setJobReq] = useState('');
-  const [deiTraits, setDeiTraits] = useState<string[]>([]);
+  const [context, setContext] = useState('');
   const [apiKey, setApiKey] = useState('');
-  const [modelId, setModelId] = useState('gpt-4o');
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState('');
   const { autoGenerateResume } = useResumeStore();
 
-  // Group models by provider
-  const modelsByProvider = LLM_MODELS.reduce((acc, model) => {
-    if (!acc[model.provider]) acc[model.provider] = [];
-    acc[model.provider].push(model);
-    return acc;
-  }, {} as Record<LLMProvider, typeof LLM_MODELS>);
-
-  const handleDeiChange = (id: string, checked: boolean) => {
-    if (checked) {
-      setDeiTraits([...deiTraits, id]);
-    } else {
-      setDeiTraits(deiTraits.filter((t: string) => t !== id));
+  useEffect(() => {
+    const storedKey = localStorage.getItem('openai_key');
+    if (storedKey) {
+      setApiKey(storedKey);
     }
+  }, []);
+
+  const handleKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setApiKey(val);
+    localStorage.setItem('openai_key', val);
   };
 
-  const selectedModel = LLM_MODELS.find(m => m.id === modelId);
-
   const handleGenerate = async () => {
-    if (!jobReq.trim()) {
-      setError('Bhai, paste the job req first!');
-      return;
-    }
     if (!apiKey.trim()) {
-      setError('API key needed, yaar!');
+      setError('Please provide an OpenAI API key.');
       return;
     }
+    if (!jobReq.trim()) {
+      setError('Please paste a job description.');
+      return;
+    }
+
     setError('');
     setIsGenerating(true);
+
     try {
-      const data = await generateResumeFromJobReq({ jobReq, deiTraits, apiKey, modelId });
-      autoGenerateResume(data);
-      alert('Resume generated successfully! Edit as needed.');
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey.trim()}`,
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o',
+          messages: [
+            {
+              role: 'system',
+              content: `You are a professional resume writer assisting a user. Write a well-structured, realistic resume tailored to the given job description. Incorporate the provided optional context where appropriate. Output ONLY valid JSON matching this schema:
+              {
+                "personalInfo": { "name": "", "email": "", "phone": "", "location": "", "summary": "", "links": [] },
+                "sections": [
+                  {
+                    "id": "", "type": "experience", "title": "", "visible": true,
+                    "items": [
+                      { "id": "", "title": "", "subtitle": "", "startDate": "", "endDate": "", "description": "", "location": "", "link": "", "customFields": {}, "skills": [] }
+                    ],
+                    "customFields": []
+                  }
+                ],
+                "theme": { "template": "modern", "accentColor": "#000000", "fontSize": "medium", "pageSize": "A4", "typography": { "heading": "large", "body": "medium", "caption": "small" } }
+              }`
+            },
+            {
+              role: 'user',
+              content: `Job Description: ${jobReq}\n\nOptional Context: ${context || 'None'}`
+            }
+          ],
+          temperature: 0.7,
+        }),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error?.message || `API Error: Status ${response.status}`);
+      }
+
+      const data = await response.json();
+      const content = data.choices[0]?.message?.content || '{}';
+
+      let jsonStr = content;
+      const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
+      if (jsonMatch) jsonStr = jsonMatch[1].trim();
+
+      const parsedResume = JSON.parse(jsonStr);
+      if (!parsedResume.personalInfo || !parsedResume.sections) {
+        throw new Error('Received malformed response from the AI.');
+      }
+
+      autoGenerateResume(parsedResume);
+      alert('Resume customized successfully! Review the output thoroughly before use.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Generation failed');
     } finally {
@@ -79,85 +105,81 @@ export const AutoGenerateForm: React.FC = () => {
       <div className="bg-muted/50 px-4 py-3 border-b border-border/50">
         <h3 className="font-semibold text-sm text-foreground flex items-center gap-2">
           <Sparkles className="w-4 h-4" />
-          Auto-Generate Resume for Pentesting
+          AI Resume Generator
         </h3>
         <p className="text-xs text-muted-foreground mt-1">
-          Paste job req, select DEI traits to max checkmarks, and generate a fake but realistic resume. For authorized testing only, bhai!
+          Paste a job description to generate a customized resume draft aligned with the role.
+          Use responsibly. This tool is intended for practice, testing, and personalization—not for misrepresentation.
         </p>
       </div>
-      <div className="p-4 space-y-4">
-        <FormTextarea
-          label="Job Requirement"
-          placeholder="Paste the job description here..."
-          value={jobReq}
-          onChange={(e) => setJobReq(e.target.value)}
-          rows={6}
-        />
+      <div className="p-4 space-y-5">
         <div>
-          <label className="text-sm font-medium text-muted-foreground">DEI Traits (Maximize for Testing)</label>
-          <div className="grid grid-cols-2 gap-2 mt-2">
-            {DEI_OPTIONS.map((option) => (
-              <label key={option.id} className="flex items-center space-x-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={deiTraits.includes(option.id)}
-                  onChange={(e) => handleDeiChange(option.id, e.target.checked)}
-                  className="rounded"
-                />
-                <span className="text-sm">{option.label}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-        <div className="space-y-3">
-          <div>
-            <label className="text-sm font-medium text-muted-foreground">LLM Model</label>
-            <select
-              value={modelId}
-              onChange={(e) => setModelId(e.target.value)}
-              className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-            >
-              {(Object.keys(modelsByProvider) as LLMProvider[]).map(provider => (
-                <optgroup key={provider} label={PROVIDER_LABELS[provider]}>
-                  {modelsByProvider[provider].map(model => (
-                    <option key={model.id} value={model.id}>
-                      {model.name}
-                    </option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
-            {selectedModel && (
-              <p className="text-xs text-muted-foreground mt-1">
-                Provider: {PROVIDER_LABELS[selectedModel.provider]} • Model: {selectedModel.modelId}
-              </p>
-            )}
-          </div>
-          <div>
-            <label className="text-sm font-medium text-muted-foreground">
-              {selectedModel ? `${PROVIDER_LABELS[selectedModel.provider]} API Key` : 'API Key'}
+          <h4 className="text-sm font-medium text-foreground flex items-center gap-2 mb-2">
+            <Key className="w-4 h-4" />
+            AI Configuration
+          </h4>
+          <div className="space-y-2 relative">
+            <label htmlFor="openai-api-key-input" className="text-sm font-medium text-muted-foreground">
+              OpenAI API Key (stored locally in your browser)
             </label>
             <input
+              id="openai-api-key-input"
               type="password"
-              placeholder={selectedModel ? `Enter your ${PROVIDER_LABELS[selectedModel.provider]} API key...` : 'Your API key...'}
+              placeholder="sk-..."
               value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+              onChange={handleKeyChange}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             />
+            <p className="text-[11px] text-muted-foreground">
+              Your API key is used only in your browser and is never stored on any server.<br/>
+              Do not share your API key. You are responsible for usage and associated costs.
+            </p>
           </div>
         </div>
-        {error && <p className="text-red-500 text-sm">{error}</p>}
+
+        <div className="pt-2 border-t border-border/50 space-y-4">
+          <FormTextarea
+            label="Job Description"
+            placeholder="Paste the target job description here..."
+            value={jobReq}
+            onChange={(e) => setJobReq(e.target.value)}
+            rows={5}
+            maxLength={10000}
+          />
+
+          <div>
+            <FormTextarea
+              label="Optional Context (for testing and personalization)"
+              placeholder="e.g., Target tone, prior background constraints, preferred skills to emphasize..."
+              value={context}
+              onChange={(e) => setContext(e.target.value)}
+              rows={3}
+              maxLength={2000}
+            />
+            <p className="text-[11px] text-muted-foreground mt-1">
+              Avoid using sensitive or protected attributes unless necessary for legitimate use.
+            </p>
+          </div>
+        </div>
+
+        {error && (
+          <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md border border-destructive/20">
+            {error}
+          </div>
+        )}
+
         <button
+          type="button"
           onClick={handleGenerate}
-          disabled={isGenerating}
+          disabled={isGenerating || !apiKey.trim() || !jobReq.trim()}
           className={cn(
-            'w-full px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 flex items-center justify-center gap-2'
+            'w-full px-4 py-2 bg-primary text-primary-foreground font-medium rounded-md hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2'
           )}
         >
           {isGenerating ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
-              Generating...
+              Generating Resume Draft...
             </>
           ) : (
             'Generate Resume'

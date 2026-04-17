@@ -1,1840 +1,449 @@
-﻿"use client";
+"use client";
 
 import React from "react";
 import {
-  Document,
+  Document as PdfDocument,
   Page,
   Text,
   View,
   StyleSheet,
-  Link,
-  Svg,
-  Path,
-  pdf,
 } from "@react-pdf/renderer";
-import type { Style } from "@react-pdf/types";
-import type { ResumeData, Section, SectionItem, TemplateType, CustomFieldDefinition } from "@/lib/schema";
-import { GLOBAL_FONT_SCALES, DEFAULT_TYPOGRAPHY, SkillWithLevel } from "@/lib/schema";
-import { formatDateRange as formatDate, ensureProtocol, TYPOGRAPHY_PX as TYPO_PX } from "@/lib/formatting";
-import { TEMPLATE_FONTS, getTemplateBackground } from "@/lib/templates";
-
-// Get the appropriate font family for a template
-const getTemplateFont = (template: TemplateType): string => {
-  return TEMPLATE_FONTS[template] || 'Helvetica';
-};
-
-// Compute font sizes from theme settings
-const getFontSizes = (data: ResumeData) => {
-  const typography = data.theme.typography || DEFAULT_TYPOGRAPHY;
-  const scale = GLOBAL_FONT_SCALES[data.theme.fontSize] || 1;
-
-  return {
-    name: Math.round(TYPO_PX[typography.name].name * scale),
-    summary: Math.round(TYPO_PX[typography.headers].headers * scale),
-    contact: Math.round(TYPO_PX[typography.body].body * scale),
-    sectionHeading: Math.round(14 * scale),
-    itemTitle: Math.round(13 * scale),
-    itemSubtitle: Math.round(11 * scale),
-    itemBody: Math.round(10 * scale),
-    itemDate: Math.round(9 * scale),
-  };
-};
-
-// Get base page styles with template-specific font
-const getPageStyles = (template: TemplateType) => {
-  const fontFamily = getTemplateFont(template);
-  return StyleSheet.create({
-    page: {
-      padding: 0,
-      fontSize: 10,
-      fontFamily: fontFamily,
-      lineHeight: 1.4,
-      color: "#1a1a1a",
-    },
-  });
-};
-
-// Base styles shared across templates (non-font-specific)
-const baseStyles = StyleSheet.create({
-  section: {
-    marginBottom: 12,
-  },
-  itemContainer: {
-    marginBottom: 8,
-  },
-  bulletItem: {
-    flexDirection: "row",
-    marginBottom: 2,
-  },
-  bullet: {
-    width: 15,
-  },
-  bulletText: {
-    flex: 1,
-  },
-  link: {
-    color: "#2563eb",
-    textDecoration: "none",
-  },
-});
-
-// Icon components for contact info
-const EmailIcon = () => (
-  <Svg viewBox="0 0 24 24" style={{ width: 10, height: 10 }}>
-    <Path
-      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-      stroke="currentColor"
-      strokeWidth={2}
-      fill="none"
-    />
-  </Svg>
-);
-
-const PhoneIcon = () => (
-  <Svg viewBox="0 0 24 24" style={{ width: 10, height: 10 }}>
-    <Path
-      d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-      stroke="currentColor"
-      strokeWidth={2}
-      fill="none"
-    />
-  </Svg>
-);
-
-const LocationIcon = () => (
-  <Svg viewBox="0 0 24 24" style={{ width: 10, height: 10 }}>
-    <Path
-      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-      stroke="currentColor"
-      strokeWidth={2}
-      fill="none"
-    />
-    <Path
-      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-      stroke="currentColor"
-      strokeWidth={2}
-      fill="none"
-    />
-  </Svg>
-);
-
-const LinkedInIcon = () => (
-  <Svg viewBox="0 0 24 24" style={{ width: 10, height: 10 }}>
-    <Path
-      d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z"
-      stroke="currentColor"
-      strokeWidth={2}
-      fill="none"
-    />
-    <Path d="M4 2a2 2 0 100 4 2 2 0 000-4z" fill="currentColor" />
-  </Svg>
-);
-
-const GithubIcon = () => (
-  <Svg viewBox="0 0 24 24" style={{ width: 10, height: 10 }}>
-    <Path
-      d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22"
-      stroke="currentColor"
-      strokeWidth={2}
-      fill="none"
-    />
-  </Svg>
-);
-
-const WebsiteIcon = () => (
-  <Svg viewBox="0 0 24 24" style={{ width: 10, height: 10 }}>
-    <Path
-      d="M12 21a9 9 0 100-18 9 9 0 000 18zM3.6 9h16.8M3.6 15h16.8M12 3a15.3 15.3 0 014 9 15.3 15.3 0 01-4 9 15.3 15.3 0 01-4-9 15.3 15.3 0 014-9z"
-      stroke="currentColor"
-      strokeWidth={2}
-      fill="none"
-    />
-  </Svg>
-);
-
-// =====================================================
-// PDF RICH TEXT RENDERER - Markdown & Bullet Support
-// =====================================================
-
-interface PDFRichTextProps {
-  text: string;
-  fontSize?: number;
-  color?: string;
-  themeColor?: string;
-  style?: Style;
-  textStyle?: Style;
-}
-
-// Render inline markdown segments for PDF (strong/em/link) using nested <Text>.
-// NOTE: This is not HTML; it is React-PDF text nesting.
-const renderInlineMarkdownChildrenPDF = (text: string): React.ReactNode[] => {
-  if (!text) return [];
-
-  // Pattern for: **bold**, __bold__, *italic*, _italic_, ***boldItalic***, [text](url)
-  const pattern = /(\*\*\*(.+?)\*\*\*|___(.+?)___|(\*\*|__)(.+?)\4|(\*|_)([^*_]+?)\6|\[([^\]]+)\]\(([^)]+)\))/g;
-
-  const children: React.ReactNode[] = [];
-  let lastIndex = 0;
-  let match: RegExpExecArray | null;
-  let key = 0;
-
-  while ((match = pattern.exec(text)) !== null) {
-    if (match.index > lastIndex) {
-      children.push(text.slice(lastIndex, match.index));
-    }
-
-    if (match[2] || match[3]) {
-      children.push(
-        <Text key={key++} style={{ fontWeight: "bold", fontStyle: "italic" }}>
-          {match[2] || match[3]}
-        </Text>
-      );
-    } else if (match[5]) {
-      children.push(
-        <Text key={key++} style={{ fontWeight: "bold" }}>
-          {match[5]}
-        </Text>
-      );
-    } else if (match[7]) {
-      children.push(
-        <Text key={key++} style={{ fontStyle: "italic" }}>
-          {match[7]}
-        </Text>
-      );
-    } else if (match[8] && match[9]) {
-      const href = match[9].startsWith("http") ? match[9] : `https://${match[9]}`;
-      children.push(
-        <Link key={key++} src={href} style={{ color: "#2563eb", textDecoration: "none" }}>
-          {match[8]}
-        </Link>
-      );
-    }
-
-    lastIndex = match.index + match[0].length;
-  }
-
-  if (lastIndex < text.length) {
-    children.push(text.slice(lastIndex));
-  }
-
-  return children;
-};
-
-const InlineMarkdownPDF: React.FC<{ text: string; style: Style }> = ({ text, style }) => {
-  if (!text) return null;
-  const children = renderInlineMarkdownChildrenPDF(text);
-  return <Text style={style}>{children.length > 0 ? children : text}</Text>;
-};
-
-// Main PDF rich text renderer with bullets, numbered lists, headers, and markdown
-const PDFRichText: React.FC<PDFRichTextProps> = ({
-  text,
-  fontSize = 10,
-  color = "#4b5563",
-  themeColor = "#2563eb",
-  style = {},
-  textStyle = {}
-}) => {
-  if (!text) return null;
-
-  const baseTextStyle: Style = { fontSize, color, ...textStyle };
-
-  const lines = text.split('\n');
-  const elements: React.ReactNode[] = [];
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    const trimmed = line.trim();
-
-    // Check for headers (## or ###)
-    const headerMatch = trimmed.match(/^(#{1,6})\s+(.+)$/);
-    if (headerMatch) {
-      const level = headerMatch[1].length;
-      const headerSizes: Record<number, number> = {
-        1: fontSize * 1.4,
-        2: fontSize * 1.25,
-        3: fontSize * 1.1,
-        4: fontSize * 1.05,
-        5: fontSize,
-        6: fontSize * 0.95,
-      };
-      const headerSize = headerSizes[level] || headerSizes[3];
-      elements.push(
-        <View key={i} style={{ marginBottom: 2 }}>
-          <InlineMarkdownPDF
-            text={headerMatch[2]}
-            style={{ fontSize: headerSize, color: themeColor, fontWeight: level <= 2 ? "bold" : "bold" }}
-          />
-        </View>
-      );
-      continue;
-    }
-
-    // Check for bullet points (-, *, •)
-    const bulletMatch = trimmed.match(/^[-*•]\s+(.+)$/);
-    if (bulletMatch) {
-      elements.push(
-        <View key={i} style={{ flexDirection: "row", marginBottom: 1.5 }}>
-          <View style={{ width: 12, alignItems: "center", paddingTop: fontSize * 0.35 }}>
-            <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: themeColor }} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <InlineMarkdownPDF text={bulletMatch[1]} style={baseTextStyle} />
-          </View>
-        </View>
-      );
-      continue;
-    }
-
-    // Check for numbered lists (1., 2., etc.)
-    const numberedMatch = trimmed.match(/^(\d+)[.)]\s+(.+)$/);
-    if (numberedMatch) {
-      elements.push(
-        <View key={i} style={{ flexDirection: "row", marginBottom: 1.5 }}>
-          <Text style={{ width: 16, fontSize, color: themeColor, fontWeight: "bold" }}>
-            {numberedMatch[1]}.
-          </Text>
-          <View style={{ flex: 1 }}>
-            <InlineMarkdownPDF text={numberedMatch[2]} style={baseTextStyle} />
-          </View>
-        </View>
-      );
-      continue;
-    }
-
-    // Regular text or empty line
-    if (trimmed) {
-      elements.push(
-        <View key={i} style={{ marginBottom: 1 }}>
-          <InlineMarkdownPDF text={trimmed} style={baseTextStyle} />
-        </View>
-      );
-    } else if (line === '' && i > 0 && i < lines.length - 1) {
-      // Empty line (paragraph break)
-      elements.push(<View key={i} style={{ height: fontSize * 0.5 }} />);
-    }
-  }
-
-  return <View style={style}>{elements}</View>;
-};
-
-// =====================================================
-// TEMPLATE-SPECIFIC HEADER RENDERERS
-// =====================================================
-
-type FontSizes = ReturnType<typeof getFontSizes>;
-
-const renderHarvardHeader = (data: ResumeData, fontSize: FontSizes) => (
-  <View style={{ marginBottom: 16, borderBottom: "2 solid #1f2937", paddingBottom: 10, textAlign: "center" }}>
-    <Text style={{ fontSize: fontSize.name, fontWeight: "bold", color: "#1f2937", textAlign: "center", marginBottom: 4, textTransform: "uppercase", letterSpacing: 2 }}>
-      {data.personalInfo?.fullName || ""}
-    </Text>
-    {data.personalInfo?.summary && (
-      <PDFRichText
-        text={data.personalInfo.summary}
-        fontSize={fontSize.summary}
-        color="#4b5563"
-        themeColor={data.theme.color}
-        style={{ marginBottom: 8 }}
-      />
-    )}
-    <View style={{ flexDirection: "row", justifyContent: "center", flexWrap: "wrap", gap: 12, fontSize: fontSize.contact }}>
-      {data.personalInfo?.email && <Text style={{ color: "#4b5563" }}>{data.personalInfo.email}</Text>}
-      {data.personalInfo?.phone && <Text style={{ color: "#4b5563" }}>{data.personalInfo.phone}</Text>}
-      {data.personalInfo?.location && <Text style={{ color: "#4b5563" }}>{data.personalInfo.location}</Text>}
-    </View>
-    <View style={{ flexDirection: "row", justifyContent: "center", flexWrap: "wrap", gap: 12, fontSize: fontSize.contact, marginTop: 4 }}>
-      {data.personalInfo?.linkedin && <Link src={data.personalInfo.linkedin} style={{ color: "#4b5563" }}>LinkedIn</Link>}
-      {data.personalInfo?.github && <Link src={data.personalInfo.github} style={{ color: "#4b5563" }}>GitHub</Link>}
-      {data.personalInfo?.website && <Link src={data.personalInfo.website} style={{ color: "#4b5563" }}>Portfolio</Link>}
-    </View>
-  </View>
-);
-
-const renderTechHeader = (data: ResumeData, fontSize: FontSizes) => {
-  const color = data.theme.color;
-  return (
-    <View style={{ marginBottom: 16 }}>
-      <Text style={{ fontSize: fontSize.name, fontWeight: "bold", color: color, marginBottom: 2 }}>
-        {data.personalInfo?.fullName || ""}
-      </Text>
-      {data.personalInfo?.summary && (
-        <PDFRichText
-          text={data.personalInfo.summary}
-          fontSize={fontSize.summary}
-          color="#6b7280"
-          themeColor={color}
-          style={{ marginBottom: 8 }}
-        />
-      )}
-      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, fontSize: fontSize.contact }}>
-        {data.personalInfo?.email && <Text style={{ color: "#4b5563" }}>{data.personalInfo.email}</Text>}
-        {data.personalInfo?.phone && <Text style={{ color: "#4b5563" }}>{data.personalInfo.phone}</Text>}
-        {data.personalInfo?.location && <Text style={{ color: "#4b5563" }}>{data.personalInfo.location}</Text>}
-      </View>
-      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, fontSize: fontSize.contact, marginTop: 4 }}>
-        {data.personalInfo?.linkedin && <Link src={data.personalInfo.linkedin} style={{ color: color }}>LinkedIn</Link>}
-        {data.personalInfo?.github && <Link src={data.personalInfo.github} style={{ color: color }}>GitHub</Link>}
-        {data.personalInfo?.website && <Link src={data.personalInfo.website} style={{ color: color }}>Portfolio</Link>}
-      </View>
-    </View>
-  );
-};
-
-const renderMinimalHeader = (data: ResumeData, fontSize: FontSizes) => (
-  <View style={{ marginBottom: 20, textAlign: "center" }}>
-    <Text style={{ fontSize: fontSize.name, fontWeight: "light", color: "#1f2937", textAlign: "center", marginBottom: 6, letterSpacing: 1 }}>
-      {data.personalInfo?.fullName || ""}
-    </Text>
-    {data.personalInfo?.summary && (
-      <PDFRichText
-        text={data.personalInfo.summary}
-        fontSize={fontSize.summary}
-        color="#9ca3af"
-        themeColor={data.theme.color}
-        style={{ marginBottom: 8 }}
-      />
-    )}
-    <View style={{ flexDirection: "row", justifyContent: "center", flexWrap: "wrap", gap: 12, fontSize: fontSize.contact }}>
-      {data.personalInfo?.email && <Text style={{ color: "#6b7280" }}>{data.personalInfo.email}</Text>}
-      {data.personalInfo?.phone && <Text style={{ color: "#6b7280" }}>{data.personalInfo.phone}</Text>}
-      {data.personalInfo?.location && <Text style={{ color: "#6b7280" }}>{data.personalInfo.location}</Text>}
-    </View>
-    <View style={{ flexDirection: "row", justifyContent: "center", flexWrap: "wrap", gap: 12, fontSize: fontSize.contact, marginTop: 4 }}>
-      {data.personalInfo?.linkedin && <Link src={data.personalInfo.linkedin} style={{ color: "#6b7280" }}>LinkedIn</Link>}
-      {data.personalInfo?.github && <Link src={data.personalInfo.github} style={{ color: "#6b7280" }}>GitHub</Link>}
-      {data.personalInfo?.website && <Link src={data.personalInfo.website} style={{ color: "#6b7280" }}>Portfolio</Link>}
-    </View>
-  </View>
-);
-
-const renderBoldHeader = (data: ResumeData, fontSize: FontSizes) => {
-  const color = data.theme.color;
-  return (
-    <View style={{ marginBottom: 16, borderBottom: `4 solid ${color}`, paddingBottom: 12 }}>
-      <Text style={{ fontSize: Math.round(fontSize.name * 1.15), fontWeight: "bold", color: color, marginBottom: 2, textTransform: "uppercase" }}>
-        {data.personalInfo?.fullName || ""}
-      </Text>
-      {data.personalInfo?.summary && (
-        <PDFRichText
-          text={data.personalInfo.summary}
-          fontSize={fontSize.summary}
-          color="#4b5563"
-          themeColor={color}
-          style={{ marginBottom: 8 }}
-        />
-      )}
-      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, fontSize: fontSize.contact }}>
-        {data.personalInfo?.email && <Text style={{ color: "#4b5563" }}>{data.personalInfo.email}</Text>}
-        {data.personalInfo?.phone && <Text style={{ color: "#4b5563" }}>{data.personalInfo.phone}</Text>}
-        {data.personalInfo?.location && <Text style={{ color: "#4b5563" }}>{data.personalInfo.location}</Text>}
-      </View>
-      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, fontSize: fontSize.contact, marginTop: 4 }}>
-        {data.personalInfo?.linkedin && <Link src={data.personalInfo.linkedin} style={{ color: color }}>LinkedIn</Link>}
-        {data.personalInfo?.github && <Link src={data.personalInfo.github} style={{ color: color }}>GitHub</Link>}
-        {data.personalInfo?.website && <Link src={data.personalInfo.website} style={{ color: color }}>Portfolio</Link>}
-      </View>
-    </View>
-  );
-};
-
-const renderNeoHeader = (data: ResumeData, fontSize: FontSizes) => {
-  const color = data.theme.color;
-  return (
-    <View style={{ marginBottom: 16 }}>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4 }}>
-        <View style={{ width: 12, height: 12, backgroundColor: color }} />
-        <Text style={{ fontSize: fontSize.name, fontWeight: "bold", color: "#1f2937" }}>
-          {data.personalInfo?.fullName || ""}
-        </Text>
-      </View>
-      {data.personalInfo?.summary && (
-        <PDFRichText
-          text={data.personalInfo.summary}
-          fontSize={fontSize.summary}
-          color="#6b7280"
-          themeColor={color}
-          style={{ marginBottom: 8 }}
-        />
-      )}
-      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, fontSize: fontSize.contact }}>
-        {data.personalInfo?.email && <Text style={{ color: "#4b5563" }}>{data.personalInfo.email}</Text>}
-        {data.personalInfo?.phone && <Text style={{ color: "#4b5563" }}>{data.personalInfo.phone}</Text>}
-        {data.personalInfo?.location && <Text style={{ color: "#4b5563" }}>{data.personalInfo.location}</Text>}
-      </View>
-      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, fontSize: fontSize.contact, marginTop: 4 }}>
-        {data.personalInfo?.linkedin && <Link src={data.personalInfo.linkedin} style={{ color: color }}>LinkedIn</Link>}
-        {data.personalInfo?.github && <Link src={data.personalInfo.github} style={{ color: color }}>GitHub</Link>}
-        {data.personalInfo?.website && <Link src={data.personalInfo.website} style={{ color: color }}>Portfolio</Link>}
-      </View>
-    </View>
-  );
-};
-
-const renderPortfolioHeader = (data: ResumeData, fontSize: FontSizes) => {
-  const color = data.theme.color;
-  return (
-    <View style={{ marginBottom: 16, borderBottom: `2 solid ${color}`, paddingBottom: 12 }}>
-      <Text style={{ fontSize: fontSize.name, fontWeight: "bold", color: color, marginBottom: 4 }}>
-        {data.personalInfo?.fullName || ""}
-      </Text>
-      {data.personalInfo?.summary && (
-        <PDFRichText
-          text={data.personalInfo.summary}
-          fontSize={fontSize.summary}
-          color="#6b7280"
-          themeColor={color}
-          style={{ marginBottom: 8 }}
-        />
-      )}
-      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, fontSize: fontSize.contact }}>
-        {data.personalInfo?.email && <Text style={{ color: "#4b5563" }}>{data.personalInfo.email}</Text>}
-        {data.personalInfo?.phone && <Text style={{ color: "#4b5563" }}>{data.personalInfo.phone}</Text>}
-        {data.personalInfo?.location && <Text style={{ color: "#4b5563" }}>{data.personalInfo.location}</Text>}
-      </View>
-      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, fontSize: fontSize.contact, marginTop: 4 }}>
-        {data.personalInfo?.linkedin && <Link src={data.personalInfo.linkedin} style={{ color: color }}>LinkedIn</Link>}
-        {data.personalInfo?.github && <Link src={data.personalInfo.github} style={{ color: color }}>GitHub</Link>}
-        {data.personalInfo?.website && <Link src={data.personalInfo.website} style={{ color: color }}>Portfolio</Link>}
-      </View>
-    </View>
-  );
-};
-
-const renderCorporateHeader = (data: ResumeData, fontSize: FontSizes) => {
-  const color = data.theme.color;
-  return (
-    <View style={{ marginBottom: 16, backgroundColor: "#f9fafb", padding: 14, borderLeft: `4 solid ${color}` }}>
-      <Text style={{ fontSize: fontSize.name, fontWeight: "bold", color: "#1f2937", marginBottom: 4 }}>
-        {data.personalInfo?.fullName || ""}
-      </Text>
-      {data.personalInfo?.summary && (
-        <PDFRichText
-          text={data.personalInfo.summary}
-          fontSize={fontSize.summary}
-          color="#4b5563"
-          themeColor={color}
-          style={{ marginBottom: 8 }}
-        />
-      )}
-      <View style={{ borderTop: "1 solid #e5e7eb", paddingTop: 8, marginTop: 4 }}>
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, fontSize: fontSize.contact }}>
-          {data.personalInfo?.email && <Text style={{ color: "#4b5563" }}>{data.personalInfo.email}</Text>}
-          {data.personalInfo?.phone && <Text style={{ color: "#4b5563" }}>{data.personalInfo.phone}</Text>}
-          {data.personalInfo?.location && <Text style={{ color: "#4b5563" }}>{data.personalInfo.location}</Text>}
-        </View>
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, fontSize: fontSize.contact, marginTop: 4 }}>
-          {data.personalInfo?.linkedin && <Link src={data.personalInfo.linkedin} style={{ color: color }}>LinkedIn</Link>}
-          {data.personalInfo?.github && <Link src={data.personalInfo.github} style={{ color: color }}>GitHub</Link>}
-          {data.personalInfo?.website && <Link src={data.personalInfo.website} style={{ color: color }}>Portfolio</Link>}
-        </View>
-      </View>
-    </View>
-  );
-};
-
-const renderCreativeHeader = (data: ResumeData, fontSize: FontSizes) => {
-  const color = data.theme.color;
-  const fullName = data.personalInfo?.fullName || "";
-  return (
-    <View style={{ marginBottom: 20, position: "relative" }}>
-      <View style={{ position: "absolute", top: 0, left: 0, width: 50, height: 50, backgroundColor: color, opacity: 0.2 }} />
-      <View style={{ paddingLeft: 20, paddingTop: 12 }}>
-        <Text style={{ fontSize: Math.round(fontSize.name * 1.1), fontWeight: "bold", marginBottom: 4 }}>
-          <Text style={{ color: color }}>{fullName.charAt(0)}</Text>
-          <Text style={{ color: "#1f2937" }}>{fullName.slice(1)}</Text>
-        </Text>
-        {data.personalInfo?.summary && (
-          <PDFRichText
-            text={`“${data.personalInfo.summary}”`}
-            fontSize={fontSize.summary}
-            color="#4b5563"
-            themeColor={color}
-            textStyle={{ fontStyle: "italic" }}
-            style={{ marginBottom: 8 }}
-          />
-        )}
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, fontSize: fontSize.contact }}>
-          {data.personalInfo?.email && <Text style={{ color: "#4b5563" }}>{data.personalInfo.email}</Text>}
-          {data.personalInfo?.phone && <Text style={{ color: "#4b5563" }}>{data.personalInfo.phone}</Text>}
-          {data.personalInfo?.location && <Text style={{ color: "#4b5563" }}>{data.personalInfo.location}</Text>}
-        </View>
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, fontSize: fontSize.contact, marginTop: 4 }}>
-          {data.personalInfo?.linkedin && <Link src={data.personalInfo.linkedin} style={{ color: color }}>LinkedIn</Link>}
-          {data.personalInfo?.github && <Link src={data.personalInfo.github} style={{ color: color }}>GitHub</Link>}
-          {data.personalInfo?.website && <Link src={data.personalInfo.website} style={{ color: color }}>Portfolio</Link>}
-        </View>
-      </View>
-    </View>
-  );
-};
-
-const renderElegantHeader = (data: ResumeData, fontSize: FontSizes) => {
-  const color = data.theme.color;
-  return (
-    <View style={{ marginBottom: 20, textAlign: "center" }}>
-      <Text style={{ fontSize: Math.round(fontSize.name * 1.05), fontFamily: "Times-Roman", fontWeight: "normal", color: "#1f2937", textAlign: "center", marginBottom: 8, letterSpacing: 3, textTransform: "uppercase" }}>
-        {data.personalInfo?.fullName || ""}
-      </Text>
-      <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 12, marginBottom: 8 }}>
-        <View style={{ width: 40, height: 1, backgroundColor: "#d1d5db" }} />
-        <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: color }} />
-        <View style={{ width: 40, height: 1, backgroundColor: "#d1d5db" }} />
-      </View>
-      {data.personalInfo?.summary && (
-        <PDFRichText
-          text={data.personalInfo.summary}
-          fontSize={fontSize.summary}
-          color="#6b7280"
-          themeColor={color}
-          textStyle={{ fontStyle: "italic", fontFamily: "Times-Roman" }}
-          style={{ marginBottom: 10 }}
-        />
-      )}
-      <View style={{ flexDirection: "row", justifyContent: "center", flexWrap: "wrap", gap: 12, fontSize: fontSize.contact }}>
-        {data.personalInfo?.email && <Text style={{ color: "#6b7280" }}>{data.personalInfo.email}</Text>}
-        {data.personalInfo?.phone && <Text style={{ color: "#6b7280" }}>{data.personalInfo.phone}</Text>}
-        {data.personalInfo?.location && <Text style={{ color: "#6b7280" }}>{data.personalInfo.location}</Text>}
-      </View>
-      <View style={{ flexDirection: "row", justifyContent: "center", flexWrap: "wrap", gap: 12, fontSize: fontSize.contact, marginTop: 4 }}>
-        {data.personalInfo?.linkedin && <Link src={data.personalInfo.linkedin} style={{ color: "#6b7280" }}>LinkedIn</Link>}
-        {data.personalInfo?.github && <Link src={data.personalInfo.github} style={{ color: "#6b7280" }}>GitHub</Link>}
-        {data.personalInfo?.website && <Link src={data.personalInfo.website} style={{ color: "#6b7280" }}>Portfolio</Link>}
-      </View>
-    </View>
-  );
-};
-
-const renderModernHeader = (data: ResumeData, fontSize: FontSizes) => {
-  const color = data.theme.color;
-  return (
-    <View style={{ marginBottom: 16, flexDirection: "row", gap: 10 }}>
-      <View style={{ width: 4, backgroundColor: color, borderRadius: 2 }} />
-      <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: fontSize.name, fontWeight: "bold", color: "#1f2937", marginBottom: 2 }}>
-          {data.personalInfo?.fullName || ""}
-        </Text>
-        {data.personalInfo?.summary && (
-          <PDFRichText
-            text={data.personalInfo.summary}
-            fontSize={fontSize.summary}
-            color="#6b7280"
-            themeColor={color}
-            style={{ marginBottom: 8 }}
-          />
-        )}
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, fontSize: fontSize.contact }}>
-          {data.personalInfo?.email && <Text style={{ color: "#4b5563" }}>{data.personalInfo.email}</Text>}
-          {data.personalInfo?.phone && <Text style={{ color: "#4b5563" }}>{data.personalInfo.phone}</Text>}
-          {data.personalInfo?.location && <Text style={{ color: "#4b5563" }}>{data.personalInfo.location}</Text>}
-        </View>
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, fontSize: fontSize.contact, marginTop: 4 }}>
-          {data.personalInfo?.linkedin && <Link src={data.personalInfo.linkedin} style={{ color: color }}>LinkedIn</Link>}
-          {data.personalInfo?.github && <Link src={data.personalInfo.github} style={{ color: color }}>GitHub</Link>}
-          {data.personalInfo?.website && <Link src={data.personalInfo.website} style={{ color: color }}>Portfolio</Link>}
-        </View>
-      </View>
-    </View>
-  );
-};
-
-// =====================================================
-// TEMPLATE-SPECIFIC SECTION TITLE RENDERERS
-// =====================================================
-
-const renderSectionTitle = (title: string, template: TemplateType, color: string, sectionHeadingSize: number = 12) => {
-  switch (template) {
-    case "harvard":
-      return (
-        <Text style={{ fontSize: sectionHeadingSize, fontWeight: "bold", color: "#1f2937", borderBottom: "1 solid #1f2937", paddingBottom: 2, marginBottom: 8, textTransform: "uppercase", letterSpacing: 1 }}>
-          {title}
-        </Text>
-      );
-    case "tech":
-      return (
-        <Text style={{ fontSize: sectionHeadingSize, fontWeight: "bold", color: color, marginBottom: 8 }}>
-          {title}
-        </Text>
-      );
-    case "bold":
-      return (
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 }}>
-          <View style={{ width: 3, height: 14, backgroundColor: color }} />
-          <Text style={{ fontSize: sectionHeadingSize, fontWeight: "bold", color: "#1f2937", textTransform: "uppercase" }}>{title}</Text>
-        </View>
-      );
-    case "neo":
-      return (
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 }}>
-          <View style={{ width: 10, height: 10, backgroundColor: color }} />
-          <Text style={{ fontSize: sectionHeadingSize, fontWeight: "bold", color: "#1f2937", textTransform: "uppercase", letterSpacing: 1 }}>{title}</Text>
-        </View>
-      );
-    case "portfolio":
-      return (
-        <Text style={{ fontSize: sectionHeadingSize, fontWeight: "bold", color: color, marginBottom: 8 }}>
-          {title}
-        </Text>
-      );
-    case "corporate":
-      return (
-        <View style={{ marginBottom: 8, borderBottom: "2 solid #e5e7eb", paddingBottom: 4 }}>
-          <Text style={{ fontSize: sectionHeadingSize, fontWeight: "bold", color: "#1f2937" }}>{title}</Text>
-        </View>
-      );
-    case "creative":
-      return (
-        <View style={{ marginBottom: 8, flexDirection: "row" }}>
-          <View style={{ backgroundColor: color + "30", paddingLeft: 6, paddingRight: 6, paddingTop: 2, paddingBottom: 2 }}>
-            <Text style={{ fontSize: sectionHeadingSize, fontWeight: "bold", color: color, textTransform: "uppercase", letterSpacing: 1 }}>{title}</Text>
-          </View>
-        </View>
-      );
-    case "elegant":
-      return (
-        <View style={{ marginBottom: 8, textAlign: "center" }}>
-          <Text style={{ fontSize: Math.round(sectionHeadingSize * 0.9), fontFamily: "Times-Roman", fontWeight: "normal", color: "#6b7280", textAlign: "center", letterSpacing: 3, textTransform: "uppercase" }}>{title}</Text>
-          <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 6, marginTop: 4 }}>
-            <View style={{ width: 30, height: 1, backgroundColor: color + "60" }} />
-            <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: color }} />
-            <View style={{ width: 30, height: 1, backgroundColor: color + "60" }} />
-          </View>
-        </View>
-      );
-    case "modern":
-      return (
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 }}>
-          <View style={{ width: 2, height: 14, backgroundColor: color, borderRadius: 1 }} />
-          <Text style={{ fontSize: sectionHeadingSize, fontWeight: "bold", color: "#1f2937" }}>{title}</Text>
-        </View>
-      );
-    case "minimal":
-    default:
-      return (
-        <Text style={{ fontSize: Math.round(sectionHeadingSize * 0.85), fontWeight: "bold", color: "#9ca3af", marginBottom: 6, textTransform: "uppercase", letterSpacing: 2 }}>
-          {title}
-        </Text>
-      );
-  }
-};
-
-// Default font sizes for standalone renderSection (no data context)
-const DEFAULT_FONT_SIZES = {
-  name: 22, summary: 13, contact: 10,
-  sectionHeading: 14, itemTitle: 13, itemSubtitle: 11,
-  itemBody: 10, itemDate: 9,
-};
-
-// =====================================================
-// HELPER FUNCTIONS
-// =====================================================
-
-// Helper to check if content is real (not placeholder)
-const isRealContent = (value: string | undefined | null): boolean => {
-  if (!value || value.trim() === '') return false;
-  const placeholders = [
-    'your name', 'full name', 'your title', 'job title',
-    'your email', 'your phone', 'your location', 'city, country',
-    'write a short', 'professional summary', 'add your',
-    'xyz company', 'company name', 'position title',
-    'university name', 'degree name', 'field of study',
-    'skill name', 'project name', 'certification name',
-    'describe your', 'brief description', 'example', 'sample',
-    'lorem ipsum', 'your.email@example', '+1 234 567'
-  ];
-  const lower = value.toLowerCase().trim();
-  return !placeholders.some(p => lower.includes(p) || lower === p);
-};
-
-// =====================================================
-// TEMPLATE-SPECIFIC SKILLS RENDERERS
-// =====================================================
-
-const renderSkills = (skills: string[], template: TemplateType, color: string) => {
-  if (!skills || skills.length === 0) return null;
-
-  switch (template) {
-    case "elegant":
-      return (
-        <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center" }}>
-          {skills.map((skill, idx) => (
-            <Text key={idx} style={{ fontSize: 9, color: "#6b7280" }}>
-              {skill}{idx < skills.length - 1 ? " · " : ""}
-            </Text>
-          ))}
-        </View>
-      );
-
-    case "corporate":
-      return (
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
-          {skills.map((skill, idx) => (
-            <Text key={idx} style={{ fontSize: 9, backgroundColor: "#f3f4f6", padding: "3 8", borderRadius: 3, color: "#374151" }}>
-              {skill}
-            </Text>
-          ))}
-        </View>
-      );
-
-    case "creative":
-      return (
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
-          {skills.map((skill, idx) => (
-            <Text key={idx} style={{ fontSize: 9, backgroundColor: color + "15", color: color, padding: "3 8", borderRadius: 4, fontWeight: "bold" }}>
-              {skill}
-            </Text>
-          ))}
-        </View>
-      );
-
-    case "modern":
-      return (
-        <View style={{ flexDirection: "column", gap: 4 }}>
-          {skills.map((skill, idx) => (
-            <View key={idx} style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-              <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: color }} />
-              <Text style={{ fontSize: 9, color: "#374151" }}>{skill}</Text>
-            </View>
-          ))}
-        </View>
-      );
-
-    case "bold":
-    case "tech":
-      return (
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
-          {skills.map((skill, idx) => (
-            <Text key={idx} style={{ fontSize: 9, backgroundColor: color + "20", color: color, padding: "3 8", borderRadius: 3 }}>
-              {skill}
-            </Text>
-          ))}
-        </View>
-      );
-
-    case "neo":
-      return (
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
-          {skills.map((skill, idx) => (
-            <Text key={idx} style={{ fontSize: 9, backgroundColor: color + "20", color: color, padding: "3 8" }}>
-              {skill}
-            </Text>
-          ))}
-        </View>
-      );
-
-    case "portfolio":
-      return (
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
-          {skills.map((skill, idx) => (
-            <Text key={idx} style={{ fontSize: 9, backgroundColor: color + "20", color: color, padding: "3 8", borderRadius: 4 }}>
-              {skill}
-            </Text>
-          ))}
-        </View>
-      );
-
-    case "harvard":
-      return (
-        <Text style={{ fontSize: 9, color: "#374151" }}>
-          {skills.join(", ")}
-        </Text>
-      );
-
-    case "minimal":
-    default:
-      return (
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
-          {skills.map((skill, idx) => (
-            <Text key={idx} style={{ fontSize: 9, backgroundColor: color + "20", color: color, padding: "3 8", borderRadius: 3 }}>
-              {skill}
-            </Text>
-          ))}
-        </View>
-      );
-  }
-};
-
-// =====================================================
-// TEMPLATE-SPECIFIC SKILLS WITH LEVELS RENDERERS
-// (Mirrors PreviewCanvas renderSkillsSection logic)
-// =====================================================
-
-const renderSkillsWithLevels = (skillsWithLevels: SkillWithLevel[], template: TemplateType, color: string) => {
-  if (!skillsWithLevels || skillsWithLevels.length === 0) return null;
-
-  switch (template) {
-    case "elegant":
-      return (
-        <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center" }}>
-          {skillsWithLevels.map((s, idx) => (
-            <Text key={idx} style={{ fontSize: 9, color: "#6b7280" }}>
-              <Text style={{ fontWeight: "bold" }}>{s.name}</Text>
-              <Text style={{ fontSize: 8, color: "#9ca3af" }}> ({s.level})</Text>
-              {idx < skillsWithLevels.length - 1 ? " · " : ""}
-            </Text>
-          ))}
-        </View>
-      );
-
-    case "corporate":
-      return (
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
-          {skillsWithLevels.map((skill, idx) => (
-            <View key={idx} style={{ flexDirection: "row", alignItems: "center", backgroundColor: "#ffffff", borderWidth: 1, borderColor: "#e5e7eb", borderRadius: 3, padding: "3 8" }}>
-              <Text style={{ fontSize: 9, fontWeight: "bold", color: "#1f2937" }}>{skill.name}</Text>
-              <Text style={{ fontSize: 7, color: "#9ca3af", marginLeft: 4 }}>{skill.level}</Text>
-            </View>
-          ))}
-        </View>
-      );
-
-    case "creative":
-      return (
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
-          {skillsWithLevels.map((skill, idx) => (
-            <View key={idx} style={{ flexDirection: "row", alignItems: "center", backgroundColor: color + "15", borderRadius: 4, padding: "3 8" }}>
-              <Text style={{ fontSize: 9, fontWeight: "bold", color: color }}>{skill.name}</Text>
-              <Text style={{ fontSize: 7, color: color, opacity: 0.6, marginLeft: 4 }}>• {skill.level}</Text>
-            </View>
-          ))}
-        </View>
-      );
-
-    case "modern":
-      return (
-        <View style={{ flexDirection: "column", gap: 4 }}>
-          {skillsWithLevels.map((skill, idx) => (
-            <View key={idx} style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-              <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: color }} />
-              <Text style={{ fontSize: 9, fontWeight: "bold", color: "#1f2937" }}>{skill.name}</Text>
-              <Text style={{ fontSize: 7, color: "#9ca3af" }}>{skill.level}</Text>
-            </View>
-          ))}
-        </View>
-      );
-
-    case "bold":
-    case "tech":
-    case "neo":
-    case "portfolio":
-    case "minimal":
-    default:
-      return (
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
-          {skillsWithLevels.map((skill, idx) => (
-            <View key={idx} style={{ flexDirection: "row", alignItems: "center", borderWidth: 1, borderColor: "#e5e7eb", padding: "2 8", borderRadius: template === "neo" ? 0 : 3 }}>
-              <Text style={{ fontSize: 9, fontWeight: "bold", color: (template === "tech" || template === "bold") ? color : "#1f2937" }}>{skill.name}</Text>
-              <Text style={{ fontSize: 7, color: "#9ca3af", marginLeft: 4, textTransform: "uppercase" }}>{skill.level}</Text>
-            </View>
-          ))}
-        </View>
-      );
-  }
-};
-
-// Full skills section renderer that handles both skills[] and skillsWithLevels[]
-// Mirrors PreviewCanvas renderSkillsSection logic exactly
-const renderFullSkillsSection = (section: Section, template: TemplateType, color: string) => {
-  const item = section.items?.[0];
-  if (!item) return null;
-
-  // Use simple presence check (matches Preview logic — no isRealContent gate)
-  const levelSkills = (item.skillsWithLevels || []).filter(s => s.name?.trim());
-  const plainSkills = (item.skills || []).filter(s => s?.trim());
-
-  const hasSkillsWithLevels = levelSkills.length > 0;
-  const hasPlainSkills = plainSkills.length > 0;
-
-  if (!hasSkillsWithLevels && !hasPlainSkills) return null;
-
-  return (
-    <View>
-      {hasSkillsWithLevels && renderSkillsWithLevels(
-        levelSkills,
-        template,
-        color
-      )}
-      {hasPlainSkills && (
-        <View style={hasSkillsWithLevels ? { marginTop: 6 } : {}}>
-          {renderSkills(plainSkills, template, color)}
-        </View>
-      )}
-    </View>
-  );
-};
-
-// =====================================================
-// CUSTOM SECTION ITEM RENDERER
-// (Mirrors PreviewCanvas renderCustomSection logic)
-// =====================================================
-
-const renderCustomSectionItem = (
-  item: SectionItem,
-  section: Section,
-  template: TemplateType,
-  color: string,
-  fontSize: ReturnType<typeof getFontSizes>
-) => {
-  const colors = getTemplateColors(template, color);
-  const fieldDefs = section.fieldDefinitions || [];
-
-  // If no field definitions, fall back to standard item rendering
-  if (fieldDefs.length === 0) {
-    return (
-      <View key={item.id} style={{ marginBottom: 8 }}>
-        {item.title && <Text style={{ fontSize: fontSize.itemTitle, fontWeight: "bold", color: colors.title }}>{item.title}</Text>}
-        {item.subtitle && <Text style={{ fontSize: fontSize.itemSubtitle, color: colors.subtitle }}>{item.subtitle}</Text>}
-        {item.description && (
-          <PDFRichText
-            text={item.description}
-            fontSize={fontSize.itemBody}
-            color="#4b5563"
-            themeColor={color}
-            style={{ marginTop: 2 }}
-          />
-        )}
-      </View>
-    );
-  }
-
-  const getFieldValue = (fieldId: string) => {
-    const field = (item.customFields || []).find((cf) => cf.fieldId === fieldId);
-    return field?.value;
-  };
-
-  const titleField = fieldDefs.find((f) => f.type === 'text');
-  const dateField = fieldDefs.find((f) => f.type === 'date' || f.type === 'dateRange');
-  const linkField = fieldDefs.find((f) => f.type === 'link');
-  const tagsField = fieldDefs.find((f) => f.type === 'tags');
-  const textareaField = fieldDefs.find((f) => f.type === 'textarea');
-
-  const title = titleField ? (getFieldValue(titleField.id) as string) : '';
-  const linkValue = linkField ? (getFieldValue(linkField.id) as string) : '';
-  const tagsValue = tagsField ? (getFieldValue(tagsField.id) as string[]) : [];
-  const description = textareaField ? (getFieldValue(textareaField.id) as string) : '';
-
-  let dateDisplay = '';
-  if (dateField) {
-    const dateValue = getFieldValue(dateField.id) as string;
-    if (dateField.type === 'dateRange' && dateValue) {
-      const [start, end] = dateValue.split('|');
-      dateDisplay = formatDate(start, end);
-    } else if (dateValue) {
-      dateDisplay = formatDate(dateValue);
-    }
-  }
-
-  return (
-    <View key={item.id} style={{ marginBottom: 8 }}>
-      {/* Title row with date */}
-      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 2 }}>
-        <View style={{ flex: 1 }}>
-          {linkValue ? (
-            <Link src={ensureProtocol(linkValue)} style={{ fontSize: fontSize.itemTitle, fontWeight: "bold", color: color, textDecoration: "none" }}>
-              {title || 'Title'}
-            </Link>
-          ) : title ? (
-            <Text style={{ fontSize: fontSize.itemTitle, fontWeight: "bold", color: colors.title }}>{title}</Text>
-          ) : null}
-        </View>
-        {dateDisplay ? (
-          <Text style={{ fontSize: fontSize.itemDate, color: colors.date, fontStyle: "italic" }}>{dateDisplay}</Text>
-        ) : null}
-      </View>
-
-      {/* Additional text fields (non-title text fields) */}
-      {fieldDefs
-        .filter((f) => f.type === 'text' && f !== titleField)
-        .map((f) => {
-          const val = getFieldValue(f.id) as string;
-          return val ? (
-            <Text key={f.id} style={{ fontSize: fontSize.itemSubtitle, color: colors.subtitle }}>{val}</Text>
-          ) : null;
-        })}
-
-      {/* Tags */}
-      {tagsValue && tagsValue.length > 0 && (
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 4, marginTop: 2 }}>
-          {tagsValue.map((tag, idx) => (
-            <Text key={idx} style={{ fontSize: 8, backgroundColor: color + '20', color: color, padding: "2 6", borderRadius: template === "neo" ? 0 : 3 }}>
-              {tag}
-            </Text>
-          ))}
-        </View>
-      )}
-
-      {/* Description with rich text support */}
-      {description && (
-        <PDFRichText
-          text={description}
-          fontSize={fontSize.itemBody}
-          color="#4b5563"
-          themeColor={color}
-          style={{ marginTop: 2 }}
-        />
-      )}
-    </View>
-  );
-};
-
-// =====================================================
-// TEMPLATE-SPECIFIC ITEM RENDERERS (Experience/Education)
-// =====================================================
-
-const getTemplateColors = (template: TemplateType, color: string) => {
-  switch (template) {
-    case "harvard": return { title: "#1f2937", subtitle: "#4b5563", date: "#6b7280" };
-    case "tech": return { title: "#0f172a", subtitle: color, date: "#64748b" };
-    case "bold": return { title: "#0f172a", subtitle: color, date: "#94a3b8" };
-    case "neo": return { title: "#1f2937", subtitle: color, date: "#9ca3af" };
-    case "portfolio": return { title: "#1f2937", subtitle: color, date: "#9ca3af" };
-    case "corporate": return { title: "#1f2937", subtitle: "#4b5563", date: "#6b7280" };
-    case "creative": return { title: color, subtitle: "#6b7280", date: "#9ca3af" };
-    case "elegant": return { title: "#1f2937", subtitle: "#6b7280", date: "#9ca3af" };
-    case "modern": return { title: "#1f2937", subtitle: color, date: "#9ca3af" };
-    case "minimal":
-    default: return { title: "#1f2937", subtitle: "#4b5563", date: "#9ca3af" };
-  }
-};
-
-const renderExperienceItem = (item: SectionItem, template: TemplateType, color: string) => {
-  const colors = getTemplateColors(template, color);
-  const dateStr = formatDate(item.startDate, item.endDate, item.current);
-
-  return (
-    <View style={{ marginBottom: 10 }}>
-      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 2 }}>
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 11, fontWeight: "bold", color: colors.title }}>{item.position || item.title || ""}</Text>
-          <Text style={{ fontSize: 10, color: colors.subtitle }}>{item.company || item.subtitle || ""}</Text>
-        </View>
-        <Text style={{ fontSize: 9, color: colors.date, fontStyle: "italic" }}>{dateStr}</Text>
-      </View>
-      {item.description && (
-        <PDFRichText
-          text={item.description}
-          fontSize={9}
-          color="#4b5563"
-          themeColor={color}
-          style={{ marginTop: 4 }}
-        />
-      )}
-    </View>
-  );
-};
-
-const renderEducationItem = (item: SectionItem, template: TemplateType, color: string) => {
-  const colors = getTemplateColors(template, color);
-  const dateStr = formatDate(item.startDate, item.endDate, item.current);
-
-  return (
-    <View style={{ marginBottom: 10 }}>
-      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 2 }}>
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 11, fontWeight: "bold", color: colors.title }}>{item.degree || item.title || ""}</Text>
-          <Text style={{ fontSize: 10, color: colors.subtitle }}>{item.institution || item.subtitle || ""}</Text>
-        </View>
-        <Text style={{ fontSize: 9, color: colors.date, fontStyle: "italic" }}>{dateStr}</Text>
-      </View>
-      {item.description && (
-        <PDFRichText
-          text={item.description}
-          fontSize={9}
-          color="#4b5563"
-          themeColor={color}
-          style={{ marginTop: 4 }}
-        />
-      )}
-    </View>
-  );
-};
-
-const renderCustomItem = (item: SectionItem, template: TemplateType, color: string) => {
-  const colors = getTemplateColors(template, color);
-
-  return (
-    <View style={{ marginBottom: 8 }}>
-      {item.title && <Text style={{ fontSize: 11, fontWeight: "bold", color: colors.title }}>{item.title}</Text>}
-      {item.subtitle && <Text style={{ fontSize: 10, color: colors.subtitle }}>{item.subtitle}</Text>}
-      {item.description && (
-        <PDFRichText
-          text={item.description}
-          fontSize={9}
-          color="#4b5563"
-          themeColor={color}
-          style={{ marginTop: 2 }}
-        />
-      )}
-    </View>
-  );
-};
-
-// =====================================================
-// SECTION RENDERER
-// =====================================================
-
-const renderSection = (section: Section, template: TemplateType, color: string) => {
-  if (!section.isVisible) return null;
-
-  // Filter items to only include those with real content (not placeholders)
-  const realItems = (section.items || []).filter(item => {
-    const hasTitle = isRealContent(item.title) || isRealContent(item.position) || isRealContent(item.degree);
-    const hasSubtitle = isRealContent(item.subtitle) || isRealContent(item.company) || isRealContent(item.institution);
-    const hasDescription = isRealContent(item.description);
-    const hasSkills = item.skills && item.skills.length > 0 && item.skills.some(s => isRealContent(s));
-    const hasSkillsWithLevels = item.skillsWithLevels && item.skillsWithLevels.length > 0 && item.skillsWithLevels.some(s => isRealContent(s.name));
-    // Custom field content check
-    const hasCustomFields = item.customFields && item.customFields.some(cf => {
-      if (Array.isArray(cf.value)) return cf.value.length > 0;
-      return isRealContent(cf.value as string);
-    });
-    return hasTitle || hasSubtitle || hasDescription || hasSkills || hasSkillsWithLevels || hasCustomFields;
-  });
-
-  // Core sections (experience, education, skills) always show header even if empty
-  const isCoreSection = ['experience', 'education', 'skills'].includes(section.type);
-
-  // For non-core sections (projects, certifications, custom), hide entirely if no real content
-  if (!isCoreSection && realItems.length === 0) {
-    return null;
-  }
-
-  switch (section.type) {
-    case "experience":
-      return (
-        <View style={baseStyles.section} key={section.id}>
-          {renderSectionTitle(section.title, template, color)}
-          {realItems.length > 0 ? (
-            realItems.map((item) => (
-              <View key={item.id}>
-                {renderExperienceItem(item, template, color)}
-              </View>
-            ))
-          ) : (
-            <View style={{ height: 20 }} /> // Empty space placeholder
-          )}
-        </View>
-      );
-
-    case "education":
-      return (
-        <View style={baseStyles.section} key={section.id}>
-          {renderSectionTitle(section.title, template, color)}
-          {realItems.length > 0 ? (
-            realItems.map((item) => (
-              <View key={item.id}>
-                {renderEducationItem(item, template, color)}
-              </View>
-            ))
-          ) : (
-            <View style={{ height: 20 }} />
-          )}
-        </View>
-      );
-
-    case "skills":
-      return (
-        <View style={baseStyles.section} key={section.id}>
-          {renderSectionTitle(section.title, template, color)}
-          {renderFullSkillsSection(section, template, color) || (
-            <View style={{ height: 20 }} />
-          )}
-        </View>
-      );
-
-    case "custom":
-      // Custom sections with field definitions use customFields-based rendering
-      if (section.fieldDefinitions && section.fieldDefinitions.length > 0) {
-        return (
-          <View style={baseStyles.section} key={section.id}>
-            {renderSectionTitle(section.title, template, color)}
-            {realItems.map((item) => renderCustomSectionItem(item, section, template, color, DEFAULT_FONT_SIZES))}
-          </View>
-        );
-      }
-      // Fall through to default for custom sections without field definitions
-      return (
-        <View style={baseStyles.section} key={section.id}>
-          {renderSectionTitle(section.title, template, color)}
-          {realItems.map((item) => (
-            <View key={item.id}>
-              {renderCustomItem(item, template, color)}
-            </View>
-          ))}
-        </View>
-      );
-
-    case "projects":
-    case "certifications":
-    default:
-      return (
-        <View style={baseStyles.section} key={section.id}>
-          {renderSectionTitle(section.title, template, color)}
-          {realItems.map((item) => (
-            <View key={item.id}>
-              {renderCustomItem(item, template, color)}
-            </View>
-          ))}
-        </View>
-      );
-  }
-};
-
-// =====================================================
-// MAIN RESUME PDF COMPONENT
-// =====================================================
+import type { ResumeData, Section, SectionItem, TemplateType } from "@/lib/schema";
+import { formatDateRange as formatDate } from "@/lib/formatting";
+import { getTemplateBackground } from "@/lib/templates";
+import html2canvas from "html2canvas";
+import { jsPDF } from "jspdf";
 
 interface ResumePDFProps {
   data: ResumeData;
   template: TemplateType;
 }
 
-const ResumePDF: React.FC<ResumePDFProps> = ({ data, template }) => {
-  const color = data.theme.color;
+type KeyedItem<T> = {
+  key: string;
+  item: T;
+};
 
-  // Compute font sizes based on theme (matches PreviewCanvas)
-  const fontSize = getFontSizes(data);
+const styles = StyleSheet.create({
+  page: {
+    padding: 32,
+    fontSize: 10,
+    color: "#1f2937",
+    lineHeight: 1.4,
+  },
+  header: {
+    marginBottom: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e5e7eb",
+    paddingBottom: 10,
+  },
+  name: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 4,
+  },
+  summary: {
+    fontSize: 11,
+    color: "#4b5563",
+    marginBottom: 6,
+  },
+  contactRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+  },
+  contactItem: {
+    fontSize: 9,
+    color: "#6b7280",
+    marginRight: 10,
+    marginBottom: 2,
+  },
+  section: {
+    marginBottom: 12,
+  },
+  sectionTitle: {
+    fontSize: 12,
+    fontWeight: "bold",
+    marginBottom: 6,
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+  },
+  itemBlock: {
+    marginBottom: 8,
+  },
+  itemHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 2,
+  },
+  itemPrimary: {
+    fontSize: 11,
+    fontWeight: "bold",
+    color: "#1f2937",
+  },
+  itemSecondary: {
+    fontSize: 10,
+    color: "#4b5563",
+  },
+  itemDate: {
+    fontSize: 9,
+    color: "#6b7280",
+    fontStyle: "italic",
+  },
+  itemDescription: {
+    fontSize: 9,
+    color: "#374151",
+    marginTop: 2,
+    lineHeight: 1.4,
+  },
+  skillWrap: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+  },
+  skillTag: {
+    fontSize: 9,
+    paddingVertical: 2,
+    paddingHorizontal: 6,
+    marginRight: 6,
+    marginBottom: 6,
+    borderRadius: 3,
+  },
+  placeholder: {
+    fontSize: 9,
+    color: "#9ca3af",
+    fontStyle: "italic",
+  },
+});
 
-  // Get all visible sections - we'll render headers for core sections even if empty
-  const visibleSections = data.sections.filter((s) => s.isVisible);
+const normalizeKeyPart = (value: string): string => {
+  const normalized = value
+    .toLowerCase()
+    .replaceAll(/[^a-z0-9]+/g, "-")
+    .replaceAll(/^-+|-+$/g, "");
+  return normalized || "item";
+};
 
-  // Check if personal info has real content
-  const hasRealName = isRealContent(data.personalInfo?.fullName);
-  const hasRealSummary = isRealContent(data.personalInfo?.summary);
-  const hasRealEmail = isRealContent(data.personalInfo?.email);
-  const hasRealPhone = isRealContent(data.personalInfo?.phone);
-  const hasRealLocation = isRealContent(data.personalInfo?.location);
+const toKeyedItems = <T,>(
+  items: T[],
+  getSeed: (item: T) => string,
+  prefix: string
+): KeyedItem<T>[] => {
+  const counters = new Map<string, number>();
 
-  // Render header based on template
-  const renderHeader = () => {
-    switch (template) {
-      case "harvard": return renderHarvardHeader(data, fontSize);
-      case "tech": return renderTechHeader(data, fontSize);
-      case "minimal": return renderMinimalHeader(data, fontSize);
-      case "bold": return renderBoldHeader(data, fontSize);
-      case "neo": return renderNeoHeader(data, fontSize);
-      case "portfolio": return renderPortfolioHeader(data, fontSize);
-      case "corporate": return renderCorporateHeader(data, fontSize);
-      case "creative": return renderCreativeHeader(data, fontSize);
-      case "elegant": return renderElegantHeader(data, fontSize);
-      case "modern": return renderModernHeader(data, fontSize);
-      default: return renderMinimalHeader(data, fontSize);
-    }
-  };
+  return items.map((item) => {
+    const seed = normalizeKeyPart(getSeed(item));
+    const occurrence = (counters.get(seed) ?? 0) + 1;
+    counters.set(seed, occurrence);
+    return {
+      key: `${prefix}-${seed}-${occurrence}`,
+      item,
+    };
+  });
+};
 
-  // Local section renderer that uses fontSize
-  const renderSectionLocal = (section: Section) => {
-    if (!section.isVisible) return null;
+const isNonEmpty = (value?: string | null): value is string => {
+  return Boolean(value?.trim());
+};
 
-    // Filter items to only include those with real content (not placeholders)
-    const realItems = (section.items || []).filter(item => {
-      const hasTitle = isRealContent(item.title) || isRealContent(item.position) || isRealContent(item.degree);
-      const hasSubtitle = isRealContent(item.subtitle) || isRealContent(item.company) || isRealContent(item.institution);
-      const hasDescription = isRealContent(item.description);
-      const hasSkills = item.skills && item.skills.length > 0 && item.skills.some(s => isRealContent(s));
-      const hasSkillsWithLevels = item.skillsWithLevels && item.skillsWithLevels.length > 0 && item.skillsWithLevels.some(s => isRealContent(s.name));
-      const hasCustomFields = item.customFields && item.customFields.some(cf => {
-        if (Array.isArray(cf.value)) return cf.value.length > 0;
-        return isRealContent(cf.value as string);
-      });
-      return hasTitle || hasSubtitle || hasDescription || hasSkills || hasSkillsWithLevels || hasCustomFields;
-    });
+const hasCustomFieldValue = (value: string | string[]): boolean => {
+  if (Array.isArray(value)) {
+    return value.some((entry) => isNonEmpty(entry));
+  }
+  return isNonEmpty(value);
+};
 
-    // Core sections (experience, education, skills) always show header even if empty
-    const isCoreSection = ['experience', 'education', 'skills'].includes(section.type);
-
-    // For non-core sections (projects, certifications, custom), hide entirely if no real content
-    if (!isCoreSection && realItems.length === 0) {
-      return null;
-    }
-
-    const colors = getTemplateColors(template, color);
-
-    switch (section.type) {
-      case "experience":
-        return (
-          <View style={baseStyles.section} key={section.id}>
-            {renderSectionTitle(section.title, template, color, fontSize.sectionHeading)}
-            {realItems.length > 0 ? (
-              realItems.map((item) => (
-                <View key={item.id} style={{ marginBottom: 10 }}>
-                  <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 2 }}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ fontSize: fontSize.itemTitle, fontWeight: "bold", color: colors.title }}>{item.position || item.title || ""}</Text>
-                      <Text style={{ fontSize: fontSize.itemSubtitle, color: colors.subtitle }}>{item.company || item.subtitle || ""}</Text>
-                    </View>
-                    <Text style={{ fontSize: fontSize.itemDate, color: colors.date, fontStyle: "italic" }}>
-                      {formatDate(item.startDate, item.endDate, item.current)}
-                    </Text>
-                  </View>
-                  {item.description && (
-                    <PDFRichText
-                      text={item.description}
-                      fontSize={fontSize.itemBody}
-                      color="#4b5563"
-                      themeColor={color}
-                      style={{ marginTop: 4 }}
-                    />
-                  )}
-                </View>
-              ))
-            ) : (
-              <View style={{ height: 20 }} />
-            )}
-          </View>
-        );
-
-      case "education":
-        return (
-          <View style={baseStyles.section} key={section.id}>
-            {renderSectionTitle(section.title, template, color, fontSize.sectionHeading)}
-            {realItems.length > 0 ? (
-              realItems.map((item) => (
-                <View key={item.id} style={{ marginBottom: 10 }}>
-                  <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 2 }}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ fontSize: fontSize.itemTitle, fontWeight: "bold", color: colors.title }}>{item.degree || item.title || ""}</Text>
-                      <Text style={{ fontSize: fontSize.itemSubtitle, color: colors.subtitle }}>{item.institution || item.subtitle || ""}</Text>
-                    </View>
-                    <Text style={{ fontSize: fontSize.itemDate, color: colors.date, fontStyle: "italic" }}>
-                      {formatDate(item.startDate, item.endDate)}
-                    </Text>
-                  </View>
-                  {item.description && (
-                    <PDFRichText
-                      text={item.description}
-                      fontSize={fontSize.itemBody}
-                      color="#4b5563"
-                      themeColor={color}
-                      style={{ marginTop: 4 }}
-                    />
-                  )}
-                </View>
-              ))
-            ) : (
-              <View style={{ height: 20 }} />
-            )}
-          </View>
-        );
-
-      case "skills":
-        return (
-          <View style={baseStyles.section} key={section.id}>
-            {renderSectionTitle(section.title, template, color, fontSize.sectionHeading)}
-            {renderFullSkillsSection(section, template, color) || (
-              <View style={{ height: 20 }} />
-            )}
-          </View>
-        );
-
-      case "custom":
-        if (section.fieldDefinitions && section.fieldDefinitions.length > 0) {
-          return (
-            <View style={baseStyles.section} key={section.id}>
-              {renderSectionTitle(section.title, template, color, fontSize.sectionHeading)}
-              {realItems.map((item) => renderCustomSectionItem(item, section, template, color, fontSize))}
-            </View>
-          );
-        }
-        return (
-          <View style={baseStyles.section} key={section.id}>
-            {renderSectionTitle(section.title, template, color, fontSize.sectionHeading)}
-            {realItems.map((item) => (
-              <View key={item.id} style={{ marginBottom: 8 }}>
-                {item.title && <Text style={{ fontSize: fontSize.itemTitle, fontWeight: "bold", color: colors.title }}>{item.title}</Text>}
-                {item.subtitle && <Text style={{ fontSize: fontSize.itemSubtitle, color: colors.subtitle }}>{item.subtitle}</Text>}
-                {item.description && (
-                  <PDFRichText
-                    text={item.description}
-                    fontSize={fontSize.itemBody}
-                    color="#4b5563"
-                    themeColor={color}
-                    style={{ marginTop: 2 }}
-                  />
-                )}
-              </View>
-            ))}
-          </View>
-        );
-
-      case "projects":
-      case "certifications":
-      default:
-        return (
-          <View style={baseStyles.section} key={section.id}>
-            {renderSectionTitle(section.title, template, color, fontSize.sectionHeading)}
-            {realItems.map((item) => (
-              <View key={item.id} style={{ marginBottom: 8 }}>
-                {item.title && <Text style={{ fontSize: fontSize.itemTitle, fontWeight: "bold", color: colors.title }}>{item.title}</Text>}
-                {item.subtitle && <Text style={{ fontSize: fontSize.itemSubtitle, color: colors.subtitle }}>{item.subtitle}</Text>}
-                {item.description && (
-                  <PDFRichText
-                    text={item.description}
-                    fontSize={fontSize.itemBody}
-                    color="#4b5563"
-                    themeColor={color}
-                    style={{ marginTop: 2 }}
-                  />
-                )}
-              </View>
-            ))}
-          </View>
-        );
-    }
-  };
-
-  // =====================================================
-  // PORTFOLIO LAYOUT - Two column with skills sidebar
-  // =====================================================
-  const renderPortfolioLayout = () => {
-    const skillsSection = visibleSections.find((s) => s.type === 'skills');
-    const mainSections = visibleSections.filter((s) => s.type !== 'skills');
-
-    return (
-      <View style={{ flexDirection: "row", flex: 1 }}>
-        {/* Left sidebar */}
-        <View style={{ width: "33%", backgroundColor: "#f9fafb", borderRight: "1 solid #e5e7eb", padding: 20 }}>
-          {hasRealName && (
-            <Text style={{ fontSize: fontSize.name, fontWeight: "bold", marginBottom: 4 }}>
-              {data.personalInfo.fullName}
-            </Text>
-          )}
-          {hasRealSummary && (
-            <PDFRichText
-              text={data.personalInfo.summary}
-              fontSize={fontSize.summary}
-              color={color}
-              themeColor={color}
-              style={{ marginBottom: 12 }}
-            />
-          )}
-          {/* Contact info */}
-          <View style={{ marginBottom: 16 }}>
-            {hasRealEmail && <Text style={{ fontSize: fontSize.contact, color: "#4b5563", marginBottom: 2 }}>{data.personalInfo.email}</Text>}
-            {hasRealPhone && <Text style={{ fontSize: fontSize.contact, color: "#4b5563", marginBottom: 2 }}>{data.personalInfo.phone}</Text>}
-            {hasRealLocation && <Text style={{ fontSize: fontSize.contact, color: "#4b5563", marginBottom: 2 }}>{data.personalInfo.location}</Text>}
-            {data.personalInfo?.linkedin && <Link src={data.personalInfo.linkedin} style={{ fontSize: fontSize.contact, color: color }}>LinkedIn</Link>}
-            {data.personalInfo?.github && <Link src={data.personalInfo.github} style={{ fontSize: fontSize.contact, color: color, marginTop: 2 }}>GitHub</Link>}
-          </View>
-          {/* Skills in sidebar - always show header if section is visible */}
-          {skillsSection && (
-            <View>
-              {renderSectionTitle("Skills", template, color, fontSize.sectionHeading)}
-              {renderFullSkillsSection(skillsSection, template, color) || <View style={{ height: 16 }} />}
-            </View>
-          )}
-        </View>
-        {/* Main content */}
-        <View style={{ width: "67%", padding: 20 }}>
-          {mainSections.map((section) => renderSectionLocal(section))}
-        </View>
-      </View>
-    );
-  };
-
-  // =====================================================
-  // CORPORATE LAYOUT - Sections in bordered cards
-  // =====================================================
-  const renderCorporateLayout = () => (
-    <View style={{ padding: 32 }}>
-      {renderHeader()}
-      <View style={{ marginTop: 16 }}>
-        {visibleSections.map((section) => (
-          <View key={section.id} style={{ backgroundColor: "#fafafa", border: "1 solid #f0f0f0", borderRadius: 4, padding: 12, marginBottom: 12 }}>
-            {renderSectionTitle(section.title, template, color, fontSize.sectionHeading)}
-            {renderSectionContent(section, template, color)}
-          </View>
-        ))}
-      </View>
-    </View>
-  );
-
-  // =====================================================
-  // CREATIVE LAYOUT - Asymmetric grid
-  // =====================================================
-  const renderCreativeLayout = () => {
-    const skillsSection = visibleSections.find((s) => s.type === 'skills');
-    const experienceSection = visibleSections.find((s) => s.type === 'experience');
-    const otherSections = visibleSections.filter((s) => s.type !== 'skills' && s.type !== 'experience');
-
-    return (
-      <View style={{ padding: 24 }}>
-        {renderHeader()}
-        <View style={{ flexDirection: "row", gap: 16, marginTop: 16 }}>
-          {/* Left column - 60% */}
-          <View style={{ width: "60%" }}>
-            {experienceSection && (
-              <View style={{ marginBottom: 16 }}>
-                {renderSectionTitle(experienceSection.title, template, color, fontSize.sectionHeading)}
-                {renderSectionContent(experienceSection, template, color)}
-              </View>
-            )}
-            {otherSections.map((section) => (
-              <View key={section.id} style={{ marginBottom: 12 }}>
-                {renderSectionTitle(section.title, template, color, fontSize.sectionHeading)}
-                {renderSectionContent(section, template, color)}
-              </View>
-            ))}
-          </View>
-          {/* Right column - 40% with accent background */}
-          <View style={{ width: "40%", backgroundColor: color + "08", borderRadius: 6, padding: 12 }}>
-            {skillsSection && (
-              <View>
-                {renderSectionTitle("Skills", template, color, fontSize.sectionHeading)}
-                {renderFullSkillsSection(skillsSection, template, color) || <View style={{ height: 16 }} />}
-              </View>
-            )}
-          </View>
-        </View>
-      </View>
-    );
-  };
-
-  // =====================================================
-  // ELEGANT LAYOUT - Centered with generous spacing
-  // =====================================================
-  const renderElegantLayout = () => (
-    <View style={{ paddingHorizontal: 48, paddingVertical: 40 }}>
-      {renderHeader()}
-      <View style={{ marginTop: 24 }}>
-        {visibleSections.map((section) => (
-          <View key={section.id} style={{ marginBottom: 20, textAlign: "center" }}>
-            {renderSectionTitle(section.title, template, color, fontSize.sectionHeading)}
-            {renderSectionContent(section, template, color)}
-          </View>
-        ))}
-      </View>
-    </View>
-  );
-
-  // =====================================================
-  // MODERN LAYOUT - Accent bar + sidebar
-  // =====================================================
-  const renderModernLayout = () => {
-    const skillsSection = visibleSections.find((s) => s.type === 'skills');
-    const mainSections = visibleSections.filter((s) => s.type !== 'skills');
-
-    return (
-      <View style={{ flexDirection: "row", flex: 1 }}>
-        {/* Thin accent bar */}
-        <View style={{ width: 4, backgroundColor: color }} />
-        {/* Main content area */}
-        <View style={{ flex: 1, padding: 32 }}>
-          {renderHeader()}
-          <View style={{ flexDirection: "row", gap: 16, marginTop: 16 }}>
-            {/* Main content - 66% */}
-            <View style={{ width: "66%" }}>
-              {mainSections.map((section) => (
-                <View key={section.id} style={{ borderLeft: "2 solid #f3f4f6", paddingLeft: 12, marginBottom: 14 }}>
-                  {renderSectionTitle(section.title, template, color, fontSize.sectionHeading)}
-                  {renderSectionContent(section, template, color)}
-                </View>
-              ))}
-            </View>
-            {/* Skills sidebar - 34% */}
-            <View style={{ width: "34%" }}>
-              {skillsSection && (
-                <View style={{ backgroundColor: "#f9fafb", padding: 12, borderRadius: 6 }}>
-                  {renderSectionTitle("Skills", template, color, fontSize.sectionHeading)}
-                  {renderFullSkillsSection(skillsSection, template, color) || <View style={{ height: 16 }} />}
-                </View>
-              )}
-            </View>
-          </View>
-        </View>
-      </View>
-    );
-  };
-
-  // =====================================================
-  // STANDARD LAYOUT (Harvard, Tech, Minimal, Bold, Neo)
-  // =====================================================
-  const renderStandardLayout = () => (
-    <View style={{ padding: 32 }}>
-      {renderHeader()}
-      {visibleSections.map((section) => renderSectionLocal(section))}
-    </View>
-  );
-
-  // Helper to filter items with real content
-  const filterRealItems = (items: SectionItem[]) => {
-    return items.filter(item => {
-      const hasTitle = isRealContent(item.title) || isRealContent(item.position) || isRealContent(item.degree);
-      const hasSubtitle = isRealContent(item.subtitle) || isRealContent(item.company) || isRealContent(item.institution);
-      const hasDescription = isRealContent(item.description);
-      const hasSkills = item.skills && item.skills.length > 0 && item.skills.some(s => isRealContent(s));
-      const hasSkillsWithLevels = item.skillsWithLevels && item.skillsWithLevels.length > 0 && item.skillsWithLevels.some(s => isRealContent(s.name));
-      const hasCustomFields = item.customFields && item.customFields.some(cf => {
-        if (Array.isArray(cf.value)) return cf.value.length > 0;
-        return isRealContent(cf.value as string);
-      });
-      return hasTitle || hasSubtitle || hasDescription || hasSkills || hasSkillsWithLevels || hasCustomFields;
-    });
-  };
-
-  // Helper to render section content without wrapper
-  const renderSectionContent = (section: Section, tmpl: TemplateType, clr: string) => {
-    const realItems = filterRealItems(section.items || []);
-    const isCoreSection = ['experience', 'education', 'skills'].includes(section.type);
-    const colors = getTemplateColors(tmpl, clr);
-
-    switch (section.type) {
-      case "experience":
-        if (realItems.length === 0) return isCoreSection ? <View style={{ height: 16 }} /> : null;
-        return realItems.map((item) => (
-          <View key={item.id} style={{ marginBottom: 10 }}>
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 2 }}>
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: fontSize.itemTitle, fontWeight: "bold", color: colors.title }}>{item.position || item.title || ""}</Text>
-                <Text style={{ fontSize: fontSize.itemSubtitle, color: colors.subtitle }}>{item.company || item.subtitle || ""}</Text>
-              </View>
-              <Text style={{ fontSize: fontSize.itemDate, color: colors.date, fontStyle: "italic" }}>
-                {formatDate(item.startDate, item.endDate, item.current)}
-              </Text>
-            </View>
-            {item.description && (
-              <PDFRichText
-                text={item.description}
-                fontSize={fontSize.itemBody}
-                color="#4b5563"
-                themeColor={clr}
-                style={{ marginTop: 4 }}
-              />
-            )}
-          </View>
-        ));
-      case "education":
-        if (realItems.length === 0) return isCoreSection ? <View style={{ height: 16 }} /> : null;
-        return realItems.map((item) => (
-          <View key={item.id} style={{ marginBottom: 10 }}>
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 2 }}>
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: fontSize.itemTitle, fontWeight: "bold", color: colors.title }}>{item.degree || item.title || ""}</Text>
-                <Text style={{ fontSize: fontSize.itemSubtitle, color: colors.subtitle }}>{item.institution || item.subtitle || ""}</Text>
-              </View>
-              <Text style={{ fontSize: fontSize.itemDate, color: colors.date, fontStyle: "italic" }}>
-                {formatDate(item.startDate, item.endDate)}
-              </Text>
-            </View>
-            {item.description && (
-              <PDFRichText
-                text={item.description}
-                fontSize={fontSize.itemBody}
-                color="#4b5563"
-                themeColor={clr}
-                style={{ marginTop: 4 }}
-              />
-            )}
-          </View>
-        ));
-      case "skills":
-        return renderFullSkillsSection(section, tmpl, clr) || (isCoreSection ? <View style={{ height: 16 }} /> : null);
-      case "custom":
-        if (section.fieldDefinitions && section.fieldDefinitions.length > 0) {
-          if (realItems.length === 0) return null;
-          return realItems.map((item) => renderCustomSectionItem(item, section, tmpl, clr, fontSize));
-        }
-        // Fall through to default for custom sections without field definitions
-        if (realItems.length === 0) return null;
-        return realItems.map((item) => (
-          <View key={item.id} style={{ marginBottom: 8 }}>
-            {item.title && <Text style={{ fontSize: fontSize.itemTitle, fontWeight: "bold", color: colors.title }}>{item.title}</Text>}
-            {item.subtitle && <Text style={{ fontSize: fontSize.itemSubtitle, color: colors.subtitle }}>{item.subtitle}</Text>}
-            {item.description && (
-              <PDFRichText
-                text={item.description}
-                fontSize={fontSize.itemBody}
-                color="#4b5563"
-                themeColor={clr}
-                style={{ marginTop: 2 }}
-              />
-            )}
-          </View>
-        ));
-      default:
-        if (realItems.length === 0) return null;
-        return realItems.map((item) => (
-          <View key={item.id} style={{ marginBottom: 8 }}>
-            {item.title && <Text style={{ fontSize: fontSize.itemTitle, fontWeight: "bold", color: colors.title }}>{item.title}</Text>}
-            {item.subtitle && <Text style={{ fontSize: fontSize.itemSubtitle, color: colors.subtitle }}>{item.subtitle}</Text>}
-            {item.description && (
-              <PDFRichText
-                text={item.description}
-                fontSize={fontSize.itemBody}
-                color="#4b5563"
-                themeColor={clr}
-                style={{ marginTop: 2 }}
-              />
-            )}
-          </View>
-        ));
-    }
-  };
-
-  // Select layout based on template
-  const renderLayout = () => {
-    switch (template) {
-      case "portfolio": return renderPortfolioLayout();
-      case "corporate": return renderCorporateLayout();
-      case "creative": return renderCreativeLayout();
-      case "elegant": return renderElegantLayout();
-      case "modern": return renderModernLayout();
-      default: return renderStandardLayout();
-    }
-  };
-
-  // Get template-specific page styles with proper font family
-  const pageStyles = getPageStyles(template);
-  const templateFont = getTemplateFont(template);
-  const templateBackground = getTemplateBackground(template);
-
-  // Base page style with font family
-  const pageStyle: Style = {
-    ...pageStyles.page,
-  };
+const sectionItemHasContent = (item: SectionItem): boolean => {
+  const hasTitle =
+    isNonEmpty(item.title) ||
+    isNonEmpty(item.position) ||
+    isNonEmpty(item.degree);
+  const hasSubtitle =
+    isNonEmpty(item.subtitle) ||
+    isNonEmpty(item.company) ||
+    isNonEmpty(item.institution);
+  const hasDescription = isNonEmpty(item.description);
+  const hasSkills = item.skills?.some((skill) => isNonEmpty(skill)) ?? false;
+  const hasSkillsWithLevels =
+    item.skillsWithLevels?.some((skill) => isNonEmpty(skill.name)) ?? false;
+  const hasCustomFields =
+    item.customFields?.some((field) => hasCustomFieldValue(field.value)) ?? false;
 
   return (
-    <Document>
-      <Page size="A4" style={pageStyle}>
-        {/* Full-page background wrapper for template-specific colors */}
-        <View style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: templateBackground
-        }} />
-        <View style={{ fontFamily: templateFont, position: 'relative' }}>
-          {renderLayout()}
-        </View>
-      </Page>
-    </Document>
+    hasTitle ||
+    hasSubtitle ||
+    hasDescription ||
+    hasSkills ||
+    hasSkillsWithLevels ||
+    hasCustomFields
   );
 };
 
-// Named export for compatibility with PDFViewer
+const getRenderableItems = (section: Section): SectionItem[] => {
+  return (section.items || []).filter((item) => sectionItemHasContent(item));
+};
+
+const getPrimaryText = (sectionType: Section["type"], item: SectionItem): string => {
+  if (sectionType === "experience") {
+    return item.position || item.title || "";
+  }
+  if (sectionType === "education") {
+    return item.degree || item.title || "";
+  }
+  return item.title || "";
+};
+
+const getSecondaryText = (sectionType: Section["type"], item: SectionItem): string => {
+  if (sectionType === "experience") {
+    return item.company || item.subtitle || "";
+  }
+  if (sectionType === "education") {
+    return item.institution || item.subtitle || "";
+  }
+  return item.subtitle || "";
+};
+
+const getDateText = (item: SectionItem): string => {
+  return formatDate(item.startDate, item.endDate, item.current);
+};
+
+const getSkillLabels = (section: Section): string[] => {
+  const firstItem = section.items[0];
+  if (!firstItem) {
+    return [];
+  }
+
+  const levelSkills = (firstItem.skillsWithLevels || [])
+    .filter((skill) => isNonEmpty(skill.name))
+    .map((skill) => `${skill.name} (${skill.level})`);
+
+  const plainSkills = (firstItem.skills || []).filter((skill) => isNonEmpty(skill));
+
+  return [...levelSkills, ...plainSkills];
+};
+
+const shouldRenderSection = (section: Section): boolean => {
+  if (!section.isVisible) {
+    return false;
+  }
+
+  if (section.type === "skills") {
+    return true;
+  }
+
+  const renderableItems = getRenderableItems(section);
+  const isCoreSection =
+    section.type === "experience" || section.type === "education";
+
+  if (isCoreSection) {
+    return true;
+  }
+
+  return renderableItems.length > 0;
+};
+
+const renderSectionBody = (section: Section, accentColor: string): React.ReactNode => {
+  if (section.type === "skills") {
+    const skillLabels = getSkillLabels(section);
+    if (skillLabels.length === 0) {
+      return <Text style={styles.placeholder}>Add skills to this section</Text>;
+    }
+
+    const keyedSkills = toKeyedItems(skillLabels, (skill) => skill, `${section.id}-skill`);
+    return (
+      <View style={styles.skillWrap}>
+        {keyedSkills.map(({ key, item }) => (
+          <Text
+            key={key}
+            style={{
+              ...styles.skillTag,
+              backgroundColor: `${accentColor}20`,
+              color: accentColor,
+            }}
+          >
+            {item}
+          </Text>
+        ))}
+      </View>
+    );
+  }
+
+  const items = getRenderableItems(section);
+  if (items.length === 0) {
+    return <Text style={styles.placeholder}>Add items to this section</Text>;
+  }
+
+  const keyedItems = toKeyedItems(
+    items,
+    (item) => `${item.id}-${item.title || item.position || item.degree || "item"}`,
+    `${section.id}-item`
+  );
+
+  return keyedItems.map(({ key, item }) => {
+    const primaryText = getPrimaryText(section.type, item);
+    const secondaryText = getSecondaryText(section.type, item);
+    const dateText = getDateText(item);
+    const description = item.description || "";
+
+    return (
+      <View key={key} style={styles.itemBlock}>
+        <View style={styles.itemHeaderRow}>
+          <View style={{ flex: 1 }}>
+            {isNonEmpty(primaryText) && <Text style={styles.itemPrimary}>{primaryText}</Text>}
+            {isNonEmpty(secondaryText) && <Text style={styles.itemSecondary}>{secondaryText}</Text>}
+          </View>
+          {isNonEmpty(dateText) && <Text style={styles.itemDate}>{dateText}</Text>}
+        </View>
+        {isNonEmpty(description) && (
+          <Text style={styles.itemDescription}>{description}</Text>
+        )}
+      </View>
+    );
+  });
+};
+
+const ResumePDF: React.FC<ResumePDFProps> = ({ data, template }) => {
+  const accentColor = data.theme.color || "#2563eb";
+  const visibleSections = data.sections.filter((section) => shouldRenderSection(section));
+  const keyedSections = toKeyedItems(
+    visibleSections,
+    (section) => `${section.id}-${section.title}`,
+    "section"
+  );
+
+  const contactItems = [
+    data.personalInfo.email,
+    data.personalInfo.phone,
+    data.personalInfo.location,
+    data.personalInfo.linkedin,
+    data.personalInfo.github,
+    data.personalInfo.website,
+  ].filter((value): value is string => isNonEmpty(value));
+
+  const keyedContacts = toKeyedItems(contactItems, (contact) => contact, "contact");
+
+  return (
+    <PdfDocument>
+      <Page
+        size="A4"
+        style={{
+          ...styles.page,
+          backgroundColor: getTemplateBackground(template),
+        }}
+      >
+        <View style={styles.header}>
+          <Text style={{ ...styles.name, color: accentColor }}>
+            {data.personalInfo.fullName || "Your Name"}
+          </Text>
+
+          {isNonEmpty(data.personalInfo.summary) && (
+            <Text style={styles.summary}>{data.personalInfo.summary}</Text>
+          )}
+
+          <View style={styles.contactRow}>
+            {keyedContacts.map(({ key, item }) => (
+              <Text key={key} style={styles.contactItem}>
+                {item}
+              </Text>
+            ))}
+          </View>
+        </View>
+
+        {keyedSections.map(({ key, item: section }) => (
+          <View key={key} style={styles.section}>
+            <Text style={{ ...styles.sectionTitle, color: accentColor }}>
+              {section.title}
+            </Text>
+            {renderSectionBody(section, accentColor)}
+          </View>
+        ))}
+      </Page>
+    </PdfDocument>
+  );
+};
+
 export const ResumePDFDocument: React.FC<{ data: ResumeData }> = ({ data }) => {
   return <ResumePDF data={data} template={data.theme.template} />;
 };
 
-// Export PDF to blob for download
-export const exportToPDF = async (data: ResumeData): Promise<Blob> => {
-  const doc = <ResumePDFDocument data={data} />;
-  const blob = await pdf(doc).toBlob();
-  return blob;
+const waitForFonts = async (): Promise<void> => {
+  const fontSet = (globalThis.document as { fonts?: FontFaceSet }).fonts;
+  if (fontSet?.ready) {
+    await fontSet.ready;
+  }
 };
 
-// Download PDF from blob
-export const downloadPDF = (blob: Blob, filename = 'resume.pdf'): void => {
+const waitForPaint = async (): Promise<void> => {
+  await new Promise<void>((resolve) => {
+    requestAnimationFrame(() => resolve());
+  });
+};
+
+export const exportToPDF = async (
+  _data: ResumeData,
+  sourceNode?: HTMLElement | null
+): Promise<Blob> => {
+  if (globalThis.window === undefined) {
+    throw new TypeError("PDF export is only available in the browser");
+  }
+
+  const sourceElement = sourceNode ?? document.getElementById("resume-pdf-export-container");
+
+  if (!(sourceElement instanceof HTMLElement)) {
+    throw new TypeError("Could not find resume container for export");
+  }
+
+  const computedStyle = globalThis.getComputedStyle(sourceElement);
+  if (computedStyle.display === "none" || computedStyle.visibility === "hidden") {
+    throw new TypeError("Resume container is not visible for export");
+  }
+
+  console.info("[PDF Export] Capture node", sourceElement);
+  const rect = sourceElement.getBoundingClientRect();
+  console.info("[PDF Export] Capture bounds", {
+    width: rect.width,
+    height: rect.height,
+    childCount: sourceElement.childElementCount,
+  });
+
+  await waitForPaint();
+  await waitForFonts();
+  await waitForPaint();
+
+  const canvas = await html2canvas(sourceElement, {
+    scale: 2,
+    useCORS: true,
+    backgroundColor: "#ffffff",
+  });
+
+  if (!canvas.width || !canvas.height) {
+    throw new Error("Export canvas has invalid dimensions");
+  }
+
+  const imageData = canvas.toDataURL("image/png");
+  const pdfDocument = new jsPDF("p", "px", [canvas.width, canvas.height]);
+  pdfDocument.addImage(imageData, "PNG", 0, 0, canvas.width, canvas.height);
+  return pdfDocument.output("blob");
+};
+
+export const downloadPDF = (blob: Blob, filename = "resume.pdf"): void => {
+  if (globalThis.window === undefined) {
+    return;
+  }
+
+  if (!(blob instanceof Blob) || blob.size === 0) {
+    throw new Error("Generated PDF is empty or invalid");
+  }
+
   const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
+  const link = document.createElement("a");
   link.href = url;
   link.download = filename;
+  link.rel = "noopener";
+  link.style.display = "none";
   document.body.appendChild(link);
   link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  link.remove();
+  globalThis.setTimeout(() => URL.revokeObjectURL(url), 1000);
 };
 
 export default ResumePDF;
