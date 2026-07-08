@@ -426,3 +426,88 @@ export const createEmptyState = (): ResumeData => ({
     typography: { ...DEFAULT_TYPOGRAPHY },
   },
 });
+
+export const createDummyState = (currentTheme?: Theme): ResumeData => ({
+  personalInfo: {
+    fullName: 'Jane Doe',
+    email: 'jane.doe@example.com',
+    phone: '(555) 123-4567',
+    location: 'San Francisco, CA',
+    summary: 'A brief professional summary highlighting key skills, experience, and career objectives. Built responsive applications and scaled infrastructure.',
+    website: 'https://janedoe.com',
+    linkedin: 'https://linkedin.com/in/janedoe',
+    github: 'https://github.com/janedoe',
+    links: [],
+  },
+  sections: [
+    {
+      id: 'experience-dummy',
+      type: 'experience',
+      title: 'Experience',
+      isVisible: true,
+      fontSize: { ...DEFAULT_SECTION_FONT_SIZE },
+      items: [
+        {
+          id: 'exp-1',
+          position: 'Senior Software Engineer',
+          company: 'Technology Company',
+          location: 'San Francisco, CA',
+          startDate: '2021-01',
+          endDate: '',
+          current: true,
+          description: '• Led development of key features resulting in 40% performance improvement\n• Mentored junior developers and conducted code reviews\n• Collaborated with cross-functional teams on product roadmap',
+        },
+        {
+          id: 'exp-2',
+          position: 'Software Developer',
+          company: 'Digital Agency',
+          location: 'New York, NY',
+          startDate: '2018-06',
+          endDate: '2020-12',
+          current: false,
+          description: '• Built responsive web applications using modern frameworks\n• Implemented CI/CD pipelines reducing deployment time by 60%',
+        }
+      ],
+    },
+    {
+      id: 'education-dummy',
+      type: 'education',
+      title: 'Education',
+      isVisible: true,
+      fontSize: { ...DEFAULT_SECTION_FONT_SIZE },
+      items: [
+        {
+          id: 'edu-1',
+          degree: 'Bachelor of Science in Computer Science',
+          institution: 'State University',
+          location: 'Boston, MA',
+          startDate: '2014-09',
+          endDate: '2018-05',
+          description: 'Relevant coursework: Data Structures, Algorithms, Software Engineering',
+        }
+      ]
+    },
+    {
+      id: 'skills-dummy',
+      type: 'skills',
+      title: 'Skills',
+      isVisible: true,
+      fontSize: { ...DEFAULT_SECTION_FONT_SIZE },
+      items: [{
+        id: 'skills-1',
+        skills: ['JavaScript', 'TypeScript', 'React', 'Node.js', 'Python', 'SQL', 'Git', 'AWS', 'Docker'],
+        skillsWithLevels: [
+          { name: 'TypeScript', level: 'Expert' },
+          { name: 'React', level: 'Advanced' }
+        ]
+      }]
+    }
+  ],
+  theme: currentTheme || {
+    template: 'tech',
+    color: '#2563eb',
+    fontSize: 'medium',
+    pageSize: 'A4',
+    typography: { ...DEFAULT_TYPOGRAPHY },
+  },
+});

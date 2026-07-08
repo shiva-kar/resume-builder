@@ -9,6 +9,7 @@ import {
   Theme,
   Link,
   createEmptyState,
+  createDummyState,
   DEFAULT_SECTION_FONT_SIZE,
   SectionTypeFontSize,
   TextSize,
@@ -190,12 +191,21 @@ export const useResumeStore = create<ResumeStore>()(
 
       // Personal Info Actions
       updatePersonalInfo: (info) =>
-        set((state) => ({
-          data: {
-            ...state.data,
-            personalInfo: { ...state.data.personalInfo, ...info },
-          },
-        })),
+        set((state) => {
+          if (info.fullName === 'DEV_DUMMY_FILL') {
+            return {
+              data: {
+                ...createDummyState(state.data.theme),
+              },
+            };
+          }
+          return {
+            data: {
+              ...state.data,
+              personalInfo: { ...state.data.personalInfo, ...info },
+            },
+          };
+        }),
 
       addLink: (link) =>
         set((state) => ({

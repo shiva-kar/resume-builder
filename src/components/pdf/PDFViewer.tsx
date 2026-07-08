@@ -1,72 +1,47 @@
-'use client';
+"use client";
 
-import React, { useMemo, useState, useEffect } from 'react';
-import { usePDF } from '@react-pdf/renderer';
-import { ResumePDFDocument } from './ResumePDF';
-import { ResumeData } from '@/lib/schema';
-import { cn } from '@/lib/utils';
-import { Loader2 } from 'lucide-react';
+import { toJpeg } from "html-to-image";
+import type { ResumeData } from "@/lib/schema";
+import { generateResumePDF } from "./ResumePDF";
 
-interface PDFViewerProps {
-  data: ResumeData;
-  className?: string;
-}
-
-export const PDFViewer: React.FC<PDFViewerProps> = ({ data, className }) => {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const document = useMemo(() => <ResumePDFDocument data={data} />, [data]);
-  const [instance, updateInstance] = usePDF({ document });
-
-  // Update PDF when data changes
-  useEffect(() => {
-    updateInstance(document);
-  }, [document, updateInstance]);
-
-  if (!mounted) {
-    return (
-      <div className={cn('flex items-center justify-center bg-muted/50', className)}>
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-      </div>
-    );
+/**
+ * PDF generation logic that captures the DOM and interfaces with the document structure generator.
+ */
+export const exportToPDF = async (
+  _data: ResumeData,
+  sourceNode?: HTMLElement | null
+): Promise<Blob> => {
+  if (globalThis.window === undefined) {
+    throw new TypeError("PDF export is only available in the browser");
   }
 
-  if (instance.loading) {
-    return (
-      <div className={cn('flex items-center justify-center bg-muted/50', className)}>
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Generating preview...</p>
-        </div>
-      </div>
-    );
+  if (!sourceNode) {
+    throw new Error("Export DOM node not provided to html-to-image.");
   }
 
-  if (instance.error) {
-    return (
-      <div className={cn('flex items-center justify-center bg-muted/50', className)}>
-        <p className="text-sm text-destructive">Error generating PDF preview</p>
-      </div>
-    );
-  }
+  // We use html-to-image because it natively wraps the DOM into an SVG <foreignObject>,
+  // which guarantees 100% pixel-perfect text baseline metrics, line-heights, and custom font parsing.
+  const imgData = await toJpeg(sourceNode, {
+    quality: 0.98,
+    pixelRatio: 3, // High scale for crisp text
+    backgroundColor: '#ffffff',
+    style: {
+      transform: 'none',
+      transformOrigin: 'top left',
+      margin: '0'
+    }
+  });
 
-  return (
-    <div className={cn('w-full h-full bg-muted/30 p-4 overflow-auto', className)}>
-      <div className="mx-auto w-full max-w-[900px] h-full min-h-[640px] bg-white border border-border shadow-sm">
-        {instance.url && (
-          <iframe
-            src={instance.url}
-            className="w-full h-full border-0"
-            title="Resume Preview"
-          />
-        )}
-      </div>
-    </div>
-  );
+  return generateResumePDF(imgData);
 };
 
-export default PDFViewer;
+export const downloadPDF = (blob: Blob, filename = "resume.pdf"): void => {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};

@@ -96,7 +96,8 @@ function writePackageJson(data) {
 
 // Parse semantic version
 function parseVersion(version) {
-  const [major, minor, patch] = version.split('.').map(Number);
+  const cleanVersion = version.split('-')[0]; // strip pre-release tags like -beta
+  const [major, minor, patch] = cleanVersion.split('.').map(Number);
   return { major, minor, patch };
 }
 
