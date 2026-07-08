@@ -527,38 +527,35 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
   };
 
   const renderElegantSkills = (skillsWithLevels: SkillWithLevel[], displaySkills: string[], isDummy: boolean) => {
-    if (skillsWithLevels.length > 0) {
-      const keyedLevels = toKeyedItems(skillsWithLevels, (skill) => `${skill.name}-${skill.level}`, 'skill-level');
-      const lastKey = keyedLevels.at(-1)?.key;
-      return (
-        <div className="text-center">
+    const keyedLevels = toKeyedItems(skillsWithLevels, (skill) => `${skill.name}-${skill.level}`, 'skill-level');
+    return (
+      <div className="text-center space-y-1">
+        {keyedLevels.length > 0 && (
           <p className="text-gray-600 font-serif" style={{ fontSize: fontSize.itemBody }}>
-            {keyedLevels.map(({ key, item }) => (
+            {keyedLevels.map(({ key, item }, index) => (
               <span key={key}>
                 <span className="font-medium">{item.name}</span>
                 <span className="text-gray-400 text-[9px] ml-1">({item.level})</span>
-                {key !== lastKey && <span className="mx-2 text-gray-300">·</span>}
+                {index !== keyedLevels.length - 1 && <span className="mx-2 text-gray-300">·</span>}
               </span>
             ))}
           </p>
-        </div>
-      );
-    }
-
-    return (
-      <div className="text-center">
-        <p className={cn('font-serif', isDummy ? 'text-gray-400 italic' : 'text-gray-600')} style={{ fontSize: fontSize.itemBody }}>
-          {displaySkills.join(' · ')}
-        </p>
+        )}
+        {displaySkills.length > 0 && (
+          <p className={cn('font-serif', isDummy ? 'text-gray-400 italic' : 'text-gray-600')} style={{ fontSize: fontSize.itemBody }}>
+            {displaySkills.join(' · ')}
+          </p>
+        )}
       </div>
     );
   };
 
   const renderCorporateSkills = (skillsWithLevels: SkillWithLevel[], displaySkills: string[], isDummy: boolean) => {
-    if (skillsWithLevels.length > 0) {
-      const keyedLevels = toKeyedItems(skillsWithLevels, (skill) => `${skill.name}-${skill.level}`, 'skill-level');
-      return (
-        <div className="space-y-2">
+    const keyedLevels = toKeyedItems(skillsWithLevels, (skill) => `${skill.name}-${skill.level}`, 'skill-level');
+    const keyedSkills = toKeyedItems(displaySkills, (skill) => skill, 'skill');
+    return (
+      <div className="space-y-2">
+        {keyedLevels.length > 0 && (
           <div className="skills-container">
             {keyedLevels.map(({ key, item }) => (
               <span key={key} className="skill-chip border border-gray-200 bg-white text-[10px]">
@@ -567,29 +564,26 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
               </span>
             ))}
           </div>
-        </div>
-      );
-    }
-
-    const keyedSkills = toKeyedItems(displaySkills, (skill) => skill, 'skill');
-    return (
-      <div className="space-y-2">
-        <div className={cn('skills-container', isDummy && 'opacity-60')}>
-          {keyedSkills.map(({ key, item }) => (
-            <span key={key} className={cn('skill-chip text-[10px]', isDummy ? 'bg-gray-100 text-gray-400 italic' : 'bg-gray-100 text-gray-700')}>
-              {item}
-            </span>
-          ))}
-        </div>
+        )}
+        {keyedSkills.length > 0 && (
+          <div className={cn('skills-container', isDummy && 'opacity-60')}>
+            {keyedSkills.map(({ key, item }) => (
+              <span key={key} className={cn('skill-chip text-[10px]', isDummy ? 'bg-gray-100 text-gray-400 italic' : 'bg-gray-100 text-gray-700')}>
+                {item}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
     );
   };
 
   const renderCreativeSkills = (skillsWithLevels: SkillWithLevel[], displaySkills: string[], isDummy: boolean) => {
-    if (skillsWithLevels.length > 0) {
-      const keyedLevels = toKeyedItems(skillsWithLevels, (skill) => `${skill.name}-${skill.level}`, 'skill-level');
-      return (
-        <div className="space-y-2">
+    const keyedLevels = toKeyedItems(skillsWithLevels, (skill) => `${skill.name}-${skill.level}`, 'skill-level');
+    const keyedSkills = toKeyedItems(displaySkills, (skill) => skill, 'skill');
+    return (
+      <div className="space-y-2">
+        {keyedLevels.length > 0 && (
           <div className="skills-container skills-container-compact">
             {keyedLevels.map(({ key, item }) => (
               <span key={key} className="skill-chip text-[10px] font-bold" style={{ backgroundColor: theme.color + '15', color: theme.color }}>
@@ -598,53 +592,46 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
               </span>
             ))}
           </div>
-        </div>
-      );
-    }
-
-    const keyedSkills = toKeyedItems(displaySkills, (skill) => skill, 'skill');
-    return (
-      <div className="space-y-2">
-        <div className={cn('skills-container skills-container-compact', isDummy && 'opacity-60')}>
-          {keyedSkills.map(({ key, item }) => (
-            <span
-              key={key}
-              className={cn('skill-chip text-[10px]', isDummy ? 'font-normal italic' : 'font-bold')}
-              style={{ backgroundColor: isDummy ? '#f3f4f6' : theme.color + '15', color: isDummy ? '#9ca3af' : theme.color }}
-            >
-              {item}
-            </span>
-          ))}
-        </div>
+        )}
+        {keyedSkills.length > 0 && (
+          <div className={cn('skills-container skills-container-compact', isDummy && 'opacity-60')}>
+            {keyedSkills.map(({ key, item }) => (
+              <span
+                key={key}
+                className={cn('skill-chip text-[10px]', isDummy ? 'font-normal italic' : 'font-bold')}
+                style={{ backgroundColor: isDummy ? '#f3f4f6' : theme.color + '15', color: isDummy ? '#9ca3af' : theme.color }}
+              >
+                {item}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
     );
   };
 
   const renderModernSkills = (skillsWithLevels: SkillWithLevel[], displaySkills: string[], isDummy: boolean) => {
-    if (skillsWithLevels.length > 0) {
-      const keyedLevels = toKeyedItems(skillsWithLevels, (skill) => `${skill.name}-${skill.level}`, 'skill-level');
-      return (
-        <div className="space-y-1.5">
-          {keyedLevels.map(({ key, item }) => (
-            <div key={key} className="flex items-center gap-2 text-[10px]">
-              <div className="w-1 h-1 rounded-full" style={{ backgroundColor: theme.color }} />
-              <span className="font-medium text-gray-800">{item.name}</span>
-              <span className="text-gray-400 text-[8px]">{item.level}</span>
-            </div>
-          ))}
-        </div>
-      );
-    }
-
+    const keyedLevels = toKeyedItems(skillsWithLevels, (skill) => `${skill.name}-${skill.level}`, 'skill-level');
     const keyedSkills = toKeyedItems(displaySkills, (skill) => skill, 'skill');
     return (
-      <div className={isDummy ? 'opacity-60' : ''}>
-        {keyedSkills.map(({ key, item }) => (
+      <div className="space-y-1.5">
+        {keyedLevels.map(({ key, item }) => (
           <div key={key} className="flex items-center gap-2 text-[10px]">
-            <div className="w-1 h-1 rounded-full" style={{ backgroundColor: isDummy ? '#9ca3af' : theme.color }} />
-            <span className={isDummy ? 'text-gray-400 italic' : 'text-gray-700'}>{item}</span>
+            <div className="w-1 h-1 rounded-full" style={{ backgroundColor: theme.color }} />
+            <span className="font-medium text-gray-800">{item.name}</span>
+            <span className="text-gray-400 text-[8px]">{item.level}</span>
           </div>
         ))}
+        {keyedSkills.length > 0 && (
+          <div className={cn("flex flex-wrap gap-x-4 gap-y-1.5", keyedLevels.length > 0 ? "mt-1" : "", isDummy ? 'opacity-60' : '')}>
+            {keyedSkills.map(({ key, item }) => (
+              <div key={key} className="flex items-center gap-2 text-[10px]">
+                <div className="w-1 h-1 rounded-full" style={{ backgroundColor: isDummy ? '#9ca3af' : theme.color }} />
+                <span className={isDummy ? 'text-gray-400 italic' : 'text-gray-700'}>{item}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     );
   };
@@ -696,11 +683,18 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
         return renderModernSkills(skillsWithLevels, displaySkills, isDummy);
       case 'harvard':
         return (
-          <p className={cn('font-serif', isDummy ? 'text-gray-400 italic' : 'text-gray-700')} style={{ fontSize: fontSize.itemBody }}>
-            {skillsWithLevels.length > 0
-              ? skillsWithLevels.map((skill) => skill.name).join(', ')
-              : displaySkills.join(', ')}
-          </p>
+          <div className={cn('font-serif space-y-1', isDummy ? 'text-gray-400 italic' : 'text-gray-700')} style={{ fontSize: fontSize.itemBody }}>
+            {skillsWithLevels.length > 0 && (
+              <p>
+                {skillsWithLevels.map((skill) => `${skill.name} (${skill.level})`).join(', ')}
+              </p>
+            )}
+            {displaySkills.length > 0 && (
+              <p>
+                {displaySkills.join(', ')}
+              </p>
+            )}
+          </div>
         );
       default:
         return renderDefaultSkills(skillsWithLevels, displaySkills, isDummy);
@@ -1627,9 +1621,12 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
             style={{
               backgroundColor: getTemplateBackground(theme.template),
               boxSizing: 'border-box',
+              position: 'relative',
             }}
           >
-            {renderLayout()}
+            <div style={{ padding: '40px', width: '100%', height: '100%', boxSizing: 'border-box' }}>
+              {renderLayout()}
+            </div>
           </div>
         </div>
       </div>

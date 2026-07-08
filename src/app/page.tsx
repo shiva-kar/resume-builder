@@ -627,6 +627,7 @@ export default function ResumeBuilderPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const resumeExportRef = useRef<HTMLDivElement | null>(null);
+  const [showDevMode, setShowDevMode] = useState(false);
   // Color picker preview state - allows live preview without saving
   const [previewColor, setPreviewColor] = useState<string | null>(null);
 
@@ -668,10 +669,9 @@ export default function ResumeBuilderPage() {
 
     try {
       const exportNode = resumeExportRef.current ?? document.getElementById('resume-pdf-export-container');
-      console.info('[PDF Export] Resume ref node', exportNode);
-
-      if (!(exportNode instanceof HTMLElement)) {
-        throw new TypeError('Resume element not found');
+      
+      if (!exportNode) {
+        throw new Error('Could not find the resume preview to export.');
       }
 
       const blob = await exportToPDF(data, exportNode);
@@ -683,6 +683,7 @@ export default function ResumeBuilderPage() {
       console.info('[PDF Export] Download triggered', { filename, size: blob.size });
     } catch (error) {
       console.error('[PDF Export] Export failed', error);
+      alert('PDF Export failed: ' + (error instanceof Error ? error.message : String(error)));
     } finally {
       setIsExporting(false);
     }
@@ -759,6 +760,22 @@ export default function ResumeBuilderPage() {
                 aria-label="Reset and start fresh"
               >
                 <RotateCcw className="w-[18px] h-[18px]" />
+              </button>
+
+              {/* Dev Mode Toggle */}
+              <button
+                type="button"
+                onClick={() => setShowDevMode(!showDevMode)}
+                className={cn(
+                  "p-2.5 rounded-lg transition-all duration-200 btn-press",
+                  showDevMode 
+                    ? "bg-primary/10 text-primary" 
+                    : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                )}
+                title="Toggle Dev Mode (AI Tools)"
+                aria-label="Toggle Dev Mode"
+              >
+                <Sparkles className="w-[18px] h-[18px]" />
               </button>
 
               {/* Export Button */}
@@ -838,8 +855,8 @@ export default function ResumeBuilderPage() {
             {/* Design Settings */}
             <DesignSettingsPanel onPreviewColorChange={setPreviewColor} />
 
-            {/* Auto Generate */}
-            <AutoGenerateForm />
+            {/* Auto Generate - Hidden behind Dev Mode */}
+            {showDevMode && <AutoGenerateForm />}
 
             {/* Section Manager */}
             <SectionManagerPanel />

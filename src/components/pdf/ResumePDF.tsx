@@ -1,18 +1,34 @@
 "use client";
 
 import React from "react";
+import { toJpeg } from "html-to-image";
+import { jsPDF } from "jspdf";
 import {
   Document as PdfDocument,
   Page,
   Text,
   View,
   StyleSheet,
+  pdf,
 } from "@react-pdf/renderer";
 import type { ResumeData, Section, SectionItem, TemplateType } from "@/lib/schema";
 import { formatDateRange as formatDate } from "@/lib/formatting";
 import { getTemplateBackground } from "@/lib/templates";
-import html2canvas from "html2canvas";
-import { jsPDF } from "jspdf";
+import { registerPdfFonts } from "@/lib/pdfFonts";
+import { PDFMarkdown } from "./PDFMarkdown";
+import { ModernTemplate } from "./templates/ModernTemplate";
+import {
+  shouldRenderSection,
+  toKeyedItems,
+  isNonEmpty,
+  getRenderableItems,
+  getPrimaryText,
+  getSecondaryText,
+  getDateText,
+  getSkillLabels
+} from "./pdfUtils";
+
+registerPdfFonts();
 
 interface ResumePDFProps {
   data: ResumeData;
@@ -26,6 +42,7 @@ type KeyedItem<T> = {
 
 const styles = StyleSheet.create({
   page: {
+    fontFamily: "Inter",
     padding: 32,
     fontSize: 10,
     color: "#1f2937",
@@ -115,131 +132,7 @@ const styles = StyleSheet.create({
   },
 });
 
-const normalizeKeyPart = (value: string): string => {
-  const normalized = value
-    .toLowerCase()
-    .replaceAll(/[^a-z0-9]+/g, "-")
-    .replaceAll(/^-+|-+$/g, "");
-  return normalized || "item";
-};
 
-const toKeyedItems = <T,>(
-  items: T[],
-  getSeed: (item: T) => string,
-  prefix: string
-): KeyedItem<T>[] => {
-  const counters = new Map<string, number>();
-
-  return items.map((item) => {
-    const seed = normalizeKeyPart(getSeed(item));
-    const occurrence = (counters.get(seed) ?? 0) + 1;
-    counters.set(seed, occurrence);
-    return {
-      key: `${prefix}-${seed}-${occurrence}`,
-      item,
-    };
-  });
-};
-
-const isNonEmpty = (value?: string | null): value is string => {
-  return Boolean(value?.trim());
-};
-
-const hasCustomFieldValue = (value: string | string[]): boolean => {
-  if (Array.isArray(value)) {
-    return value.some((entry) => isNonEmpty(entry));
-  }
-  return isNonEmpty(value);
-};
-
-const sectionItemHasContent = (item: SectionItem): boolean => {
-  const hasTitle =
-    isNonEmpty(item.title) ||
-    isNonEmpty(item.position) ||
-    isNonEmpty(item.degree);
-  const hasSubtitle =
-    isNonEmpty(item.subtitle) ||
-    isNonEmpty(item.company) ||
-    isNonEmpty(item.institution);
-  const hasDescription = isNonEmpty(item.description);
-  const hasSkills = item.skills?.some((skill) => isNonEmpty(skill)) ?? false;
-  const hasSkillsWithLevels =
-    item.skillsWithLevels?.some((skill) => isNonEmpty(skill.name)) ?? false;
-  const hasCustomFields =
-    item.customFields?.some((field) => hasCustomFieldValue(field.value)) ?? false;
-
-  return (
-    hasTitle ||
-    hasSubtitle ||
-    hasDescription ||
-    hasSkills ||
-    hasSkillsWithLevels ||
-    hasCustomFields
-  );
-};
-
-const getRenderableItems = (section: Section): SectionItem[] => {
-  return (section.items || []).filter((item) => sectionItemHasContent(item));
-};
-
-const getPrimaryText = (sectionType: Section["type"], item: SectionItem): string => {
-  if (sectionType === "experience") {
-    return item.position || item.title || "";
-  }
-  if (sectionType === "education") {
-    return item.degree || item.title || "";
-  }
-  return item.title || "";
-};
-
-const getSecondaryText = (sectionType: Section["type"], item: SectionItem): string => {
-  if (sectionType === "experience") {
-    return item.company || item.subtitle || "";
-  }
-  if (sectionType === "education") {
-    return item.institution || item.subtitle || "";
-  }
-  return item.subtitle || "";
-};
-
-const getDateText = (item: SectionItem): string => {
-  return formatDate(item.startDate, item.endDate, item.current);
-};
-
-const getSkillLabels = (section: Section): string[] => {
-  const firstItem = section.items[0];
-  if (!firstItem) {
-    return [];
-  }
-
-  const levelSkills = (firstItem.skillsWithLevels || [])
-    .filter((skill) => isNonEmpty(skill.name))
-    .map((skill) => `${skill.name} (${skill.level})`);
-
-  const plainSkills = (firstItem.skills || []).filter((skill) => isNonEmpty(skill));
-
-  return [...levelSkills, ...plainSkills];
-};
-
-const shouldRenderSection = (section: Section): boolean => {
-  if (!section.isVisible) {
-    return false;
-  }
-
-  if (section.type === "skills") {
-    return true;
-  }
-
-  const renderableItems = getRenderableItems(section);
-  const isCoreSection =
-    section.type === "experience" || section.type === "education";
-
-  if (isCoreSection) {
-    return true;
-  }
-
-  return renderableItems.length > 0;
-};
 
 const renderSectionBody = (section: Section, accentColor: string): React.ReactNode => {
   if (section.type === "skills") {
@@ -294,7 +187,7 @@ const renderSectionBody = (section: Section, accentColor: string): React.ReactNo
           {isNonEmpty(dateText) && <Text style={styles.itemDate}>{dateText}</Text>}
         </View>
         {isNonEmpty(description) && (
-          <Text style={styles.itemDescription}>{description}</Text>
+          <PDFMarkdown text={description} style={styles.itemDescription} />
         )}
       </View>
     );
@@ -302,6 +195,14 @@ const renderSectionBody = (section: Section, accentColor: string): React.ReactNo
 };
 
 const ResumePDF: React.FC<ResumePDFProps> = ({ data, template }) => {
+  if (template === 'modern') {
+    return (
+      <PdfDocument>
+        <ModernTemplate data={data} />
+      </PdfDocument>
+    );
+  }
+
   const accentColor = data.theme.color || "#2563eb";
   const visibleSections = data.sections.filter((section) => shouldRenderSection(section));
   const keyedSections = toKeyedItems(
@@ -365,19 +266,6 @@ export const ResumePDFDocument: React.FC<{ data: ResumeData }> = ({ data }) => {
   return <ResumePDF data={data} template={data.theme.template} />;
 };
 
-const waitForFonts = async (): Promise<void> => {
-  const fontSet = (globalThis.document as { fonts?: FontFaceSet }).fonts;
-  if (fontSet?.ready) {
-    await fontSet.ready;
-  }
-};
-
-const waitForPaint = async (): Promise<void> => {
-  await new Promise<void>((resolve) => {
-    requestAnimationFrame(() => resolve());
-  });
-};
-
 export const exportToPDF = async (
   _data: ResumeData,
   sourceNode?: HTMLElement | null
@@ -386,43 +274,61 @@ export const exportToPDF = async (
     throw new TypeError("PDF export is only available in the browser");
   }
 
-  const sourceElement = sourceNode ?? document.getElementById("resume-pdf-export-container");
-
-  if (!(sourceElement instanceof HTMLElement)) {
-    throw new TypeError("Could not find resume container for export");
+  if (!sourceNode) {
+    throw new Error("Export DOM node not provided to html2canvas.");
   }
 
-  const computedStyle = globalThis.getComputedStyle(sourceElement);
-  if (computedStyle.display === "none" || computedStyle.visibility === "hidden") {
-    throw new TypeError("Resume container is not visible for export");
-  }
-
-  console.info("[PDF Export] Capture node", sourceElement);
-  const rect = sourceElement.getBoundingClientRect();
-  console.info("[PDF Export] Capture bounds", {
-    width: rect.width,
-    height: rect.height,
-    childCount: sourceElement.childElementCount,
+  // We use html-to-image because it natively wraps the DOM into an SVG <foreignObject>,
+  // which guarantees 100% pixel-perfect text baseline metrics, line-heights, and custom font parsing.
+  const imgData = await toJpeg(sourceNode, {
+    quality: 0.98,
+    pixelRatio: 3, // High scale for crisp text
+    backgroundColor: '#ffffff',
+    style: {
+      transform: 'none',
+      transformOrigin: 'top left',
+      margin: '0'
+    }
   });
 
-  await waitForPaint();
-  await waitForFonts();
-  await waitForPaint();
-
-  const canvas = await html2canvas(sourceElement, {
-    scale: 2,
-    useCORS: true,
-    backgroundColor: "#ffffff",
+  // Initialize an A4 portrait PDF
+  const pdf = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: 'a4'
   });
 
-  if (!canvas.width || !canvas.height) {
-    throw new Error("Export canvas has invalid dimensions");
+  // Calculate the aspect ratio dynamically directly from the image data rather than canvas width/height
+  const imgElement = new Image();
+  imgElement.src = imgData;
+  await new Promise((resolve) => {
+    imgElement.onload = resolve;
+  });
+
+  const imgWidth = imgElement.width;
+  const imgHeight = imgElement.height;
+  const pdfWidth = pdf.internal.pageSize.getWidth();
+  const pdfHeight = pdf.internal.pageSize.getHeight();
+  const ratio = pdfWidth / imgWidth;
+  const totalPdfHeight = imgHeight * ratio;
+
+  let heightLeft = totalPdfHeight;
+  let position = 0;
+
+  // Render the first page
+  pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, totalPdfHeight);
+  heightLeft -= pdfHeight;
+
+  // If the resume is long, slice the remaining image into new pages
+  // We use a small epsilon (1mm) to prevent generating a blank page for tiny rounding errors
+  while (heightLeft > 1) {
+    position = heightLeft - totalPdfHeight; // Move the image up
+    pdf.addPage();
+    pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, totalPdfHeight);
+    heightLeft -= pdfHeight;
   }
 
-  const imageData = canvas.toDataURL("image/png");
-  const pdfDocument = new jsPDF("p", "px", [canvas.width, canvas.height]);
-  pdfDocument.addImage(imageData, "PNG", 0, 0, canvas.width, canvas.height);
-  return pdfDocument.output("blob");
+  return pdf.output('blob');
 };
 
 export const downloadPDF = (blob: Blob, filename = "resume.pdf"): void => {
