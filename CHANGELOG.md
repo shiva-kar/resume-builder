@@ -1,4 +1,20 @@
 # Changelog
+## [0.4.2] - 2026-07-08
+
+### Added
+- Fix PDF export alignment by replacing html2canvas with html-to-image. Fix theming issues for quick skills. Add Dev toggle.
+- Add resume generation API with rate limiting and support for multiple LLM providers
+
+### Fixed
+- fix(script): handle prerelease tags in version bumps
+- fix(pdf): resolve empty second page due to rounding errors, restructure PDF architecture into separate modules
+- Fix syntax errors, remove unused react-pdf components and dependencies, fix release script version error. Closes all related issues.
+
+### Other
+- Configure next.js for static export to support gh-pages deployment
+
+---
+
 ## [0.4.NaN] - 2026-07-08
 
 ### Added

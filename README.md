@@ -1,6 +1,6 @@
 # Resume Builder
 
-[![Version](https://img.shields.io/badge/Version-0.4.NaN-blue?style=for-the-badge)](https://github.com/shiva-kar/resume-builder/releases)
+[![Version](https://img.shields.io/badge/Version-0.4.2-blue?style=for-the-badge)](https://github.com/shiva-kar/resume-builder/releases)
 [![Status](https://img.shields.io/badge/Status-Beta-orange?style=for-the-badge)](https://github.com/shiva-kar/resume-builder/releases)
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-green?style=for-the-badge&logo=github)](https://shiva-kar.github.io/resume-builder/)
 [![Next.js](https://img.shields.io/badge/Next.js-14-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
