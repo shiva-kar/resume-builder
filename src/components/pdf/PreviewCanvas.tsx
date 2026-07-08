@@ -376,13 +376,6 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
   const { personalInfo, sections, theme } = data;
   const typography = theme.typography || DEFAULT_TYPOGRAPHY;
 
-  // Locked 1:1 render state to keep preview and export pixel-identical
-  const zoom = 1;
-  const containerRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
-  const [currentPage, setCurrentPage] = useState(0);
-  const [pageCount, setPageCount] = useState(1);
-
   // Template checks
   const isHarvard = theme.template === 'harvard';
   const isTech = theme.template === 'tech';
@@ -412,25 +405,6 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
 
   // Visible sections
   const visibleSections = useMemo(() => sections.filter((s) => s.isVisible), [sections]);
-
-  // Page height for multi-page (A4 at ~72 DPI scaled)
-  const pageHeightPx = 842;
-
-  // Calculate page breaks
-  useEffect(() => {
-    if (contentRef.current) {
-      const contentHeight = contentRef.current.scrollHeight;
-      const pages = Math.max(1, Math.ceil(contentHeight / pageHeightPx));
-      setPageCount(pages);
-      if (currentPage >= pages) {
-        setCurrentPage(Math.max(0, pages - 1));
-      }
-    }
-  }, [data, currentPage]);
-
-  const handleZoomIn = () => undefined;
-  const handleZoomOut = () => undefined;
-  const handleReset = () => undefined;
 
   const setResumeExportNode = (node: HTMLDivElement | null): void => {
     if (resumeRef) {
@@ -1394,7 +1368,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
   // ============================================================================
 
   const renderCorporateLayout = () => (
-    <div ref={contentRef} className="w-full h-full p-8 font-sans bg-white">
+    <div  className="w-full h-full p-8 font-sans bg-white">
       {renderCorporateHeader()}
       <div className="space-y-5">
         {visibleSections.map((section) => (
@@ -1417,7 +1391,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
     const otherSections = visibleSections.filter((s) => s.type !== 'skills' && s.type !== 'experience');
 
     return (
-      <div ref={contentRef} className="w-full h-full p-6 font-sans">
+      <div  className="w-full h-full p-6 font-sans">
         {renderCreativeHeader()}
 
         {/* Main content in asymmetric grid */}
@@ -1454,7 +1428,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
 
   // Elegant layout - Centered serif with generous spacing
   const renderElegantLayout = () => (
-    <div ref={contentRef} className="w-full h-full px-12 py-10 font-serif" style={{ backgroundColor: getTemplateBackground('elegant') }}>
+    <div  className="w-full h-full px-12 py-10 font-serif" style={{ backgroundColor: getTemplateBackground('elegant') }}>
       {renderElegantHeader()}
       <div className="max-w-2xl mx-auto space-y-8">
         {visibleSections.map((section) => (
@@ -1478,7 +1452,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
     const mainSections = visibleSections.filter((s) => s.type !== 'skills');
 
     return (
-      <div ref={contentRef} className="w-full h-full font-sans flex">
+      <div  className="w-full h-full font-sans flex">
         {/* Thin accent sidebar */}
         <div className="w-1" style={{ backgroundColor: theme.color }} />
 
@@ -1514,7 +1488,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
   // ============================================================================
 
   const renderStandardLayout = () => (
-    <div ref={contentRef} className={cn('w-full h-full p-8', isHarvard || isElegant ? 'font-serif' : 'font-sans')}>
+    <div  className={cn('w-full h-full p-8', isHarvard || isElegant ? 'font-serif' : 'font-sans')}>
       {renderHeader()}
       {visibleSections.map((section) => (
         <div key={section.id} className="section-block">
@@ -1543,92 +1517,18 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
   // ============================================================================
 
   return (
-    <div className={cn('w-full h-full flex flex-col bg-muted/30', className)}>
-      {/* Zoom Controls and Page Navigation */}
-      <div className="flex items-center justify-between px-3 py-2 bg-background border-b border-border">
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={handleZoomOut}
-            disabled
-            className="p-1.5 rounded-none text-muted-foreground/50 cursor-not-allowed"
-            title="Zoom is locked to 100% for export consistency"
-          >
-            <ZoomOut className="w-4 h-4 text-muted-foreground" />
-          </button>
-          <span className="text-xs font-medium text-muted-foreground w-12 text-center">
-            {Math.round(zoom * 100)}%
-          </span>
-          <button
-            type="button"
-            onClick={handleZoomIn}
-            disabled
-            className="p-1.5 rounded-none text-muted-foreground/50 cursor-not-allowed"
-            title="Zoom is locked to 100% for export consistency"
-          >
-            <ZoomIn className="w-4 h-4 text-muted-foreground" />
-          </button>
-          <button
-            type="button"
-            onClick={handleReset}
-            disabled
-            className="p-1.5 rounded-none text-muted-foreground/50 cursor-not-allowed ml-1"
-            title="View is already reset"
-          >
-            <RotateCcw className="w-4 h-4 text-muted-foreground" />
-          </button>
-        </div>
-
-        {/* Page Navigation */}
-        {pageCount > 1 && (
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
-              disabled={currentPage === 0}
-              className="p-1 hover:bg-muted rounded-none transition-colors disabled:opacity-50"
-            >
-              <ChevronLeft className="w-4 h-4 text-muted-foreground" />
-            </button>
-            <span className="text-xs font-medium text-muted-foreground">
-              Page {currentPage + 1} of {pageCount}
-            </span>
-            <button
-              onClick={() => setCurrentPage(Math.min(pageCount - 1, currentPage + 1))}
-              disabled={currentPage >= pageCount - 1}
-              className="p-1 hover:bg-muted rounded-none transition-colors disabled:opacity-50"
-            >
-              <ChevronRight className="w-4 h-4 text-muted-foreground" />
-            </button>
-          </div>
-        )}
-
-        <div className="flex items-center gap-1 text-muted-foreground">
-          <Move className="w-3 h-3" />
-          <span className="text-[10px]">1:1 render lock</span>
-        </div>
-      </div>
-
-      {/* Preview Area */}
-      <div
-        ref={containerRef}
-        className="flex-1 overflow-auto p-4 w-full"
-      >
-        <div className="preview-wrapper mx-auto border border-border shadow-sm bg-white">
-          <div
-            ref={setResumeExportNode}
-            id="resume-pdf-export-container"
-            className="resume-container"
-            style={{
-              backgroundColor: getTemplateBackground(theme.template),
-              boxSizing: 'border-box',
-              position: 'relative',
-            }}
-          >
-            <div style={{ padding: '40px', width: '100%', height: '100%', boxSizing: 'border-box' }}>
-              {renderLayout()}
-            </div>
-          </div>
-        </div>
+    <div
+      ref={setResumeExportNode}
+      id="resume-pdf-export-container"
+      className={`resume-container ${className || ''}`}
+      style={{
+        backgroundColor: getTemplateBackground(theme.template),
+        boxSizing: 'border-box',
+        position: 'relative',
+      }}
+    >
+      <div style={{ padding: '40px', width: '100%', height: '100%', boxSizing: 'border-box' }}>
+        {renderLayout()}
       </div>
     </div>
   );

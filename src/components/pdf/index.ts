@@ -1,4 +1,4 @@
-export { exportToPDF, downloadPDF } from './ResumePDF';
+export { exportToPDF, downloadPDF } from './PDFViewer';
+export { generateResumePDF } from './ResumePDF';
+export { LivePreview } from './LivePreview';
 export { PreviewCanvas } from './PreviewCanvas';
-// Alias for backwards compatibility
-export { PreviewCanvas as LivePreview } from './PreviewCanvas';

@@ -18,7 +18,7 @@
     "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && electron .\"",
     "electron:build": "npm run build && electron-builder --win --publish never",
     "electron:build:portable": "npm run build && electron-builder --win portable --publish never",
-    "deploy": "next build && echo. > out/.nojekyll && gh-pages -d out --dotfiles",
+    "deploy": "set NEXT_PUBLIC_BASE_PATH=/resume-builder&& next build && echo. > out/.nojekyll && gh-pages -d out --dotfiles",
     "release": "node scripts/release.js",
     "release:patch": "node scripts/release.js --patch",
     "release:minor": "node scripts/release.js --minor",

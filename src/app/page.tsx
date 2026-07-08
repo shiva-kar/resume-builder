@@ -75,7 +75,7 @@ import {
   AutoGenerateForm,
 } from '@/components/editor';
 import { exportToPDF, downloadPDF } from '@/components/pdf';
-import { PreviewCanvas } from '@/components/pdf/PreviewCanvas';
+import { LivePreview } from '@/components/pdf/LivePreview';
 import { cn } from '@/lib/utils';
 
 // ============================================================================
@@ -950,7 +950,7 @@ export default function ResumeBuilderPage() {
                 </div>
               </div>
               <div className="h-[calc(100%-48px)]">
-                <PreviewCanvas
+                <LivePreview
                   data={previewColor ? { ...data, theme: { ...data.theme, color: previewColor } } : data}
                   resumeRef={resumeExportRef}
                   className="h-full"
