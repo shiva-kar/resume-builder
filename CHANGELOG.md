@@ -1,4 +1,12 @@
 # Changelog
+## [0.4.NaN] - 2026-07-08
+
+### Added
+- Fix PDF export alignment by replacing html2canvas with html-to-image. Fix theming issues for quick skills. Add Dev toggle.
+- Add resume generation API with rate limiting and support for multiple LLM providers
+
+---
+
 
 All notable changes to Resume Builder will be documented in this file.
 

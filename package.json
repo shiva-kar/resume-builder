@@ -1,6 +1,6 @@
 {
   "name": "resume-builder",
-  "version": "0.4.0-beta",
+  "version": "0.4.1-beta",
   "private": true,
   "description": "Professional Resume Builder - Create beautiful resumes with live preview and PDF export",
   "author": "Shiva Kar",
@@ -82,7 +82,6 @@
     "@radix-ui/react-switch": "^1.0.3",
     "@radix-ui/react-tabs": "^1.0.4",
     "@radix-ui/react-tooltip": "^1.0.7",
-    "@react-pdf/renderer": "^3.4.4",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "groq-sdk": "^0.37.0",

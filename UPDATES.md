@@ -6,6 +6,14 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.4.NaN] - 2026-07-08
+
+### Added
+- Fix PDF export alignment by replacing html2canvas with html-to-image. Fix theming issues for quick skills. Add Dev toggle.
+- Add resume generation API with rate limiting and support for multiple LLM providers
+
+---
+
 ## [Beta 0.4] - 2026-02-21
 
 ### Fixed
