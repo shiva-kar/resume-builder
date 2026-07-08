@@ -280,8 +280,8 @@ This project is currently in **Beta**.
 
 | Phase | Versions | Status |
 |-------|----------|--------|
-| **Alpha** | Alpha 0.1 - Alpha 0.7 | ✅ Completed |
-| **Beta** | Beta 0.1 - Beta 0.4 | 🚧 Current |
+| **Alpha** | 0.1.0-alpha - 0.7.0-alpha | ✅ Completed |
+| **Beta** | 0.1.0-beta - 0.4.0-beta | 🚧 Current |
 | **Stable** | 1.0+ | ⏳ Planned |
 
 Earlier versions were released as **Alpha** builds for testing and experimentation.
@@ -298,28 +298,28 @@ See [CHANGELOG.md](CHANGELOG.md) for full version history.
 
 ### Recent Releases
 
-#### [Beta 0.4] - 2026-02-21
+#### [0.4.0-beta] - 2026-02-21
 - Fixed skills, custom sections, and markdown not rendering in PDF export
 - Fixed certifications/projects auto-enable when added via Build Your Story
 - Export pipeline stability and typography consistency across all 10 templates
 - Shared formatting utilities extracted to dedicated modules
 
-#### [Beta 0.3] - 2026-01-10
+#### [0.3.0-beta] - 2026-01-10
 - Multi-LLM support with 40+ AI models across 4 providers
 - OpenAI, Anthropic, Groq, and Mistral integration
 - Corrected model names with verified API model IDs
 
-#### [Beta 0.2] - 2026-01-10
+#### [0.2.0-beta] - 2026-01-10
 - Improved template consistency between Preview and PDF
 - Auto-generate resume feature for HR teams
 - Fixed rendering across all 10 templates
 
-#### [Beta 0.1] - 2026-01-09
+#### [0.1.0-beta] - 2026-01-09
 - First Beta release
 - Electron desktop app support
 - MIT License added
 
-#### [Alpha 0.7] - 2024-12-19
+#### [0.7.0-alpha] - 2024-12-19
 - SVG Icons in PDF Export
 - 10 Unique Template Renderers
 - Dark Mode Theme Selector

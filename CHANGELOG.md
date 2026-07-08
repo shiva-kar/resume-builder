@@ -15,12 +15,6 @@
 
 ---
 
-## [0.4.NaN] - 2026-07-08
-
-### Added
-- Fix PDF export alignment by replacing html2canvas with html-to-image. Fix theming issues for quick skills. Add Dev toggle.
-- Add resume generation API with rate limiting and support for multiple LLM providers
-
 ---
 
 
@@ -30,7 +24,7 @@ All notable changes to Resume Builder will be documented in this file.
 
 ---
 
-## [Beta 0.4] - 2026-02-21
+## [0.4.0-beta] - 2026-02-21
 
 ### Fixed
 - Skills not rendering in exported PDF (placeholder filter was silently dropping real skills)
@@ -63,7 +57,7 @@ All notable changes to Resume Builder will be documented in this file.
 
 ---
 
-## [Beta 0.3] - 2026-01-10
+## [0.3.0-beta] - 2026-01-10
 
 ### Added
 - Multi-LLM support with 40+ AI models across 4 providers
@@ -78,7 +72,7 @@ All notable changes to Resume Builder will be documented in this file.
 
 ---
 
-## [Beta 0.2] - 2026-01-10
+## [0.2.0-beta] - 2026-01-10
 
 ### Added
 - Improved resume preview experience with enhanced template consistency
@@ -109,7 +103,7 @@ This release is open for community contributions to improve PDF export accuracy,
 
 ---
 
-## [Beta 0.1] - 2026-01-09
+## [0.1.0-beta] - 2026-01-09
 
 ### Added
 - Add MIT License to the project
@@ -122,7 +116,7 @@ This release is open for community contributions to improve PDF export accuracy,
 
 ---
 
-## [Alpha 0.7] - 2024-12-19
+## [0.7.0-alpha] - 2024-12-19
 
 ### Added
 - **SVG Icons in PDF Export**: Professional icon set with 7 custom SVG components
@@ -142,7 +136,7 @@ This release is open for community contributions to improve PDF export accuracy,
 
 ---
 
-## [Alpha 0.6] - 2024-12-19
+## [0.6.0-alpha] - 2024-12-19
 
 ### Fixed
 - PDF Contact Labels: Added text-based labels before contact info
@@ -154,7 +148,7 @@ This release is open for community contributions to improve PDF export accuracy,
 
 ---
 
-## [Alpha 0.5] - 2024-12-19
+## [0.5.0-alpha] - 2024-12-19
 
 ### Added
 - Custom Section Field Types: text, textarea, date, dateRange, link, tags
@@ -162,7 +156,7 @@ This release is open for community contributions to improve PDF export accuracy,
 
 ---
 
-## [Alpha 0.4] - 2024-12-18
+## [0.4.0-alpha] - 2024-12-18
 
 ### Added
 - Drag & Drop section reordering with @dnd-kit
@@ -171,7 +165,7 @@ This release is open for community contributions to improve PDF export accuracy,
 
 ---
 
-## [Alpha 0.3] - 2024-12-17
+## [0.3.0-alpha] - 2024-12-17
 
 ### Added
 - Real-time PDF preview with @react-pdf/renderer
@@ -180,7 +174,7 @@ This release is open for community contributions to improve PDF export accuracy,
 
 ---
 
-## [Alpha 0.2] - 2024-12-16
+## [0.2.0-alpha] - 2024-12-16
 
 ### Added
 - Complete UI redesign with bento grid layout
@@ -189,7 +183,7 @@ This release is open for community contributions to improve PDF export accuracy,
 
 ---
 
-## [Alpha 0.1] - 2024-12-15
+## [0.1.0-alpha] - 2024-12-15
 
 ### Added
 - Initial release
