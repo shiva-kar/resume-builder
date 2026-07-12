@@ -59,8 +59,9 @@ export const PersonalInfoForm: React.FC = () => {
   return (
     <div className="glass rounded-none bento-card overflow-hidden">
       {/* Header */}
-      <div
-        className="bg-muted px-4 py-3 border-b border-border flex justify-between items-center cursor-pointer select-none"
+      <button
+        type="button"
+        className="w-full bg-muted px-4 py-3 border-b border-border flex justify-between items-center cursor-pointer select-none"
         onClick={() => setIsOpen(!isOpen)}
       >
         <div className="flex items-center gap-2">
@@ -72,7 +73,7 @@ export const PersonalInfoForm: React.FC = () => {
         ) : (
           <ChevronDown className="w-4 h-4 text-muted-foreground" />
         )}
-      </div>
+      </button>
 
       {/* Content */}
       {isOpen && (

@@ -190,7 +190,7 @@ const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPrevie
     <div className="glass rounded-lg bento-card overflow-hidden mb-4">
       <button
         type="button"
-        className="bg-muted/50 px-4 py-3 border-b border-border/50 flex justify-between items-center cursor-pointer select-none hover:bg-muted/70 transition-colors"
+        className="w-full bg-muted/50 px-4 py-3 border-b border-border/50 flex justify-between items-center cursor-pointer select-none hover:bg-muted/70 transition-colors"
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
       >
@@ -547,7 +547,7 @@ const SectionManagerPanel: React.FC = memo(() => {
     <div className="glass rounded-lg bento-card overflow-hidden mb-4">
       <button
         type="button"
-        className="bg-muted/50 px-4 py-3 border-b border-border/50 flex justify-between items-center cursor-pointer select-none hover:bg-muted/70 transition-colors"
+        className="w-full bg-muted/50 px-4 py-3 border-b border-border/50 flex justify-between items-center cursor-pointer select-none hover:bg-muted/70 transition-colors"
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
       >
