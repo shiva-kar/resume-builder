@@ -65,7 +65,7 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
       )}
     >
       {/* Section Header */}
-      <div className="flex items-center justify-between p-4 border-b border-border/50">
+      <div className="bg-muted/50 px-4 py-3 flex items-center justify-between border-b border-border/50">
         <div className="flex items-center gap-3 flex-1">
           <button
             {...attributes}

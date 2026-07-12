@@ -61,10 +61,12 @@ import {
   FontSizeLevel,
   PageSize,
   ACCENT_COLORS,
-  TYPOGRAPHY_SIZES,
   DEFAULT_TYPOGRAPHY,
+  TYPOGRAPHY_SIZES,
   TEMPLATE_INFO,
 } from '@/lib/schema';
+import * as Popover from '@radix-ui/react-popover';
+import { HexColorPicker, HexColorInput } from 'react-colorful';
 import {
   SectionWrapper,
   ExperienceForm,
@@ -123,74 +125,51 @@ interface DesignSettingsPanelProps {
 
 const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPreviewColorChange }) => {
   const theme = useTheme();
-  const { updateTheme, updateTypography } = useResumeStore();
+  const { updateTheme, updateTypography, addRecentColor } = useResumeStore();
   const [isOpen, setIsOpen] = useState(true);
 
-  // Color picker state - only confirmed colors are saved
   const [isPickingColor, setIsPickingColor] = useState(false);
   const [tempColor, setTempColor] = useState(theme.color);
-  const colorInputRef = React.useRef<HTMLInputElement>(null);
+  const [originalColor, setOriginalColor] = useState(theme.color);
 
   const typography = theme.typography || DEFAULT_TYPOGRAPHY;
 
-  // Handle opening color picker
+  // Debounced theme update for lag-free live preview
+  useEffect(() => {
+    if (isPickingColor) {
+      const timer = setTimeout(() => {
+        updateTheme({ color: tempColor });
+      }, 50); // 50ms throttle prevents heavy PDF rendering lag
+      return () => clearTimeout(timer);
+    }
+  }, [tempColor, isPickingColor, updateTheme]);
+
   const openColorPicker = () => {
+    setOriginalColor(theme.color);
     setTempColor(theme.color);
     setIsPickingColor(true);
-    onPreviewColorChange?.(theme.color); // Start live preview with current color
-    // Small delay to ensure state is set before opening native picker
-    setTimeout(() => colorInputRef.current?.click(), 50);
   };
 
-  // Handle color change (preview only, not saved) - updates live preview
-  const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTempColor(e.target.value);
-    onPreviewColorChange?.(e.target.value); // Update live preview
-  };
-
-  // Confirm the selected color - saves and ends preview
   const confirmColor = () => {
     updateTheme({ color: tempColor });
+    addRecentColor(tempColor);
     setIsPickingColor(false);
-    onPreviewColorChange?.(null); // End live preview (use saved color)
   };
 
-  // Cancel color selection - reverts preview
   const cancelColor = () => {
-    setTempColor(theme.color);
+    updateTheme({ color: originalColor });
     setIsPickingColor(false);
-    onPreviewColorChange?.(null); // End live preview (use saved color)
   };
 
   const isPresetThemeColor = ACCENT_COLORS.some((accent) => accent.color === theme.color);
   const isRecentThemeColor = theme.recentColors?.includes(theme.color) ?? false;
   const isCustomThemeColor = !isPresetThemeColor && !isRecentThemeColor;
 
-  const getCustomColorBorderClass = () => {
-    if (isPickingColor) {
-      return 'border-primary ring-2 ring-primary/20';
-    }
-    if (isCustomThemeColor) {
-      return 'border-foreground';
-    }
-    return 'border-border hover:border-primary/50 bg-muted/30';
-  };
-
-  const getCustomColorButtonStyle = (): React.CSSProperties | undefined => {
-    if (isPickingColor) {
-      return { backgroundColor: tempColor };
-    }
-    if (isCustomThemeColor) {
-      return { backgroundColor: theme.color };
-    }
-    return undefined;
-  };
-
   return (
     <div className="glass rounded-lg bento-card overflow-hidden mb-4">
       <button
         type="button"
-        className="bg-muted/50 px-4 py-3 border-b border-border/50 flex justify-between items-center cursor-pointer select-none hover:bg-muted/70 transition-colors"
+        className="w-full bg-muted/50 px-4 py-3 border-b border-border/50 flex justify-between items-center cursor-pointer select-none hover:bg-muted/70 transition-colors"
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
       >
@@ -331,8 +310,11 @@ const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPrevie
                 />
               ))}
 
+              {/* Separator between presets and custom colors */}
+              <div className="w-[2px] h-6 bg-border mx-1 rounded-full" />
+
               {/* Recent custom colors */}
-              {theme.recentColors?.filter(c => !ACCENT_COLORS.some(ac => ac.color === c)).slice(0, 5).map((color) => (
+              {theme.recentColors?.filter(c => !ACCENT_COLORS.some(ac => ac.color.toLowerCase() === c.toLowerCase())).map((color) => (
                 <button
                   key={color}
                   onClick={() => updateTheme({ color })}
@@ -347,68 +329,71 @@ const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPrevie
                 />
               ))}
 
-              {/* Custom color picker with confirmation */}
-              <div className="relative">
-                {/* Hidden color input */}
-                <input
-                  ref={colorInputRef}
-                  type="color"
-                  value={tempColor}
-                  onChange={handleColorChange}
-                  className="sr-only"
-                />
+              {/* Custom color picker */}
+              <Popover.Root 
+                open={isPickingColor} 
+                onOpenChange={(open) => {
+                  if (open) {
+                    openColorPicker();
+                  } else {
+                    cancelColor();
+                  }
+                }}
+              >
+                <Popover.Trigger asChild>
+                  <button
+                    title="Pick custom color"
+                    className={cn(
+                      'w-8 h-8 rounded-lg border-2 border-dashed flex items-center justify-center transition-all',
+                      isCustomThemeColor || isPickingColor
+                        ? 'border-foreground'
+                        : 'border-border hover:border-primary/50 bg-muted/30'
+                    )}
+                  >
+                    {(isPresetThemeColor || isRecentThemeColor) && !isPickingColor && (
+                      <Plus className="w-3.5 h-3.5 text-muted-foreground" />
+                    )}
+                  </button>
+                </Popover.Trigger>
 
-                {/* Custom color trigger button */}
-                <button
-                  onClick={openColorPicker}
-                  title="Pick custom color"
-                  className={cn(
-                    'w-8 h-8 rounded-lg border-2 border-dashed flex items-center justify-center transition-all',
-                    getCustomColorBorderClass()
-                  )}
-                  style={getCustomColorButtonStyle()}
-                >
-                  {(isPresetThemeColor || isRecentThemeColor) && !isPickingColor && (
-                    <Plus className="w-3.5 h-3.5 text-muted-foreground" />
-                  )}
-                </button>
-
-                {/* Color picker confirmation popover */}
-                {isPickingColor && (
-                  <div className="absolute top-full left-0 mt-2 z-50 bg-background border border-border rounded-lg shadow-lg p-3 min-w-[180px]">
-                    <div className="flex items-center gap-2 mb-3">
-                      <div
-                        className="w-10 h-10 rounded-lg border border-border shadow-inner"
-                        style={{ backgroundColor: tempColor }}
-                      />
-                      <div className="flex-1">
-                        <p className="text-xs text-muted-foreground mb-1">Selected</p>
-                        <p className="text-sm font-mono">{tempColor.toUpperCase()}</p>
-                      </div>
+                <Popover.Portal>
+                  <Popover.Content 
+                    align="center"
+                    sideOffset={8}
+                    className="z-50 bg-background border border-border rounded-xl shadow-xl p-3 w-[220px] flex flex-col gap-3 animate-in fade-in zoom-in-95 duration-200"
+                  >
+                    <div className="w-full custom-color-picker">
+                      <HexColorPicker color={tempColor} onChange={setTempColor} />
                     </div>
-                    <button
-                      onClick={() => colorInputRef.current?.click()}
-                      className="w-full text-xs py-1.5 px-2 mb-2 rounded border border-border hover:bg-muted transition-colors"
-                    >
-                      Change Color
-                    </button>
-                    <div className="flex gap-2">
+                    
+                    <div className="flex items-center gap-2 px-1 w-full">
+                      <span className="text-xs font-mono text-muted-foreground font-medium">HEX</span>
+                      <HexColorInput 
+                        color={tempColor} 
+                        onChange={setTempColor} 
+                        className="flex-1 min-w-0 bg-muted/50 border border-border rounded px-2 py-1.5 text-sm font-mono focus:outline-none focus:border-primary transition-colors uppercase"
+                        prefixed={true}
+                        alpha={false}
+                      />
+                    </div>
+                    
+                    <div className="flex gap-2 w-full mt-1">
                       <button
                         onClick={cancelColor}
-                        className="flex-1 text-xs py-1.5 px-2 rounded border border-border hover:bg-muted transition-colors"
+                        className="flex-1 text-xs py-2 rounded-md border border-border hover:bg-muted transition-colors font-medium"
                       >
                         Cancel
                       </button>
                       <button
                         onClick={confirmColor}
-                        className="flex-1 text-xs py-1.5 px-2 rounded bg-primary text-primary-foreground hover:bg-primary/90 transition-colors font-medium"
+                        className="flex-1 text-xs py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors font-medium shadow-sm"
                       >
                         ✓ Apply
                       </button>
                     </div>
-                  </div>
-                )}
-              </div>
+                  </Popover.Content>
+                </Popover.Portal>
+              </Popover.Root>
             </div>
           </div>
 
@@ -547,7 +532,7 @@ const SectionManagerPanel: React.FC = memo(() => {
     <div className="glass rounded-lg bento-card overflow-hidden mb-4">
       <button
         type="button"
-        className="bg-muted/50 px-4 py-3 border-b border-border/50 flex justify-between items-center cursor-pointer select-none hover:bg-muted/70 transition-colors"
+        className="w-full bg-muted/50 px-4 py-3 border-b border-border/50 flex justify-between items-center cursor-pointer select-none hover:bg-muted/70 transition-colors"
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
       >
