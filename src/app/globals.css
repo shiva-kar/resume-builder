@@ -143,23 +143,20 @@ html {
 
 .resume-container .main-grid {
   display: grid;
-  width: 754px;
-  grid-template-columns: 514px 240px;
+  width: 100%;
+  grid-template-columns: 68% 32%;
   column-gap: 0;
   row-gap: 0;
   align-items: start;
   justify-content: start;
-  margin-left: -20px;
 }
 
 .resume-container .left-column {
-  width: 514px;
-  min-width: 514px;
+  width: 100%;
 }
 
 .resume-container .right-column {
-  width: 240px;
-  min-width: 240px;
+  width: 100%;
 }
 
 .resume-container .skills-card {

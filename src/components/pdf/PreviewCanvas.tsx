@@ -1294,7 +1294,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
     const mainSections = visibleSections.filter((s) => s.type !== 'skills');
 
     return (
-      <div className="flex h-full">
+      <div className="flex min-h-full">
         <div className="w-1/3 p-6 bg-gray-50 border-r border-gray-200">
           <h1 className="font-bold mb-1" style={{ fontSize: fontSize.name }}>
             {personalInfo.fullName || <span className="text-gray-400 italic font-normal">{DUMMY_DATA.personalInfo.fullName}</span>}
@@ -1333,7 +1333,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
   // ============================================================================
 
   const renderCorporateLayout = () => (
-    <div  className="w-full h-full p-8 font-sans bg-white">
+    <div  className="w-full min-h-full p-8 font-sans bg-white">
       {renderCorporateHeader()}
       <div className="space-y-5">
         {visibleSections.map((section) => (
@@ -1356,7 +1356,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
     const otherSections = visibleSections.filter((s) => s.type !== 'skills' && s.type !== 'experience');
 
     return (
-      <div  className="w-full h-full p-6 font-sans">
+      <div  className="w-full min-h-full p-6 font-sans">
         {renderCreativeHeader()}
 
         {/* Main content in asymmetric grid */}
@@ -1393,7 +1393,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
 
   // Elegant layout - Centered serif with generous spacing
   const renderElegantLayout = () => (
-    <div  className="w-full h-full px-12 py-10 font-serif" style={{ backgroundColor: getTemplateBackground('elegant') }}>
+    <div  className="w-full min-h-full px-12 py-10 font-serif" style={{ backgroundColor: getTemplateBackground('elegant') }}>
       {renderElegantHeader()}
       <div className="max-w-2xl mx-auto space-y-8">
         {visibleSections.map((section) => (
@@ -1417,7 +1417,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
     const mainSections = visibleSections.filter((s) => s.type !== 'skills');
 
     return (
-      <div  className="w-full h-full font-sans flex">
+      <div  className="w-full min-h-full font-sans flex">
         {/* Thin accent sidebar */}
         <div className="w-1" style={{ backgroundColor: theme.color }} />
 
@@ -1453,7 +1453,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
   // ============================================================================
 
   const renderStandardLayout = () => (
-    <div  className={cn('w-full h-full p-8', isHarvard || isElegant ? 'font-serif' : 'font-sans')}>
+    <div  className={cn('w-full min-h-full p-8', isHarvard || isElegant ? 'font-serif' : 'font-sans')}>
       {renderHeader()}
       {visibleSections.map((section) => (
         <div key={section.id} className="section-block">
