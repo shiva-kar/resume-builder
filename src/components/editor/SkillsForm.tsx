@@ -27,7 +27,7 @@ export const SkillsForm: React.FC<SkillsFormProps> = ({ section }) => {
     removeSkillWithLevel,
   } = useResumeStore();
   const [inputValue, setInputValue] = useState('');
-  const [selectedLevel, setSelectedLevel] = useState<SkillLevel>('Intermediate');
+  const [selectedLevel, setSelectedLevel] = useState<SkillLevel | ''>('');
 
   // Ensure there is always at least one skills item
   const skillsItem = section.items[0] || { id: 'temp', skills: [], skillsWithLevels: [] };
@@ -63,7 +63,7 @@ export const SkillsForm: React.FC<SkillsFormProps> = ({ section }) => {
 
     addSkillWithLevel(section.id, skillsItem.id, {
       name: trimmed,
-      level: selectedLevel,
+      level: selectedLevel as SkillLevel,
     });
     setInputValue('');
   };
@@ -76,7 +76,7 @@ export const SkillsForm: React.FC<SkillsFormProps> = ({ section }) => {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      addSkillLevel();
+      handleAdd();
     }
     if (e.key === 'Backspace' && !inputValue) {
       if (skillsWithLevels.length > 0) {
@@ -84,6 +84,14 @@ export const SkillsForm: React.FC<SkillsFormProps> = ({ section }) => {
       } else if (skills.length > 0) {
         removeSkill(skills.length - 1);
       }
+    }
+  };
+
+  const handleAdd = () => {
+    if (!selectedLevel) {
+      addSkill(inputValue);
+    } else {
+      addSkillLevel();
     }
   };
 
@@ -200,13 +208,14 @@ export const SkillsForm: React.FC<SkillsFormProps> = ({ section }) => {
           />
           <select
             value={selectedLevel}
-            onChange={(e) => setSelectedLevel(e.target.value as SkillLevel)}
+            onChange={(e) => setSelectedLevel(e.target.value as SkillLevel | '')}
             aria-label="Skill proficiency level"
             className={cn(
               'px-3 py-2 rounded-none border border-border bg-background',
               'text-sm focus:outline-none focus:ring-2 focus:ring-primary/20'
             )}
           >
+            <option value="">No Level (Quick Skill)</option>
             {SKILL_LEVELS.map((level) => (
               <option key={level} value={level}>
                 {level}
@@ -214,7 +223,7 @@ export const SkillsForm: React.FC<SkillsFormProps> = ({ section }) => {
             ))}
           </select>
           <button
-            onClick={addSkillLevel}
+            onClick={handleAdd}
             disabled={!inputValue.trim()}
             className={cn(
               'px-4 py-2 rounded-none font-medium text-sm',
@@ -241,6 +250,7 @@ export const SkillsForm: React.FC<SkillsFormProps> = ({ section }) => {
                 key={suggestion}
                 onClick={() => {
                   setInputValue(suggestion);
+                  setSelectedLevel('');
                 }}
                 className={cn(
                   'text-xs px-2 py-1 rounded-none',

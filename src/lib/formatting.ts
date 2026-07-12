@@ -251,10 +251,10 @@ export const parseFormattedText = (text: string): ParsedLine[] => {
  * Typography pixel sizes - shared between Preview and PDF
  */
 export const TYPOGRAPHY_PX = {
-  sm: { name: 18, headers: 11, body: 9 },
-  md: { name: 22, headers: 13, body: 10 },
-  lg: { name: 26, headers: 15, body: 11 },
-  xl: { name: 30, headers: 17, body: 12 },
+  sm: { name: 18, headers: 11, body: 9, experience: 9, skills: 9 },
+  md: { name: 22, headers: 13, body: 10, experience: 10, skills: 10 },
+  lg: { name: 26, headers: 15, body: 11, experience: 11, skills: 11 },
+  xl: { name: 30, headers: 17, body: 12, experience: 12, skills: 12 },
 } as const;
 
 /**

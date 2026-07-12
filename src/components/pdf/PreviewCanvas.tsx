@@ -49,13 +49,13 @@ import { getTemplateBackground } from '@/lib/templates';
 // Context for passing spacer heights from the pagination engine to PageBreakable components
 const SpacerContext = React.createContext<Record<string, number>>({});
 
-export const PageBreakable: React.FC<{ children: React.ReactNode; id?: string; className?: string }> = ({ children, id, className }) => {
+export const PageBreakable: React.FC<{ children: React.ReactNode; id?: string; className?: string; style?: React.CSSProperties }> = ({ children, id, className, style }) => {
   const spacerMap = React.useContext(SpacerContext);
   const spacerHeight = (id && spacerMap[id]) || 0;
   return (
-    <div className={cn("page-breakable-container", className)}>
+    <div className={cn("page-breakable-container", className)} style={style}>
       <div className="page-spacer" style={{ height: `${spacerHeight}px` }} />
-      <div className="page-breakable-content" data-breakable-id={id}>
+      <div className="page-breakable-content flow-root" data-breakable-id={id}>
         {children}
       </div>
     </div>
@@ -386,12 +386,19 @@ const ContactItem: React.FC<ContactItemProps> = ({ icon: Icon, value, href, colo
 
 interface PreviewCanvasProps {
   data: ResumeData;
+  spacerMap?: Record<string, number>;
   resumeRef?: React.MutableRefObject<HTMLDivElement | null>;
   className?: string;
-  spacerMap?: Record<string, number>;
+  minHeight?: number;
 }
 
-export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, className, spacerMap }) => {
+export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ 
+  data, 
+  spacerMap, 
+  resumeRef, 
+  className,
+  minHeight 
+}) => {
   const { personalInfo, sections, theme } = data;
   const typography = theme.typography || DEFAULT_TYPOGRAPHY;
 
@@ -411,16 +418,24 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
   const scale = GLOBAL_FONT_SCALES[theme.fontSize];
 
   // Font sizes (computed once)
-  const fontSize = useMemo(() => ({
-    name: Math.round(TYPO_PX[typography.name].name * scale),
-    summary: Math.round(TYPO_PX[typography.headers].headers * scale),
-    contact: Math.round(TYPO_PX[typography.body].body * scale),
-    sectionHeading: Math.round(14 * scale),
-    itemTitle: Math.round(13 * scale),
-    itemSubtitle: Math.round(11 * scale),
-    itemBody: Math.round(10 * scale),
-    itemDate: Math.round(9 * scale),
-  }), [typography, scale]);
+  const fontSize = useMemo(() => {
+    // Fallback to 'body' size for older saved themes that don't have experience/skills
+    const expSize = typography.experience || typography.body || 'sm';
+    const skillsSize = typography.skills || typography.body || 'sm';
+    
+    const expBase = TYPO_PX[expSize].experience;
+    return {
+      name: Math.round(TYPO_PX[typography.name || 'lg'].name * scale),
+      summary: Math.round(TYPO_PX[typography.headers || 'md'].headers * scale),
+      contact: Math.round(TYPO_PX[typography.body || 'sm'].body * scale),
+      sectionHeading: Math.round((TYPO_PX[typography.headers || 'md'].headers + 1) * scale),
+      itemTitle: Math.round((expBase + 3) * scale),
+      itemSubtitle: Math.round((expBase + 1) * scale),
+      itemBody: Math.round(expBase * scale),
+      itemDate: Math.round((expBase - 1) * scale),
+      skills: Math.round(TYPO_PX[skillsSize].skills * scale),
+    };
+  }, [typography, scale]);
 
   // Visible sections
   const visibleSections = useMemo(() => sections.filter((s) => s.isVisible), [sections]);
@@ -551,9 +566,9 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
         {keyedLevels.length > 0 && (
           <div className="skills-container">
             {keyedLevels.map(({ key, item }) => (
-              <span key={key} className="skill-chip border border-gray-200 bg-white text-[10px]">
+              <span key={key} className="skill-chip border border-gray-200 bg-white" style={{ fontSize: fontSize.skills }}>
                 <span className="font-medium text-gray-800">{item.name}</span>
-                <span className="ml-1.5 text-gray-400 text-[8px]">{item.level}</span>
+                <span className="ml-1.5 text-gray-400" style={{ fontSize: Math.max(8, fontSize.skills - 2) }}>{item.level}</span>
               </span>
             ))}
           </div>
@@ -561,7 +576,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
         {keyedSkills.length > 0 && (
           <div className={cn('skills-container', isDummy && 'opacity-60')}>
             {keyedSkills.map(({ key, item }) => (
-              <span key={key} className={cn('skill-chip text-[10px]', isDummy ? 'bg-gray-100 text-gray-400 italic' : 'bg-gray-100 text-gray-700')}>
+              <span key={key} className={cn('skill-chip', isDummy ? 'bg-gray-100 text-gray-400 italic' : 'bg-gray-100 text-gray-700')} style={{ fontSize: fontSize.skills }}>
                 {item}
               </span>
             ))}
@@ -579,9 +594,9 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
         {keyedLevels.length > 0 && (
           <div className="skills-container skills-container-compact">
             {keyedLevels.map(({ key, item }) => (
-              <span key={key} className="skill-chip text-[10px] font-bold" style={{ backgroundColor: theme.color + '15', color: theme.color }}>
+              <span key={key} className="skill-chip font-bold" style={{ backgroundColor: theme.color + '15', color: theme.color, fontSize: fontSize.skills }}>
                 {item.name}
-                <span className="ml-1 opacity-60 text-[8px] font-normal">• {item.level}</span>
+                <span className="ml-1 opacity-60 font-normal" style={{ fontSize: Math.max(8, fontSize.skills - 2) }}>• {item.level}</span>
               </span>
             ))}
           </div>
@@ -591,8 +606,8 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
             {keyedSkills.map(({ key, item }) => (
               <span
                 key={key}
-                className={cn('skill-chip text-[10px]', isDummy ? 'font-normal italic' : 'font-bold')}
-                style={{ backgroundColor: isDummy ? '#f3f4f6' : theme.color + '15', color: isDummy ? '#9ca3af' : theme.color }}
+                className={cn('skill-chip', isDummy ? 'font-normal italic' : 'font-bold')}
+                style={{ backgroundColor: isDummy ? '#f3f4f6' : theme.color + '15', color: isDummy ? '#9ca3af' : theme.color, fontSize: fontSize.skills }}
               >
                 {item}
               </span>
@@ -609,16 +624,16 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
     return (
       <div className="space-y-1.5">
         {keyedLevels.map(({ key, item }) => (
-          <div key={key} className="flex items-center gap-2 text-[10px]">
+          <div key={key} className="flex items-center gap-2" style={{ fontSize: fontSize.skills }}>
             <div className="w-1 h-1 rounded-full" style={{ backgroundColor: theme.color }} />
             <span className="font-medium text-gray-800">{item.name}</span>
-            <span className="text-gray-400 text-[8px]">{item.level}</span>
+            <span className="text-gray-400" style={{ fontSize: Math.max(8, fontSize.skills - 2) }}>{item.level}</span>
           </div>
         ))}
         {keyedSkills.length > 0 && (
           <div className={cn("flex flex-wrap gap-x-4 gap-y-1.5", keyedLevels.length > 0 ? "mt-1" : "", isDummy ? 'opacity-60' : '')}>
             {keyedSkills.map(({ key, item }) => (
-              <div key={key} className="flex items-center gap-2 text-[10px]">
+              <div key={key} className="flex items-center gap-2" style={{ fontSize: fontSize.skills }}>
                 <div className="w-1 h-1 rounded-full" style={{ backgroundColor: isDummy ? '#9ca3af' : theme.color }} />
                 <span className={isDummy ? 'text-gray-400 italic' : 'text-gray-700'}>{item}</span>
               </div>
@@ -639,27 +654,24 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
         {keyedLevels.length > 0 && (
           <div className={containerClass}>
             {keyedLevels.map(({ key, item }) => (
-              <PageBreakable key={key} id={key} className="inline-block">
-                <span className={cn('skill-chip text-[10px] font-medium border border-gray-200', isNeo ? 'rounded-none' : 'rounded')}>
-                  <span className="font-semibold" style={{ color: isTech || isBold ? theme.color : 'inherit' }}>
-                    {item.name}
-                  </span>
-                  <span className="ml-1 text-gray-400 text-[8px] uppercase">{item.level}</span>
+              <span key={key} className={cn('skill-chip font-medium border border-gray-200', isNeo ? 'rounded-none' : 'rounded')} style={{ fontSize: fontSize.skills }}>
+                <span className="font-semibold" style={{ color: isTech || isBold ? theme.color : 'inherit' }}>
+                  {item.name}
                 </span>
-              </PageBreakable>
+                <span className="ml-1 text-gray-400 uppercase" style={{ fontSize: Math.max(8, fontSize.skills - 2) }}>{item.level}</span>
+              </span>
             ))}
           </div>
         )}
         <div className={cn(containerClass, isDummy && 'opacity-60')}>
           {keyedSkills.map(({ key, item }) => (
-            <PageBreakable key={key} id={key} className="inline-block">
-              <span
-                className={cn('skill-chip text-[10px]', isNeo ? 'rounded-none' : 'rounded-sm', isDummy && 'italic')}
-                style={{ backgroundColor: isDummy ? '#f3f4f6' : theme.color + '20', color: isDummy ? '#9ca3af' : theme.color }}
-              >
-                {item}
-              </span>
-            </PageBreakable>
+            <span
+              key={key}
+              className={cn('skill-chip', isNeo ? 'rounded-none' : 'rounded-sm', isDummy && 'italic')}
+              style={{ backgroundColor: isDummy ? '#f3f4f6' : theme.color + '20', color: isDummy ? '#9ca3af' : theme.color, fontSize: fontSize.skills }}
+            >
+              {item}
+            </span>
           ))}
         </div>
       </div>
@@ -744,14 +756,14 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
     return [];
   };
 
-  const renderCustomSection = (section: Section) => {
+  const renderCustomSection = (section: Section, sectionTitle?: string) => {
     if (!section.items.length) {
       return <p className="text-gray-400 italic" style={{ fontSize: fontSize.itemBody }}>Add items to this section</p>;
     }
 
     const fieldDefs = section.fieldDefinitions || [];
 
-    return section.items.map((item) => {
+    return section.items.map((item, index) => {
       const titleField = fieldDefs.find((f) => f.type === 'text');
       const dateField = fieldDefs.find((f) => f.type === 'date' || f.type === 'dateRange');
       const linkField = fieldDefs.find((f) => f.type === 'link');
@@ -776,6 +788,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
 
       return (
         <PageBreakable key={item.id} id={item.id} className="mb-2.5">
+          {index === 0 && sectionTitle && renderSectionTitle(sectionTitle)}
           <div className="flex justify-between items-baseline mb-0.5">
             <div className="flex items-center gap-2">
               {linkValue ? (
@@ -841,7 +854,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
     });
   };
 
-  const renderExperienceEducation = (section: Section) => {
+  const renderExperienceEducation = (section: Section, sectionTitle?: string) => {
     // Use dummy data if section is empty
     const isDummy = !section.items.length;
     const dummyItems = getDummyItemsBySectionType(section.type);
@@ -852,13 +865,14 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
     }
 
     if (isModern || isNeo || isCreative || isElegant) {
-      return itemsToRender.map((item) => (
+      return itemsToRender.map((item, index) => (
         <PageBreakable key={item.id} id={item.id} className={cn('mb-4', isDummy && 'opacity-60')}>
+          {index === 0 && sectionTitle && renderSectionTitle(sectionTitle)}
           <div className="flex justify-between items-baseline mb-0.5">
             <h3 className={cn('font-bold', isDummy ? 'text-gray-400 italic font-normal' : 'text-gray-900')} style={{ fontSize: fontSize.itemTitle, color: isModern ? theme.color : undefined }}>
               {getItemTitleContent(section.type, item)}
             </h3>
-            <span className="text-gray-400 text-[10px]">
+            <span className="text-gray-400" style={{ fontSize: fontSize.itemDate }}>
               {formatDate(item.startDate, item.endDate, item.current) || 'Date'}
             </span>
           </div>
@@ -886,8 +900,9 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
     }
 
     // Default layout for Harvard, Tech, Minimal, Bold, Neo, Portfolio
-    return itemsToRender.map((item) => (
+    return itemsToRender.map((item, index) => (
       <PageBreakable key={item.id} id={item.id} className={cn('mb-2.5', isDummy && 'opacity-60')}>
+        {index === 0 && sectionTitle && renderSectionTitle(sectionTitle)}
         <div className="flex justify-between items-baseline mb-0.5">
           <h3 className={cn('font-bold', isDummy ? 'text-gray-400 italic font-normal' : 'text-gray-900')} style={{ fontSize: fontSize.itemTitle }}>
             {getItemTitleContent(section.type, item)}
@@ -914,13 +929,14 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
     ));
   };
 
-  const renderProjectsCertifications = (section: Section) => {
+  const renderProjectsCertifications = (section: Section, sectionTitle?: string) => {
     if (!section.items.length) {
       return <p className="text-gray-400 italic" style={{ fontSize: fontSize.itemBody }}>Add items to this section</p>;
     }
 
-    return section.items.map((item) => (
+    return section.items.map((item, index) => (
       <PageBreakable key={item.id} id={item.id} className="mb-2.5">
+        {index === 0 && sectionTitle && renderSectionTitle(sectionTitle)}
         <div className="flex justify-between items-baseline mb-0.5">
           <div className="flex items-center gap-2">
             {item.subtitle && isUrl(item.subtitle) ? (
@@ -960,16 +976,21 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
     ));
   };
 
-  const renderSection = (section: Section) => {
+  const renderSection = (section: Section, sectionTitle?: string) => {
     switch (section.type) {
       case 'skills':
-        return renderSkillsSection(section);
+        return (
+          <PageBreakable id={section.id}>
+            {sectionTitle && renderSectionTitle(sectionTitle)}
+            {renderSkillsSection(section)}
+          </PageBreakable>
+        );
       case 'custom':
       case 'projects':
       case 'certifications':
-        return section.fieldDefinitions?.length ? renderCustomSection(section) : renderProjectsCertifications(section);
+        return section.fieldDefinitions?.length ? renderCustomSection(section, sectionTitle) : renderProjectsCertifications(section, sectionTitle);
       default:
-        return renderExperienceEducation(section);
+        return renderExperienceEducation(section, sectionTitle);
     }
   };
 
@@ -1286,7 +1307,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
     const mainSections = visibleSections.filter((s) => s.type !== 'skills');
 
     return (
-      <div className="flex h-full">
+      <div className="flex min-h-full">
         <div className="w-1/3 p-6 bg-gray-50 border-r border-gray-200">
           <h1 className="font-bold mb-1" style={{ fontSize: fontSize.name }}>
             {personalInfo.fullName || <span className="text-gray-400 italic font-normal">{DUMMY_DATA.personalInfo.fullName}</span>}
@@ -1302,8 +1323,10 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
 
           {skillsSection && (
             <div className="mt-4">
-              {renderSectionTitle(skillsSection.title)}
-              {renderSkillsSection(skillsSection)}
+              <PageBreakable id={`skills-${skillsSection.id}`}>
+                {renderSectionTitle(skillsSection.title)}
+                {renderSkillsSection(skillsSection)}
+              </PageBreakable>
             </div>
           )}
         </div>
@@ -1311,8 +1334,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
         <div className="w-2/3 p-6">
           {mainSections.map((section) => (
             <div key={section.id} className="section-block">
-              {renderSectionTitle(section.title)}
-              {renderSection(section)}
+              {renderSection(section, section.title)}
             </div>
           ))}
         </div>
@@ -1325,13 +1347,12 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
   // ============================================================================
 
   const renderCorporateLayout = () => (
-    <div  className="w-full h-full p-8 font-sans bg-white">
+    <div  className="w-full min-h-full p-8 font-sans bg-white">
       {renderCorporateHeader()}
       <div className="space-y-5">
         {visibleSections.map((section) => (
           <div key={section.id} className="section-block bg-gray-50/50 p-4 rounded border border-gray-100">
-            {renderSectionTitle(section.title)}
-            {renderSection(section)}
+            {renderSection(section, section.title)}
           </div>
         ))}
       </div>
@@ -1348,7 +1369,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
     const otherSections = visibleSections.filter((s) => s.type !== 'skills' && s.type !== 'experience');
 
     return (
-      <div  className="w-full h-full p-6 font-sans">
+      <div  className="w-full min-h-full p-6 font-sans">
         {renderCreativeHeader()}
 
         {/* Main content in asymmetric grid */}
@@ -1356,14 +1377,12 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
           <div className="left-column section">
             {experienceSection && (
               <div className="section-block">
-                {renderSectionTitle(experienceSection.title)}
-                {renderSection(experienceSection)}
+                {renderSection(experienceSection, experienceSection.title)}
               </div>
             )}
             {otherSections.map((section) => (
               <div key={section.id} className="section-block">
-                {renderSectionTitle(section.title)}
-                {renderSection(section)}
+                {renderSection(section, section.title)}
               </div>
             ))}
           </div>
@@ -1371,10 +1390,10 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
           <div className="right-column">
             <div className="skills-card" style={{ backgroundColor: theme.color + '08' }}>
               {skillsSection && (
-                <div>
+                <PageBreakable id={`skills-${skillsSection.id}`}>
                   {renderSectionTitle(skillsSection.title)}
                   {renderSkillsSection(skillsSection)}
-                </div>
+                </PageBreakable>
               )}
             </div>
           </div>
@@ -1385,15 +1404,12 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
 
   // Elegant layout - Centered serif with generous spacing
   const renderElegantLayout = () => (
-    <div  className="w-full h-full px-12 py-10 font-serif" style={{ backgroundColor: getTemplateBackground('elegant') }}>
+    <div  className="w-full min-h-full px-12 py-10 font-serif" style={{ backgroundColor: getTemplateBackground('elegant') }}>
       {renderElegantHeader()}
       <div className="max-w-2xl mx-auto space-y-8">
         {visibleSections.map((section) => (
-          <div key={section.id} className="section-block">
-            {renderSectionTitle(section.title)}
-            <div className="text-center">
-              {renderSection(section)}
-            </div>
+          <div key={section.id} className="section-block text-center">
+            {renderSection(section, section.title)}
           </div>
         ))}
       </div>
@@ -1409,7 +1425,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
     const mainSections = visibleSections.filter((s) => s.type !== 'skills');
 
     return (
-      <div  className="w-full h-full font-sans flex">
+      <div  className="w-full min-h-full font-sans flex">
         {/* Thin accent sidebar */}
         <div className="w-1" style={{ backgroundColor: theme.color }} />
 
@@ -1420,18 +1436,17 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
             <div className="left-column section">
               {mainSections.map((section) => (
                 <div key={section.id} className="section-block border-l-2 border-gray-100 pl-4">
-                  {renderSectionTitle(section.title)}
-                  {renderSection(section)}
+                  {renderSection(section, section.title)}
                 </div>
               ))}
             </div>
 
             <div className="right-column">
               {skillsSection && (
-                <div className="skills-card" style={{ backgroundColor: '#f9fafb' }}>
+                <PageBreakable id={`skills-${skillsSection.id}`} className="skills-card" style={{ backgroundColor: '#f9fafb' }}>
                   {renderSectionTitle(skillsSection.title)}
                   {renderSkillsSection(skillsSection)}
-                </div>
+                </PageBreakable>
               )}
             </div>
           </div>
@@ -1445,12 +1460,11 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
   // ============================================================================
 
   const renderStandardLayout = () => (
-    <div  className={cn('w-full h-full p-8', isHarvard || isElegant ? 'font-serif' : 'font-sans')}>
+    <div  className={cn('w-full min-h-full p-8', isHarvard || isElegant ? 'font-serif' : 'font-sans')}>
       {renderHeader()}
       {visibleSections.map((section) => (
         <div key={section.id} className="section-block">
-          {renderSectionTitle(section.title)}
-          {renderSection(section)}
+          {renderSection(section, section.title)}
         </div>
       ))}
     </div>
@@ -1487,7 +1501,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
           boxSizing: 'border-box',
           position: 'relative',
           width: dimensions.width,
-          minHeight: dimensions.height,
+          minHeight: minHeight || dimensions.height,
         }}
       >
         <div style={{ padding: '40px', width: '100%', height: '100%', boxSizing: 'border-box' }}>

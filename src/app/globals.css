@@ -116,10 +116,12 @@ html {
   box-sizing: border-box;
   background: #ffffff;
   white-space: normal;
-  word-break: break-word;
+  word-break: normal;
   overflow-wrap: break-word;
   line-height: 1.4;
   overflow: hidden;
+  container-type: inline-size;
+  container-name: resume;
 }
 
 .preview-wrapper {
@@ -143,23 +145,27 @@ html {
 
 .resume-container .main-grid {
   display: grid;
-  width: 754px;
-  grid-template-columns: 514px 240px;
+  width: 100%;
+  grid-template-columns: 68% 32%;
   column-gap: 0;
   row-gap: 0;
   align-items: start;
   justify-content: start;
-  margin-left: -20px;
+}
+
+@container resume (max-width: 650px) {
+  .resume-container .main-grid {
+    grid-template-columns: 1fr;
+    row-gap: 24px;
+  }
 }
 
 .resume-container .left-column {
-  width: 514px;
-  min-width: 514px;
+  width: 100%;
 }
 
 .resume-container .right-column {
-  width: 240px;
-  min-width: 240px;
+  width: 100%;
 }
 
 .resume-container .skills-card {
