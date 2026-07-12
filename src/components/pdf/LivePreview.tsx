@@ -261,22 +261,30 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ data, className, resum
           {Array.from({ length: pageCount }).map((_, i) => (
             <div 
               key={i}
-              className="preview-wrapper bg-white overflow-hidden relative"
+              className="bg-white relative shadow-[0_4px_12px_rgba(0,0,0,0.1)] border border-gray-300"
               style={{ 
-                width: pageWidthPx,
-                height: pageHeightPx,
-                zoom: zoom, 
-                transition: 'zoom 0.2s ease-in-out',
+                width: pageWidthPx * zoom,
+                height: pageHeightPx * zoom,
+                transition: 'width 0.2s ease-out, height 0.2s ease-out',
                 pointerEvents: isPanMode ? 'none' : 'auto',
-                border: '1px solid #d1d5db',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.06)',
+                flexShrink: 0, // Prevents flexbox from squishing the pages
               }}
             >
               <div 
-                className="absolute top-0 left-0 w-full" 
-                style={{ transform: `translateY(-${i * pageHeightPx}px)` }}
+                className="absolute top-0 left-0 overflow-hidden bg-white"
+                style={{ 
+                  width: pageWidthPx,
+                  height: pageHeightPx,
+                  transform: `scale(${zoom})`,
+                  transformOrigin: 'top left',
+                }}
               >
-                <PreviewCanvas data={data} spacerMap={spacerMap} />
+                <div 
+                  className="absolute top-0 left-0 w-full" 
+                  style={{ transform: `translateY(-${i * pageHeightPx}px)` }}
+                >
+                  <PreviewCanvas data={data} spacerMap={spacerMap} />
+                </div>
               </div>
             </div>
           ))}
