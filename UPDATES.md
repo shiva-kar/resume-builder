@@ -6,6 +6,35 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.5.0] - 2026-07-12
+
+### Added
+- feat: unlimited custom colors and visual separator
+- fix: color picker layout, add hex input, and fix recent colors append order
+- feat: simplify color picker and fix jumping swatches
+- feat: Typography controls for all sections and quick skills support
+- feat: Dynamic DOM pagination engine with page-break avoidance
+- feat: Add paper size selector and paginated preview UI
+- feat: Separate Job Title and Headline, fix Portfolio layout
+
+### Fixed
+- fix: use Radix Popover for color picker to prevent cutoff
+- fix: Google Maps link for location and recent color display bug
+- style: Fix accordion buttons not stretching to full width
+- fix: Keep section titles with content and move entire skills block together
+- fix: Rendering and layout edge cases
+- fix: Responsive grids and layout heights
+- fix: LivePreview rendering of physical pages
+- fix: Handle undefined typography fields for backward compatibility
+- fix: Responsive contact/skills layout for all paper sizes
+- fix: Resolve preview canvas overflow and scroll boundary bugs
+
+### Other
+- style: Unify all sidebar accordion header colors and spacing
+- docs: standardize version history headers to semver format
+
+---
+
 ## [0.4.2] - 2026-07-08
 
 ### Added
