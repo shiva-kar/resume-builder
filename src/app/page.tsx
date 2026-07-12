@@ -309,8 +309,11 @@ const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPrevie
                 />
               ))}
 
+              {/* Separator between presets and custom colors */}
+              <div className="w-[2px] h-6 bg-border mx-1 rounded-full" />
+
               {/* Recent custom colors */}
-              {theme.recentColors?.filter(c => !ACCENT_COLORS.some(ac => ac.color.toLowerCase() === c.toLowerCase())).slice(-5).map((color) => (
+              {theme.recentColors?.filter(c => !ACCENT_COLORS.some(ac => ac.color.toLowerCase() === c.toLowerCase())).map((color) => (
                 <button
                   key={color}
                   onClick={() => updateTheme({ color })}
