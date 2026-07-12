@@ -180,10 +180,15 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ data, className, resum
         </div>
       </div>
 
+      {/* Hidden Export Canvas for html-to-image - Fixed to prevent scroll expansion */}
+      <div className="fixed top-0 left-0 opacity-0 pointer-events-none -z-50 h-0 overflow-visible">
+        <PreviewCanvas data={data} resumeRef={actualResumeRef} />
+      </div>
+
       {/* Preview Area */}
       <div
         ref={containerRef}
-        className="flex-1 overflow-auto p-8 w-full bg-slate-50 flex flex-col items-center gap-8"
+        className="flex-1 overflow-auto p-8 w-full bg-slate-50 relative"
         style={{ 
           cursor: isPanMode ? (isDragging ? 'grabbing' : 'grab') : 'auto',
           userSelect: isPanMode ? 'none' : 'auto',
@@ -194,32 +199,30 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ data, className, resum
         onMouseUp={onMouseUp}
         onMouseMove={onMouseMove}
       >
-        {/* Hidden Export Canvas for html-to-image */}
-        <div className="absolute opacity-0 pointer-events-none" style={{ left: '-9999px' }}>
-          <PreviewCanvas data={data} resumeRef={actualResumeRef} />
-        </div>
-
-        {/* Visual Pages */}
-        {Array.from({ length: pageCount }).map((_, i) => (
-          <div 
-            key={i}
-            className="preview-wrapper mx-auto border border-border shadow-sm bg-white overflow-hidden relative"
-            style={{ 
-              width: pageWidthPx,
-              height: pageHeightPx,
-              zoom: zoom, 
-              transition: 'zoom 0.2s ease-in-out',
-              pointerEvents: isPanMode ? 'none' : 'auto'
-            }}
-          >
+        {/* Inner wrapper that guarantees the scrollable area bounds encompass the full width */}
+        <div className="flex flex-col items-center gap-8 min-w-full w-max mx-auto">
+          {/* Visual Pages */}
+          {Array.from({ length: pageCount }).map((_, i) => (
             <div 
-              className="absolute top-0 left-0 w-full" 
-              style={{ transform: `translateY(-${i * pageHeightPx}px)` }}
+              key={i}
+              className="preview-wrapper border border-border shadow-sm bg-white overflow-hidden relative"
+              style={{ 
+                width: pageWidthPx,
+                height: pageHeightPx,
+                zoom: zoom, 
+                transition: 'zoom 0.2s ease-in-out',
+                pointerEvents: isPanMode ? 'none' : 'auto'
+              }}
             >
-              <PreviewCanvas data={data} />
+              <div 
+                className="absolute top-0 left-0 w-full" 
+                style={{ transform: `translateY(-${i * pageHeightPx}px)` }}
+              >
+                <PreviewCanvas data={data} />
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );
