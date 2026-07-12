@@ -117,8 +117,9 @@ html {
   background: #ffffff;
   white-space: normal;
   word-break: break-word;
+  overflow-wrap: break-word;
   line-height: 1.4;
-  overflow: visible;
+  overflow: hidden;
 }
 
 .preview-wrapper {
@@ -241,7 +242,6 @@ html {
   align-items: center;
   padding: 6px 10px;
   border-radius: 8px;
-  white-space: nowrap;
   line-height: 1.4;
   margin-bottom: 8px;
 }
