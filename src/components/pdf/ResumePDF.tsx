@@ -2,15 +2,17 @@
 
 import { jsPDF } from "jspdf";
 
+import { PaperSize } from '@/lib/paperSizes';
+
 /**
- * Handles the PDF document structure, taking a raw image and slicing it into A4 pages.
+ * Handles the PDF document structure, taking a raw image and slicing it into pages.
  */
-export const generateResumePDF = async (imgData: string): Promise<Blob> => {
-  // Initialize an A4 portrait PDF
+export const generateResumePDF = async (imgData: string, paperSize: PaperSize = 'A4'): Promise<Blob> => {
+  // Initialize PDF with dynamic paper size
   const pdf = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
-    format: 'a4'
+    format: paperSize.toLowerCase()
   });
 
   // Calculate the aspect ratio dynamically directly from the image data rather than canvas width/height

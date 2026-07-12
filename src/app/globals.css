@@ -111,8 +111,6 @@ html {
 }
 
 .resume-container {
-  width: 794px;
-  min-height: 1123px;
   display: block;
   visibility: visible;
   box-sizing: border-box;
@@ -124,8 +122,6 @@ html {
 }
 
 .preview-wrapper {
-  width: 794px;
-  min-height: 1123px;
   display: block;
   visibility: visible;
   overflow: visible;

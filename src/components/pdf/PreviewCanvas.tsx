@@ -33,6 +33,7 @@ import {
   SectionItem,
   SkillWithLevel,
 } from '@/lib/schema';
+import { PAPER_SIZES, PaperSize } from '@/lib/paperSizes';
 import { cn } from '@/lib/utils';
 import {
   formatDateRange as formatDate,
@@ -1547,6 +1548,9 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
   // MAIN RENDER
   // ============================================================================
 
+  const paperSize = theme.pageSize || 'A4';
+  const dimensions = PAPER_SIZES[paperSize as PaperSize];
+
   return (
     <div
       ref={setResumeExportNode}
@@ -1556,6 +1560,8 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
         backgroundColor: getTemplateBackground(theme.template),
         boxSizing: 'border-box',
         position: 'relative',
+        width: dimensions.width,
+        minHeight: dimensions.height,
       }}
     >
       <div style={{ padding: '40px', width: '100%', height: '100%', boxSizing: 'border-box' }}>

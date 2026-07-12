@@ -204,6 +204,14 @@ export const DEFAULT_TYPOGRAPHY: TypographySettings = {
 // ZOD SCHEMAS - Validation Layer
 // ============================================================================
 
+export const MetadataSchema = z.object({
+  template: z.string(),
+  theme: z.string(),
+  paperSize: z.enum(['a4', 'letter', 'a5']).default('a4'),
+  font: z.string().optional(),
+  color: z.string().optional(),
+});
+
 export const LinkSchema = z.object({
   id: z.string(),
   label: z.string(),

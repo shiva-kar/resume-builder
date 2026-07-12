@@ -2,7 +2,9 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { ZoomIn, ZoomOut, RotateCcw, Move, ChevronLeft, ChevronRight, Hand } from 'lucide-react';
-import type { ResumeData } from '@/lib/schema';
+import { useResumeStore } from '@/lib/store';
+import { ResumeData } from '@/lib/schema';
+import { PAPER_SIZES, PaperSize } from '@/lib/paperSizes';
 import { PreviewCanvas } from './PreviewCanvas';
 
 interface LivePreviewProps {
@@ -12,16 +14,23 @@ interface LivePreviewProps {
 }
 
 export const LivePreview: React.FC<LivePreviewProps> = ({ data, className, resumeRef }) => {
+  const updateTheme = useResumeStore(state => state.updateTheme);
+  
   // Zoom state
   const [zoom, setZoom] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
   const localResumeRef = useRef<HTMLDivElement | null>(null);
   const actualResumeRef = resumeRef || localResumeRef;
 
+  // Paper Dimensions
+  const paperSize = data.theme.pageSize || 'A4';
+  const dimensions = PAPER_SIZES[paperSize as PaperSize];
+  const pageWidthPx = dimensions.width;
+  const pageHeightPx = dimensions.height;
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(0);
   const [pageCount, setPageCount] = useState(1);
-  const pageHeightPx = 1123; // A4 height at 96 DPI
 
   // Panning state
   const [isPanMode, setIsPanMode] = useState(false);
@@ -39,7 +48,7 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ data, className, resum
         setCurrentPage(Math.max(0, pages - 1));
       }
     }
-  }, [data, currentPage, actualResumeRef]);
+  }, [data, currentPage, actualResumeRef, pageHeightPx]);
 
   // Scroll to current page
   useEffect(() => {
@@ -127,9 +136,24 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ data, className, resum
           </button>
         </div>
 
+        {/* Paper Size Selector */}
+        <div className="flex items-center gap-2 border-l border-border pl-4">
+          <select
+            value={paperSize}
+            onChange={(e) => updateTheme({ pageSize: e.target.value as PaperSize })}
+            className="h-7 text-xs bg-transparent border-none text-muted-foreground outline-none cursor-pointer focus:ring-0"
+          >
+            {(Object.keys(PAPER_SIZES) as PaperSize[]).map((size) => (
+              <option key={size} value={size}>
+                {PAPER_SIZES[size].label}
+              </option>
+            ))}
+          </select>
+        </div>
+
         {/* Page Navigation */}
         {pageCount > 1 && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 border-l border-border pl-4">
             <button
               onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
               disabled={currentPage === 0}
@@ -159,7 +183,7 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ data, className, resum
       {/* Preview Area */}
       <div
         ref={containerRef}
-        className="flex-1 overflow-auto p-4 w-full"
+        className="flex-1 overflow-auto p-8 w-full bg-slate-50 flex flex-col items-center gap-8"
         style={{ 
           cursor: isPanMode ? (isDragging ? 'grabbing' : 'grab') : 'auto',
           userSelect: isPanMode ? 'none' : 'auto',
@@ -170,16 +194,32 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ data, className, resum
         onMouseUp={onMouseUp}
         onMouseMove={onMouseMove}
       >
-        <div 
-          className="preview-wrapper mx-auto border border-border shadow-sm bg-white"
-          style={{ 
-            zoom: zoom, 
-            transition: 'zoom 0.2s ease-in-out',
-            pointerEvents: isPanMode ? 'none' : 'auto' // Prevent native drag on links/images
-          }}
-        >
+        {/* Hidden Export Canvas for html-to-image */}
+        <div className="absolute opacity-0 pointer-events-none" style={{ left: '-9999px' }}>
           <PreviewCanvas data={data} resumeRef={actualResumeRef} />
         </div>
+
+        {/* Visual Pages */}
+        {Array.from({ length: pageCount }).map((_, i) => (
+          <div 
+            key={i}
+            className="preview-wrapper mx-auto border border-border shadow-sm bg-white overflow-hidden relative"
+            style={{ 
+              width: pageWidthPx,
+              height: pageHeightPx,
+              zoom: zoom, 
+              transition: 'zoom 0.2s ease-in-out',
+              pointerEvents: isPanMode ? 'none' : 'auto'
+            }}
+          >
+            <div 
+              className="absolute top-0 left-0 w-full" 
+              style={{ transform: `translateY(-${i * pageHeightPx}px)` }}
+            >
+              <PreviewCanvas data={data} />
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
