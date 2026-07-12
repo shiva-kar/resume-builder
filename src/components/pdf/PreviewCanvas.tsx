@@ -411,16 +411,20 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
   const scale = GLOBAL_FONT_SCALES[theme.fontSize];
 
   // Font sizes (computed once)
-  const fontSize = useMemo(() => ({
-    name: Math.round(TYPO_PX[typography.name].name * scale),
-    summary: Math.round(TYPO_PX[typography.headers].headers * scale),
-    contact: Math.round(TYPO_PX[typography.body].body * scale),
-    sectionHeading: Math.round(14 * scale),
-    itemTitle: Math.round(13 * scale),
-    itemSubtitle: Math.round(11 * scale),
-    itemBody: Math.round(10 * scale),
-    itemDate: Math.round(9 * scale),
-  }), [typography, scale]);
+  const fontSize = useMemo(() => {
+    const expBase = TYPO_PX[typography.experience].experience;
+    return {
+      name: Math.round(TYPO_PX[typography.name].name * scale),
+      summary: Math.round(TYPO_PX[typography.headers].headers * scale),
+      contact: Math.round(TYPO_PX[typography.body].body * scale),
+      sectionHeading: Math.round((TYPO_PX[typography.headers].headers + 1) * scale),
+      itemTitle: Math.round((expBase + 3) * scale),
+      itemSubtitle: Math.round((expBase + 1) * scale),
+      itemBody: Math.round(expBase * scale),
+      itemDate: Math.round((expBase - 1) * scale),
+      skills: Math.round(TYPO_PX[typography.skills].skills * scale),
+    };
+  }, [typography, scale]);
 
   // Visible sections
   const visibleSections = useMemo(() => sections.filter((s) => s.isVisible), [sections]);
@@ -551,9 +555,9 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
         {keyedLevels.length > 0 && (
           <div className="skills-container">
             {keyedLevels.map(({ key, item }) => (
-              <span key={key} className="skill-chip border border-gray-200 bg-white text-[10px]">
+              <span key={key} className="skill-chip border border-gray-200 bg-white" style={{ fontSize: fontSize.skills }}>
                 <span className="font-medium text-gray-800">{item.name}</span>
-                <span className="ml-1.5 text-gray-400 text-[8px]">{item.level}</span>
+                <span className="ml-1.5 text-gray-400" style={{ fontSize: Math.max(8, fontSize.skills - 2) }}>{item.level}</span>
               </span>
             ))}
           </div>
@@ -561,7 +565,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
         {keyedSkills.length > 0 && (
           <div className={cn('skills-container', isDummy && 'opacity-60')}>
             {keyedSkills.map(({ key, item }) => (
-              <span key={key} className={cn('skill-chip text-[10px]', isDummy ? 'bg-gray-100 text-gray-400 italic' : 'bg-gray-100 text-gray-700')}>
+              <span key={key} className={cn('skill-chip', isDummy ? 'bg-gray-100 text-gray-400 italic' : 'bg-gray-100 text-gray-700')} style={{ fontSize: fontSize.skills }}>
                 {item}
               </span>
             ))}
@@ -579,9 +583,9 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
         {keyedLevels.length > 0 && (
           <div className="skills-container skills-container-compact">
             {keyedLevels.map(({ key, item }) => (
-              <span key={key} className="skill-chip text-[10px] font-bold" style={{ backgroundColor: theme.color + '15', color: theme.color }}>
+              <span key={key} className="skill-chip font-bold" style={{ backgroundColor: theme.color + '15', color: theme.color, fontSize: fontSize.skills }}>
                 {item.name}
-                <span className="ml-1 opacity-60 text-[8px] font-normal">• {item.level}</span>
+                <span className="ml-1 opacity-60 font-normal" style={{ fontSize: Math.max(8, fontSize.skills - 2) }}>• {item.level}</span>
               </span>
             ))}
           </div>
@@ -591,8 +595,8 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
             {keyedSkills.map(({ key, item }) => (
               <span
                 key={key}
-                className={cn('skill-chip text-[10px]', isDummy ? 'font-normal italic' : 'font-bold')}
-                style={{ backgroundColor: isDummy ? '#f3f4f6' : theme.color + '15', color: isDummy ? '#9ca3af' : theme.color }}
+                className={cn('skill-chip', isDummy ? 'font-normal italic' : 'font-bold')}
+                style={{ backgroundColor: isDummy ? '#f3f4f6' : theme.color + '15', color: isDummy ? '#9ca3af' : theme.color, fontSize: fontSize.skills }}
               >
                 {item}
               </span>
@@ -609,16 +613,16 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
     return (
       <div className="space-y-1.5">
         {keyedLevels.map(({ key, item }) => (
-          <div key={key} className="flex items-center gap-2 text-[10px]">
+          <div key={key} className="flex items-center gap-2" style={{ fontSize: fontSize.skills }}>
             <div className="w-1 h-1 rounded-full" style={{ backgroundColor: theme.color }} />
             <span className="font-medium text-gray-800">{item.name}</span>
-            <span className="text-gray-400 text-[8px]">{item.level}</span>
+            <span className="text-gray-400" style={{ fontSize: Math.max(8, fontSize.skills - 2) }}>{item.level}</span>
           </div>
         ))}
         {keyedSkills.length > 0 && (
           <div className={cn("flex flex-wrap gap-x-4 gap-y-1.5", keyedLevels.length > 0 ? "mt-1" : "", isDummy ? 'opacity-60' : '')}>
             {keyedSkills.map(({ key, item }) => (
-              <div key={key} className="flex items-center gap-2 text-[10px]">
+              <div key={key} className="flex items-center gap-2" style={{ fontSize: fontSize.skills }}>
                 <div className="w-1 h-1 rounded-full" style={{ backgroundColor: isDummy ? '#9ca3af' : theme.color }} />
                 <span className={isDummy ? 'text-gray-400 italic' : 'text-gray-700'}>{item}</span>
               </div>
@@ -640,11 +644,11 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
           <div className={containerClass}>
             {keyedLevels.map(({ key, item }) => (
               <PageBreakable key={key} id={key} className="inline-block">
-                <span className={cn('skill-chip text-[10px] font-medium border border-gray-200', isNeo ? 'rounded-none' : 'rounded')}>
+                <span className={cn('skill-chip font-medium border border-gray-200', isNeo ? 'rounded-none' : 'rounded')} style={{ fontSize: fontSize.skills }}>
                   <span className="font-semibold" style={{ color: isTech || isBold ? theme.color : 'inherit' }}>
                     {item.name}
                   </span>
-                  <span className="ml-1 text-gray-400 text-[8px] uppercase">{item.level}</span>
+                  <span className="ml-1 text-gray-400 uppercase" style={{ fontSize: Math.max(8, fontSize.skills - 2) }}>{item.level}</span>
                 </span>
               </PageBreakable>
             ))}
@@ -654,8 +658,8 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
           {keyedSkills.map(({ key, item }) => (
             <PageBreakable key={key} id={key} className="inline-block">
               <span
-                className={cn('skill-chip text-[10px]', isNeo ? 'rounded-none' : 'rounded-sm', isDummy && 'italic')}
-                style={{ backgroundColor: isDummy ? '#f3f4f6' : theme.color + '20', color: isDummy ? '#9ca3af' : theme.color }}
+                className={cn('skill-chip', isNeo ? 'rounded-none' : 'rounded-sm', isDummy && 'italic')}
+                style={{ backgroundColor: isDummy ? '#f3f4f6' : theme.color + '20', color: isDummy ? '#9ca3af' : theme.color, fontSize: fontSize.skills }}
               >
                 {item}
               </span>
@@ -858,7 +862,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
             <h3 className={cn('font-bold', isDummy ? 'text-gray-400 italic font-normal' : 'text-gray-900')} style={{ fontSize: fontSize.itemTitle, color: isModern ? theme.color : undefined }}>
               {getItemTitleContent(section.type, item)}
             </h3>
-            <span className="text-gray-400 text-[10px]">
+            <span className="text-gray-400" style={{ fontSize: fontSize.itemDate }}>
               {formatDate(item.startDate, item.endDate, item.current) || 'Date'}
             </span>
           </div>

@@ -192,12 +192,16 @@ export interface TypographySettings {
   name: TypographySize;
   headers: TypographySize;
   body: TypographySize;
+  experience: TypographySize;
+  skills: TypographySize;
 }
 
 export const DEFAULT_TYPOGRAPHY: TypographySettings = {
   name: 'lg',
   headers: 'md',
   body: 'sm',
+  experience: 'sm',
+  skills: 'sm',
 };
 
 // ============================================================================
@@ -290,6 +294,8 @@ export const TypographySettingsSchema = z.object({
   name: z.enum(['sm', 'md', 'lg', 'xl']),
   headers: z.enum(['sm', 'md', 'lg', 'xl']),
   body: z.enum(['sm', 'md', 'lg', 'xl']),
+  experience: z.enum(['sm', 'md', 'lg', 'xl']).default('sm'),
+  skills: z.enum(['sm', 'md', 'lg', 'xl']).default('sm'),
 });
 
 export const ThemeSchema = z.object({

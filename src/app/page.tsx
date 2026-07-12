@@ -448,24 +448,35 @@ const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPrevie
               { label: 'Your Name', key: 'name' as keyof typeof typography },
               { label: 'Section Titles', key: 'headers' as keyof typeof typography },
               { label: 'Body Content', key: 'body' as keyof typeof typography },
+              { label: 'Experience & Items', key: 'experience' as keyof typeof typography },
+              { label: 'Skills', key: 'skills' as keyof typeof typography },
             ].map((item) => (
               <div key={item.key} className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">{item.label}</span>
-                <div className="flex bg-muted/50 p-0.5 rounded-md">
-                  {TYPOGRAPHY_SIZES.map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => updateTypography(item.key, s)}
-                      className={cn(
-                        'w-8 text-[10px] py-1.5 rounded font-medium transition-all duration-200 uppercase',
-                        typography[item.key] === s
-                          ? 'bg-background text-foreground shadow-sm'
-                          : 'text-muted-foreground hover:text-foreground'
-                      )}
-                    >
-                      {s}
-                    </button>
-                  ))}
+                <div className="flex bg-muted/50 p-0.5 rounded-md gap-0.5">
+                  {TYPOGRAPHY_SIZES.map((s) => {
+                    const sizeClass = 
+                      s === 'sm' ? 'text-[10px]' : 
+                      s === 'md' ? 'text-xs' : 
+                      s === 'lg' ? 'text-sm' : 
+                      'text-base';
+                      
+                    return (
+                      <button
+                        key={s}
+                        onClick={() => updateTypography(item.key, s)}
+                        className={cn(
+                          'w-7 h-7 flex items-center justify-center rounded transition-all duration-200',
+                          typography[item.key] === s
+                            ? 'bg-background text-foreground shadow-sm'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                        )}
+                        title={s.toUpperCase()}
+                      >
+                        <span className={cn("font-medium", sizeClass)}>A</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             ))}
