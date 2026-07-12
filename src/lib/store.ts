@@ -556,13 +556,13 @@ export const useResumeStore = create<ResumeStore>()(
 
       addRecentColor: (color) =>
         set((state) => {
-          const isPresetColor = ACCENT_COLORS.some(c => c.color === color);
+          const isPresetColor = ACCENT_COLORS.some(c => c.color.toLowerCase() === color.toLowerCase());
           if (isPresetColor) return state; // Don't add presets to recent
           
           const recentColors = state.data.theme.recentColors || [];
           // If it's already in recent colors, don't move it to the front! 
           // Just leave it where it is.
-          if (recentColors.includes(color)) {
+          if (recentColors.some(c => c.toLowerCase() === color.toLowerCase())) {
             return state;
           }
           

@@ -454,7 +454,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
     const rawItems = [
       { icon: Mail, value: personalInfo.email, href: `mailto:${personalInfo.email}` },
       { icon: Phone, value: personalInfo.phone, href: `tel:${personalInfo.phone?.replaceAll(/\s/g, '')}` },
-      { icon: MapPin, value: personalInfo.location, href: undefined },
+      { icon: MapPin, value: personalInfo.location, href: personalInfo.location ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(personalInfo.location)}` : undefined },
       { icon: Linkedin, value: personalInfo.linkedin, href: personalInfo.linkedin },
       { icon: Github, value: personalInfo.github, href: personalInfo.github },
       { icon: Globe, value: personalInfo.website, href: personalInfo.website },

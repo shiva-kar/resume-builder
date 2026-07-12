@@ -310,7 +310,7 @@ const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPrevie
               ))}
 
               {/* Recent custom colors */}
-              {theme.recentColors?.filter(c => !ACCENT_COLORS.some(ac => ac.color === c)).slice(0, 5).map((color) => (
+              {theme.recentColors?.filter(c => !ACCENT_COLORS.some(ac => ac.color.toLowerCase() === c.toLowerCase())).slice(-5).map((color) => (
                 <button
                   key={color}
                   onClick={() => updateTheme({ color })}
