@@ -571,7 +571,8 @@ export const useResumeStore = create<ResumeStore>()(
               ...state.data,
               theme: {
                 ...state.data.theme,
-                recentColors: [color, ...recentColors].slice(0, 8),
+                // Keep the most recent 8 colors by slicing from the end
+                recentColors: [...recentColors, color].slice(-8),
               },
             },
           };

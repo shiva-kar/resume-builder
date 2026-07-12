@@ -61,10 +61,11 @@ import {
   FontSizeLevel,
   PageSize,
   ACCENT_COLORS,
-  TYPOGRAPHY_SIZES,
   DEFAULT_TYPOGRAPHY,
+  TYPOGRAPHY_SIZES,
   TEMPLATE_INFO,
 } from '@/lib/schema';
+import { HexColorPicker, HexColorInput } from 'react-colorful';
 import {
   SectionWrapper,
   ExperienceForm,
@@ -126,24 +127,37 @@ const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPrevie
   const { updateTheme, updateTypography, addRecentColor } = useResumeStore();
   const [isOpen, setIsOpen] = useState(true);
 
-  const colorInputRef = React.useRef<HTMLInputElement>(null);
+  const [isPickingColor, setIsPickingColor] = useState(false);
+  const [tempColor, setTempColor] = useState(theme.color);
+  const [originalColor, setOriginalColor] = useState(theme.color);
 
   const typography = theme.typography || DEFAULT_TYPOGRAPHY;
 
-  // Handle opening color picker
+  // Debounced theme update for lag-free live preview
+  useEffect(() => {
+    if (isPickingColor) {
+      const timer = setTimeout(() => {
+        updateTheme({ color: tempColor });
+      }, 50); // 50ms throttle prevents heavy PDF rendering lag
+      return () => clearTimeout(timer);
+    }
+  }, [tempColor, isPickingColor, updateTheme]);
+
   const openColorPicker = () => {
-    // Small delay to ensure state is set before opening native picker
-    setTimeout(() => colorInputRef.current?.click(), 50);
+    setOriginalColor(theme.color);
+    setTempColor(theme.color);
+    setIsPickingColor(true);
   };
 
-  // Handle color change live preview (immediately updates theme)
-  const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    updateTheme({ color: e.target.value });
+  const confirmColor = () => {
+    updateTheme({ color: tempColor });
+    addRecentColor(tempColor);
+    setIsPickingColor(false);
   };
 
-  // When color picker closes (loses focus), save it to recent colors
-  const handleColorBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    addRecentColor(e.target.value);
+  const cancelColor = () => {
+    updateTheme({ color: originalColor });
+    setIsPickingColor(false);
   };
 
   const isPresetThemeColor = ACCENT_COLORS.some((accent) => accent.color === theme.color);
@@ -313,31 +327,55 @@ const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPrevie
 
               {/* Custom color picker */}
               <div className="relative">
-                {/* Hidden color input */}
-                <input
-                  ref={colorInputRef}
-                  type="color"
-                  value={theme.color}
-                  onChange={handleColorChange}
-                  onBlur={handleColorBlur}
-                  className="sr-only"
-                />
-
                 {/* Custom color trigger button */}
                 <button
                   onClick={openColorPicker}
                   title="Pick custom color"
                   className={cn(
                     'w-8 h-8 rounded-lg border-2 border-dashed flex items-center justify-center transition-all',
-                    isCustomThemeColor
+                    isCustomThemeColor || isPickingColor
                       ? 'border-foreground'
                       : 'border-border hover:border-primary/50 bg-muted/30'
                   )}
                 >
-                  {(isPresetThemeColor || isRecentThemeColor) && (
+                  {(isPresetThemeColor || isRecentThemeColor) && !isPickingColor && (
                     <Plus className="w-3.5 h-3.5 text-muted-foreground" />
                   )}
                 </button>
+
+                {isPickingColor && (
+                  <div className="absolute top-full right-0 mt-2 z-50 bg-background border border-border rounded-xl shadow-xl p-3 w-[220px] flex flex-col gap-3 animate-in fade-in zoom-in-95 duration-200">
+                    <div className="w-full custom-color-picker">
+                      <HexColorPicker color={tempColor} onChange={setTempColor} />
+                    </div>
+                    
+                    <div className="flex items-center gap-2 px-1 w-full">
+                      <span className="text-xs font-mono text-muted-foreground font-medium">HEX</span>
+                      <HexColorInput 
+                        color={tempColor} 
+                        onChange={setTempColor} 
+                        className="flex-1 min-w-0 bg-muted/50 border border-border rounded px-2 py-1.5 text-sm font-mono focus:outline-none focus:border-primary transition-colors uppercase"
+                        prefixed={true}
+                        alpha={false}
+                      />
+                    </div>
+                    
+                    <div className="flex gap-2 w-full mt-1">
+                      <button
+                        onClick={cancelColor}
+                        className="flex-1 text-xs py-2 rounded-md border border-border hover:bg-muted transition-colors font-medium"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={confirmColor}
+                        className="flex-1 text-xs py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors font-medium shadow-sm"
+                      >
+                        ✓ Apply
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
