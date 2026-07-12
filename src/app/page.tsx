@@ -467,7 +467,7 @@ const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPrevie
                         onClick={() => updateTypography(item.key, s)}
                         className={cn(
                           'w-7 h-7 flex items-center justify-center rounded transition-all duration-200',
-                          typography[item.key] === s
+                          (typography[item.key] || typography.body || 'sm') === s
                             ? 'bg-background text-foreground shadow-sm'
                             : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                         )}

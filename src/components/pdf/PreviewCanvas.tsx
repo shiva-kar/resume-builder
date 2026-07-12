@@ -412,17 +412,21 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
 
   // Font sizes (computed once)
   const fontSize = useMemo(() => {
-    const expBase = TYPO_PX[typography.experience].experience;
+    // Fallback to 'body' size for older saved themes that don't have experience/skills
+    const expSize = typography.experience || typography.body || 'sm';
+    const skillsSize = typography.skills || typography.body || 'sm';
+    
+    const expBase = TYPO_PX[expSize].experience;
     return {
-      name: Math.round(TYPO_PX[typography.name].name * scale),
-      summary: Math.round(TYPO_PX[typography.headers].headers * scale),
-      contact: Math.round(TYPO_PX[typography.body].body * scale),
-      sectionHeading: Math.round((TYPO_PX[typography.headers].headers + 1) * scale),
+      name: Math.round(TYPO_PX[typography.name || 'lg'].name * scale),
+      summary: Math.round(TYPO_PX[typography.headers || 'md'].headers * scale),
+      contact: Math.round(TYPO_PX[typography.body || 'sm'].body * scale),
+      sectionHeading: Math.round((TYPO_PX[typography.headers || 'md'].headers + 1) * scale),
       itemTitle: Math.round((expBase + 3) * scale),
       itemSubtitle: Math.round((expBase + 1) * scale),
       itemBody: Math.round(expBase * scale),
       itemDate: Math.round((expBase - 1) * scale),
-      skills: Math.round(TYPO_PX[typography.skills].skills * scale),
+      skills: Math.round(TYPO_PX[skillsSize].skills * scale),
     };
   }, [typography, scale]);
 
