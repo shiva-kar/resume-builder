@@ -123,68 +123,32 @@ interface DesignSettingsPanelProps {
 
 const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPreviewColorChange }) => {
   const theme = useTheme();
-  const { updateTheme, updateTypography } = useResumeStore();
+  const { updateTheme, updateTypography, addRecentColor } = useResumeStore();
   const [isOpen, setIsOpen] = useState(true);
 
-  // Color picker state - only confirmed colors are saved
-  const [isPickingColor, setIsPickingColor] = useState(false);
-  const [tempColor, setTempColor] = useState(theme.color);
   const colorInputRef = React.useRef<HTMLInputElement>(null);
 
   const typography = theme.typography || DEFAULT_TYPOGRAPHY;
 
   // Handle opening color picker
   const openColorPicker = () => {
-    setTempColor(theme.color);
-    setIsPickingColor(true);
-    onPreviewColorChange?.(theme.color); // Start live preview with current color
     // Small delay to ensure state is set before opening native picker
     setTimeout(() => colorInputRef.current?.click(), 50);
   };
 
-  // Handle color change (preview only, not saved) - updates live preview
+  // Handle color change live preview (immediately updates theme)
   const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTempColor(e.target.value);
-    onPreviewColorChange?.(e.target.value); // Update live preview
+    updateTheme({ color: e.target.value });
   };
 
-  // Confirm the selected color - saves and ends preview
-  const confirmColor = () => {
-    updateTheme({ color: tempColor });
-    setIsPickingColor(false);
-    onPreviewColorChange?.(null); // End live preview (use saved color)
-  };
-
-  // Cancel color selection - reverts preview
-  const cancelColor = () => {
-    setTempColor(theme.color);
-    setIsPickingColor(false);
-    onPreviewColorChange?.(null); // End live preview (use saved color)
+  // When color picker closes (loses focus), save it to recent colors
+  const handleColorBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    addRecentColor(e.target.value);
   };
 
   const isPresetThemeColor = ACCENT_COLORS.some((accent) => accent.color === theme.color);
   const isRecentThemeColor = theme.recentColors?.includes(theme.color) ?? false;
   const isCustomThemeColor = !isPresetThemeColor && !isRecentThemeColor;
-
-  const getCustomColorBorderClass = () => {
-    if (isPickingColor) {
-      return 'border-primary ring-2 ring-primary/20';
-    }
-    if (isCustomThemeColor) {
-      return 'border-foreground';
-    }
-    return 'border-border hover:border-primary/50 bg-muted/30';
-  };
-
-  const getCustomColorButtonStyle = (): React.CSSProperties | undefined => {
-    if (isPickingColor) {
-      return { backgroundColor: tempColor };
-    }
-    if (isCustomThemeColor) {
-      return { backgroundColor: theme.color };
-    }
-    return undefined;
-  };
 
   return (
     <div className="glass rounded-lg bento-card overflow-hidden mb-4">
@@ -347,14 +311,15 @@ const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPrevie
                 />
               ))}
 
-              {/* Custom color picker with confirmation */}
+              {/* Custom color picker */}
               <div className="relative">
                 {/* Hidden color input */}
                 <input
                   ref={colorInputRef}
                   type="color"
-                  value={tempColor}
+                  value={theme.color}
                   onChange={handleColorChange}
+                  onBlur={handleColorBlur}
                   className="sr-only"
                 />
 
@@ -364,50 +329,15 @@ const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPrevie
                   title="Pick custom color"
                   className={cn(
                     'w-8 h-8 rounded-lg border-2 border-dashed flex items-center justify-center transition-all',
-                    getCustomColorBorderClass()
+                    isCustomThemeColor
+                      ? 'border-foreground'
+                      : 'border-border hover:border-primary/50 bg-muted/30'
                   )}
-                  style={getCustomColorButtonStyle()}
                 >
-                  {(isPresetThemeColor || isRecentThemeColor) && !isPickingColor && (
+                  {(isPresetThemeColor || isRecentThemeColor) && (
                     <Plus className="w-3.5 h-3.5 text-muted-foreground" />
                   )}
                 </button>
-
-                {/* Color picker confirmation popover */}
-                {isPickingColor && (
-                  <div className="absolute top-full left-0 mt-2 z-50 bg-background border border-border rounded-lg shadow-lg p-3 min-w-[180px]">
-                    <div className="flex items-center gap-2 mb-3">
-                      <div
-                        className="w-10 h-10 rounded-lg border border-border shadow-inner"
-                        style={{ backgroundColor: tempColor }}
-                      />
-                      <div className="flex-1">
-                        <p className="text-xs text-muted-foreground mb-1">Selected</p>
-                        <p className="text-sm font-mono">{tempColor.toUpperCase()}</p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => colorInputRef.current?.click()}
-                      className="w-full text-xs py-1.5 px-2 mb-2 rounded border border-border hover:bg-muted transition-colors"
-                    >
-                      Change Color
-                    </button>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={cancelColor}
-                        className="flex-1 text-xs py-1.5 px-2 rounded border border-border hover:bg-muted transition-colors"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={confirmColor}
-                        className="flex-1 text-xs py-1.5 px-2 rounded bg-primary text-primary-foreground hover:bg-primary/90 transition-colors font-medium"
-                      >
-                        ✓ Apply
-                      </button>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           </div>

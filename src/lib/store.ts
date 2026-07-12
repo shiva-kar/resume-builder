@@ -85,8 +85,9 @@ interface ResumeStore {
   ) => void;
   removeSkillWithLevel: (sectionId: string, itemId: string, skillIndex: number) => void;
 
-  // Theme Actions
+  // Theme & Layout
   updateTheme: (theme: Partial<Theme>) => void;
+  addRecentColor: (color: string) => void;
   updateTypography: (type: keyof TypographySettings, size: TypographySize) => void;
   toggleDarkMode: () => void;
   setMobilePreview: (show: boolean) => void;
@@ -545,21 +546,33 @@ export const useResumeStore = create<ResumeStore>()(
       updateTheme: (theme) =>
         set((state) => {
           const newTheme = { ...state.data.theme, ...theme };
-
-          // Track recent custom colors (max 8)
-          if (theme.color) {
-            const isPresetColor = ACCENT_COLORS.some(c => c.color === theme.color);
-            if (!isPresetColor) {
-              const recentColors = state.data.theme.recentColors || [];
-              const filteredRecent = recentColors.filter(c => c !== theme.color);
-              newTheme.recentColors = [theme.color, ...filteredRecent].slice(0, 8);
-            }
-          }
-
           return {
             data: {
               ...state.data,
               theme: newTheme,
+            },
+          };
+        }),
+
+      addRecentColor: (color) =>
+        set((state) => {
+          const isPresetColor = ACCENT_COLORS.some(c => c.color === color);
+          if (isPresetColor) return state; // Don't add presets to recent
+          
+          const recentColors = state.data.theme.recentColors || [];
+          // If it's already in recent colors, don't move it to the front! 
+          // Just leave it where it is.
+          if (recentColors.includes(color)) {
+            return state;
+          }
+          
+          return {
+            data: {
+              ...state.data,
+              theme: {
+                ...state.data.theme,
+                recentColors: [color, ...recentColors].slice(0, 8),
+              },
             },
           };
         }),
