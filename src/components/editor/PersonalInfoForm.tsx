@@ -61,7 +61,7 @@ export const PersonalInfoForm: React.FC = () => {
       {/* Header */}
       <button
         type="button"
-        className="w-full bg-muted px-4 py-3 border-b border-border flex justify-between items-center cursor-pointer select-none"
+        className="w-full bg-muted/50 px-4 py-3 border-b border-border/50 flex justify-between items-center cursor-pointer select-none hover:bg-muted/70 transition-colors"
         onClick={() => setIsOpen(!isOpen)}
       >
         <div className="flex items-center gap-2">
