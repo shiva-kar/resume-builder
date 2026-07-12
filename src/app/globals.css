@@ -112,7 +112,7 @@ html {
 
 .resume-container {
   width: 794px;
-  height: 1123px;
+  min-height: 1123px;
   display: block;
   visibility: visible;
   box-sizing: border-box;
@@ -125,12 +125,10 @@ html {
 
 .preview-wrapper {
   width: 794px;
-  height: 1123px;
+  min-height: 1123px;
   display: block;
   visibility: visible;
   overflow: visible;
-  transform: none !important;
-  zoom: 1 !important;
 }
 
 .resume-container .section {
@@ -187,6 +185,13 @@ html {
   align-items: center;
   column-gap: 0;
   row-gap: 6px;
+}
+
+.resume-container .contact-column {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
 }
 
 .resume-container .contact-row-centered {

@@ -77,7 +77,7 @@ export const PersonalInfoForm: React.FC = () => {
       {/* Content */}
       {isOpen && (
         <div className="p-4 space-y-4">
-          {/* Name and Summary */}
+          {/* Name and Title */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormInput
               label="Full Name"
@@ -87,11 +87,21 @@ export const PersonalInfoForm: React.FC = () => {
               autoComplete="name"
             />
             <FormInput
-              label="Job Title / Headline"
+              label="Job Title"
               placeholder="e.g. Senior Software Engineer"
+              value={personalInfo.title || ''}
+              onChange={(e) => updatePersonalInfo({ title: e.target.value })}
+              autoComplete="organization-title"
+            />
+          </div>
+
+          {/* Headline */}
+          <div className="grid grid-cols-1 gap-4">
+            <FormInput
+              label="Headline"
+              placeholder="A brief professional summary..."
               value={personalInfo.summary || ''}
               onChange={(e) => updatePersonalInfo({ summary: e.target.value })}
-              autoComplete="organization-title"
             />
           </div>
 

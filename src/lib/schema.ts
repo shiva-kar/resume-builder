@@ -218,10 +218,11 @@ export const SkillWithLevelSchema = z.object({
 
 export const PersonalInfoSchema = z.object({
   fullName: z.string(),
+  title: z.string().optional(), // Job Title
   email: z.string().email().or(z.literal('')),
   phone: z.string(),
   location: z.string(),
-  summary: z.string(), // Job title / headline
+  summary: z.string(), // Headline
   website: z.string(), // Dedicated website field
   linkedin: z.string(), // Dedicated linkedin field
   github: z.string(), // Dedicated github field
@@ -383,6 +384,7 @@ export const DEFAULT_SECTION_FONT_SIZE: SectionTypeFontSize = {
 export const createEmptyState = (): ResumeData => ({
   personalInfo: {
     fullName: '',
+    title: '',
     email: '',
     phone: '',
     location: '',
@@ -430,6 +432,7 @@ export const createEmptyState = (): ResumeData => ({
 export const createDummyState = (currentTheme?: Theme): ResumeData => ({
   personalInfo: {
     fullName: 'Jane Doe',
+    title: 'Senior Software Engineer',
     email: 'jane.doe@example.com',
     phone: '(555) 123-4567',
     location: 'San Francisco, CA',

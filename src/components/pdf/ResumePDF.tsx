@@ -34,8 +34,8 @@ export const generateResumePDF = async (imgData: string): Promise<Blob> => {
   pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, totalPdfHeight);
   remainingHeight -= pdfHeight;
 
-  // Render subsequent pages, using a 1mm tolerance to prevent rounding errors from generating blank pages
-  while (remainingHeight > 1) {
+  // Render subsequent pages, using a 10mm tolerance to prevent rounding errors from generating blank pages
+  while (remainingHeight > 10) {
     pdf.addPage();
     position -= pdfHeight;
     pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, totalPdfHeight);

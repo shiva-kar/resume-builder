@@ -265,10 +265,11 @@ const RichText: React.FC<RichTextProps> = ({ text, className, style, themeColor 
 const DUMMY_DATA = {
   personalInfo: {
     fullName: 'Your Full Name',
+    title: 'Senior Software Engineer',
     email: 'email@example.com',
     phone: '(555) 123-4567',
     location: 'City, State',
-    summary: 'A brief professional summary highlighting your key skills, experience, and career objectives. This helps recruiters quickly understand your value proposition.',
+    summary: 'A brief professional summary highlighting key skills, experience, and career objectives.',
   },
   experience: [
     {
@@ -416,7 +417,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
   // CONTACT INFO RENDERER
   // ============================================================================
 
-  const renderContactInfo = (centered = false, showIcons = true) => {
+  const renderContactInfo = (centered = false, showIcons = true, layout: 'row' | 'column' = 'row') => {
     const rawItems = [
       { icon: Mail, value: personalInfo.email, href: `mailto:${personalInfo.email}` },
       { icon: Phone, value: personalInfo.phone, href: `tel:${personalInfo.phone?.replaceAll(/\s/g, '')}` },
@@ -446,7 +447,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
 
     return (
       <div
-        className={cn('contact-row text-gray-600', centered && 'contact-row-centered')}
+        className={cn(layout === 'row' ? 'contact-row' : 'contact-column', 'text-gray-600', centered && 'contact-row-centered')}
         style={{ fontSize: fontSize.contact }}
       >
         {keyedItems.map(({ key, item }) => (
@@ -1055,6 +1056,9 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
       <h1 className="font-bold uppercase tracking-widest mb-2" style={{ fontSize: fontSize.name }}>
         {personalInfo.fullName || <span className="text-gray-400 italic normal-case">{DUMMY_DATA.personalInfo.fullName}</span>}
       </h1>
+      <div className="text-gray-600 mb-1 font-medium" style={{ fontSize: fontSize.summary }}>
+        {personalInfo.title || <span className="text-gray-400 italic font-normal">{DUMMY_DATA.personalInfo.title}</span>}
+      </div>
       <p className="text-gray-600 mb-2" style={{ fontSize: fontSize.summary }}>
         {personalInfo.summary || <span className="text-gray-400 italic">{DUMMY_DATA.personalInfo.summary}</span>}
       </p>
@@ -1067,6 +1071,9 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
       <h1 className="font-extrabold tracking-tight mb-1" style={{ fontSize: fontSize.name, color: theme.color }}>
         {personalInfo.fullName || <span className="text-gray-400 italic font-normal">{DUMMY_DATA.personalInfo.fullName}</span>}
       </h1>
+      <div className="text-gray-700 font-semibold mb-1" style={{ fontSize: Math.round(fontSize.summary * 1.1) }}>
+        {personalInfo.title || <span className="text-gray-400 italic font-normal">{DUMMY_DATA.personalInfo.title}</span>}
+      </div>
       <p className="text-gray-500 mb-3" style={{ fontSize: fontSize.summary }}>
         {personalInfo.summary || <span className="text-gray-400 italic">{DUMMY_DATA.personalInfo.summary}</span>}
       </p>
@@ -1079,6 +1086,9 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
       <h1 className="font-light tracking-wide mb-2" style={{ fontSize: fontSize.name }}>
         {personalInfo.fullName || <span className="text-gray-400 italic">{DUMMY_DATA.personalInfo.fullName}</span>}
       </h1>
+      <div className="text-gray-500 tracking-widest uppercase mb-2" style={{ fontSize: fontSize.itemSubtitle }}>
+        {personalInfo.title || <span className="text-gray-400 italic normal-case">{DUMMY_DATA.personalInfo.title}</span>}
+      </div>
       <p className="text-gray-400 mb-3" style={{ fontSize: fontSize.summary }}>
         {personalInfo.summary || <span className="text-gray-300 italic">{DUMMY_DATA.personalInfo.summary}</span>}
       </p>
@@ -1094,6 +1104,9 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
       >
         {personalInfo.fullName || <span className="text-gray-400 italic font-normal normal-case">{DUMMY_DATA.personalInfo.fullName}</span>}
       </h1>
+      <div className="font-bold text-gray-800 mb-1" style={{ fontSize: Math.round(fontSize.summary * 1.1) }}>
+        {personalInfo.title || <span className="text-gray-400 italic font-normal">{DUMMY_DATA.personalInfo.title}</span>}
+      </div>
       <p className="text-gray-600 font-medium mb-3" style={{ fontSize: fontSize.summary }}>
         {personalInfo.summary || <span className="text-gray-400 italic font-normal">{DUMMY_DATA.personalInfo.summary}</span>}
       </p>
@@ -1108,6 +1121,9 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
         <h1 className="font-bold tracking-tight" style={{ fontSize: fontSize.name }}>
           {personalInfo.fullName || <span className="text-gray-400 italic font-normal">{DUMMY_DATA.personalInfo.fullName}</span>}
         </h1>
+      </div>
+      <div className="font-medium text-gray-800 mb-1" style={{ fontSize: fontSize.summary }}>
+        {personalInfo.title || <span className="text-gray-400 italic font-normal">{DUMMY_DATA.personalInfo.title}</span>}
       </div>
       <p className="text-gray-500 mb-3" style={{ fontSize: fontSize.summary }}>
         {personalInfo.summary || <span className="text-gray-400 italic">{DUMMY_DATA.personalInfo.summary}</span>}
@@ -1124,6 +1140,9 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
       <h1 className="font-semibold tracking-normal mb-1" style={{ fontSize: fontSize.name, color: '#1f2937' }}>
         {personalInfo.fullName || <span className="text-gray-400 italic font-normal">{DUMMY_DATA.personalInfo.fullName}</span>}
       </h1>
+      <div className="font-medium text-gray-700 mb-1.5" style={{ fontSize: Math.round(fontSize.summary * 1.05) }}>
+        {personalInfo.title || <span className="text-gray-400 italic font-normal">{DUMMY_DATA.personalInfo.title}</span>}
+      </div>
       <p className="text-gray-600 mb-3 leading-relaxed" style={{ fontSize: fontSize.summary }}>
         {personalInfo.summary || <span className="text-gray-400 italic">{DUMMY_DATA.personalInfo.summary}</span>}
       </p>
@@ -1147,6 +1166,9 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
             <span style={{ color: isPlaceholder ? '#9ca3af' : theme.color }}>{displayName.charAt(0)}</span>
             <span className={isPlaceholder ? 'text-gray-400 italic font-normal' : 'text-gray-900'}>{displayName.slice(1)}</span>
           </h1>
+          <div className="font-semibold text-gray-800 mb-1" style={{ fontSize: Math.round(fontSize.summary * 1.05) }}>
+            {personalInfo.title || <span className="text-gray-400 italic font-normal">{DUMMY_DATA.personalInfo.title}</span>}
+          </div>
           <p className="text-gray-600 italic mb-2" style={{ fontSize: fontSize.summary }}>
             {personalInfo.summary ? (
               <>&ldquo;{personalInfo.summary}&rdquo;</>
@@ -1168,6 +1190,9 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
       <h1 className="font-serif font-normal mb-2" style={{ fontSize: Math.round(fontSize.name * 1.05), letterSpacing: '0.2em' }}>
         {personalInfo.fullName?.toUpperCase() || <span className="text-gray-400 italic normal-case">{DUMMY_DATA.personalInfo.fullName}</span>}
       </h1>
+      <div className="font-serif text-gray-700 tracking-wide mb-2" style={{ fontSize: Math.round(fontSize.summary * 1.1) }}>
+        {personalInfo.title?.toUpperCase() || <span className="text-gray-400 italic normal-case">{DUMMY_DATA.personalInfo.title.toUpperCase()}</span>}
+      </div>
       <div className="flex items-center justify-center gap-3 mb-2">
         <div style={{ width: 40, height: 1, backgroundColor: '#d1d5db' }} />
         <div style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: theme.color }} />
@@ -1190,6 +1215,9 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
         <h1 className="font-bold tracking-tight mb-1" style={{ fontSize: fontSize.name }}>
           {personalInfo.fullName || <span className="text-gray-400 italic font-normal">{DUMMY_DATA.personalInfo.fullName}</span>}
         </h1>
+        <div className="font-semibold text-gray-700 mb-1" style={{ fontSize: Math.round(fontSize.summary * 1.05) }}>
+          {personalInfo.title || <span className="text-gray-400 italic font-normal">{DUMMY_DATA.personalInfo.title}</span>}
+        </div>
         <p className="text-gray-500 mb-3 leading-relaxed" style={{ fontSize: fontSize.summary }}>
           {personalInfo.summary || <span className="text-gray-400 italic">{DUMMY_DATA.personalInfo.summary}</span>}
         </p>
@@ -1337,11 +1365,14 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
           <h1 className="font-bold mb-1" style={{ fontSize: fontSize.name }}>
             {personalInfo.fullName || <span className="text-gray-400 italic font-normal">{DUMMY_DATA.personalInfo.fullName}</span>}
           </h1>
+          <div className="font-semibold text-gray-700 mb-1.5" style={{ fontSize: Math.round(fontSize.summary * 1.05) }}>
+            {personalInfo.title || <span className="text-gray-400 italic font-normal">{DUMMY_DATA.personalInfo.title}</span>}
+          </div>
           <p className="mb-4" style={{ fontSize: fontSize.summary, color: personalInfo.summary ? theme.color : '#9ca3af' }}>
             {personalInfo.summary || <span className="italic">{DUMMY_DATA.personalInfo.summary}</span>}
           </p>
 
-          <div className="space-y-2 mb-6">{renderContactInfo(false, true)}</div>
+          <div className="space-y-2 mb-6">{renderContactInfo(false, true, 'column')}</div>
 
           {skillsSection && (
             <div className="mt-4">
