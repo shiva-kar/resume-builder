@@ -177,10 +177,10 @@ html {
 }
 
 .resume-container .contact-row {
-  display: grid;
-  grid-template-columns: 238px 238px 238px;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  column-gap: 0;
+  column-gap: 16px;
   row-gap: 6px;
 }
 
@@ -192,66 +192,71 @@ html {
 }
 
 .resume-container .contact-row-centered {
-  justify-items: center;
+  justify-content: center;
   text-align: center;
 }
 
 .resume-container .contact-item {
-  display: grid;
-  grid-template-columns: 16px 222px;
+  display: inline-flex;
   align-items: center;
-  column-gap: 8px;
-  width: 238px;
+  gap: 6px;
+  max-width: 100%;
 }
 
 .resume-container .contact-item-no-icon {
-  grid-template-columns: 222px;
+  /* No grid override needed for flex layout */
 }
 
 .resume-container .contact-icon {
-  width: 16px;
-  height: 16px;
-  min-width: 16px;
-  min-height: 16px;
+  width: 14px;
+  height: 14px;
+  min-width: 14px;
+  min-height: 14px;
+  flex-shrink: 0;
 }
 
 .resume-container .contact-value {
-  width: 222px;
   white-space: normal;
   word-break: break-word;
+  overflow-wrap: break-word;
   line-height: 1.4;
 }
 
 .resume-container .contact-link {
-  display: block;
-  width: 238px;
+  display: inline;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .resume-container .skills-container {
-  display: block;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
   width: 100%;
 }
 
 .resume-container .skills-container-compact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
   width: 100%;
 }
 
 .resume-container .skill-chip {
-  display: flex;
-  width: 100%;
+  display: inline-flex;
   align-items: center;
-  padding: 6px 10px;
-  border-radius: 8px;
+  padding: 5px 10px;
+  border-radius: 6px;
   line-height: 1.4;
-  margin-bottom: 8px;
+  max-width: 100%;
 }
 
 .resume-container .skills-container-compact .skill-chip {
-  margin-bottom: 6px;
+  /* inherits from .skill-chip */
 }
 
 .resume-container .skills-container .skill-chip:last-child {
-  margin-bottom: 0;
+  /* no special margin needed with flex gap */
 }
 
 .resume-container,

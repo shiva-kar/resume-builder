@@ -53,9 +53,9 @@ export const PageBreakable: React.FC<{ children: React.ReactNode; id?: string; c
   const spacerMap = React.useContext(SpacerContext);
   const spacerHeight = (id && spacerMap[id]) || 0;
   return (
-    <div className={cn("page-breakable-container w-full", className)}>
-      <div className="page-spacer w-full" style={{ height: `${spacerHeight}px` }} />
-      <div className="page-breakable-content w-full" data-breakable-id={id}>
+    <div className={cn("page-breakable-container", className)}>
+      <div className="page-spacer" style={{ height: `${spacerHeight}px` }} />
+      <div className="page-breakable-content" data-breakable-id={id}>
         {children}
       </div>
     </div>
