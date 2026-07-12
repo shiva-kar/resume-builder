@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
-import { ZoomIn, ZoomOut, RotateCcw, Move, ChevronLeft, ChevronRight } from 'lucide-react';
-import type { ResumeData } from '@/lib/schema';
+import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import { ZoomIn, ZoomOut, RotateCcw, Move, ChevronLeft, ChevronRight, Hand } from 'lucide-react';
+import { useResumeStore } from '@/lib/store';
+import { ResumeData } from '@/lib/schema';
+import { PAPER_SIZES, PaperSize } from '@/lib/paperSizes';
 import { PreviewCanvas } from './PreviewCanvas';
 
 interface LivePreviewProps {
@@ -12,73 +14,198 @@ interface LivePreviewProps {
 }
 
 export const LivePreview: React.FC<LivePreviewProps> = ({ data, className, resumeRef }) => {
-  // Zoom state (locked to 100% to ensure identical export rendering)
-  const zoom = 1;
+  const updateTheme = useResumeStore(state => state.updateTheme);
+  
+  // Zoom state
+  const [zoom, setZoom] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
   const localResumeRef = useRef<HTMLDivElement | null>(null);
   const actualResumeRef = resumeRef || localResumeRef;
 
+  // Paper Dimensions
+  const paperSize = data.theme.pageSize || 'A4';
+  const dimensions = PAPER_SIZES[paperSize as PaperSize];
+  const pageWidthPx = dimensions.width;
+  const pageHeightPx = dimensions.height;
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(0);
   const [pageCount, setPageCount] = useState(1);
-  const pageHeightPx = 842;
+  
+  // Spacer map: breakableId -> spacer height in px
+  const [spacerMap, setSpacerMap] = useState<Record<string, number>>({});
 
-  // Calculate page breaks based on the rendered content height
+  // Panning state
+  const [isPanMode, setIsPanMode] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0, scrollLeft: 0, scrollTop: 0 });
+
+  // Ref for the hidden measurement canvas
+  const measureRef = useRef<HTMLDivElement>(null);
+
+  // Dynamic DOM Pagination Engine
+  // Measures the hidden canvas and produces a spacerMap that all visible canvases can use
+  useLayoutEffect(() => {
+    const root = measureRef.current;
+    if (!root) return;
+    
+    // 1. Reset all spacers to 0 on the measurement canvas
+    const spacers = Array.from(root.querySelectorAll('.page-spacer')) as HTMLElement[];
+    spacers.forEach(s => { s.style.height = '0px'; });
+    
+    // Force reflow so measurements reflect the flat layout
+    void root.offsetHeight;
+
+    // 2. Measure and compute spacer heights
+    const newSpacerMap: Record<string, number> = {};
+    const containers = Array.from(root.querySelectorAll('.page-breakable-container')) as HTMLElement[];
+    
+    for (const container of containers) {
+       const content = container.querySelector('.page-breakable-content') as HTMLElement;
+       const spacer = container.querySelector('.page-spacer') as HTMLElement;
+       if (!content || !spacer) continue;
+       
+       const breakableId = content.getAttribute('data-breakable-id');
+       if (!breakableId) continue;
+       
+       const rect = content.getBoundingClientRect();
+       const parentRect = root.getBoundingClientRect();
+       
+       const top = rect.top - parentRect.top;
+       const bottom = top + rect.height;
+       
+       const pageOfTop = Math.floor(top / pageHeightPx);
+       const pageOfBottom = Math.floor((bottom - 1) / pageHeightPx);
+       
+       // If element straddles a page boundary and more than 5px overflows onto the next page
+       if (pageOfBottom > pageOfTop && (bottom - (pageOfBottom * pageHeightPx)) > 5) {
+          const nextPageStart = (pageOfTop + 1) * pageHeightPx;
+          const spacerHeight = nextPageStart - top;
+          newSpacerMap[breakableId] = spacerHeight;
+          // Apply it immediately to the measurement canvas so subsequent elements measure correctly
+          spacer.style.height = `${spacerHeight}px`;
+       }
+    }
+    
+    // 3. Only update state if values actually changed (prevents infinite re-render loop)
+    const newContentHeight = root.scrollHeight;
+    const newPages = Math.max(1, Math.ceil((newContentHeight - 2) / pageHeightPx));
+    
+    if (newPages !== pageCount) {
+      setPageCount(newPages);
+    }
+    
+    const spacerMapStr = JSON.stringify(newSpacerMap);
+    const prevSpacerMapStr = JSON.stringify(spacerMap);
+    if (spacerMapStr !== prevSpacerMapStr) {
+      setSpacerMap(newSpacerMap);
+    }
+    
+    if (currentPage >= newPages) {
+      setCurrentPage(Math.max(0, newPages - 1));
+    }
+  });
+
+  // Set the export ref from the measurement canvas
   useEffect(() => {
-    if (actualResumeRef?.current) {
-      const contentHeight = actualResumeRef.current.scrollHeight;
-      const pages = Math.max(1, Math.ceil(contentHeight / pageHeightPx));
-      setPageCount(pages);
-      if (currentPage >= pages) {
-        setCurrentPage(Math.max(0, pages - 1));
+    if (actualResumeRef && measureRef.current) {
+      const exportNode = measureRef.current.querySelector('#resume-pdf-export-container') as HTMLDivElement | null;
+      if (exportNode) {
+        actualResumeRef.current = exportNode;
       }
     }
-  }, [data, currentPage, actualResumeRef]);
+  });
 
-  const handleZoomIn = () => undefined;
-  const handleZoomOut = () => undefined;
-  const handleReset = () => undefined;
+  // Scroll to current page
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollTo({
+        top: currentPage * pageHeightPx * zoom,
+        behavior: 'smooth'
+      });
+    }
+  }, [currentPage, zoom, pageHeightPx]);
+
+  const handleZoomIn = () => setZoom(prev => Math.min(prev + 0.1, 2));
+  const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.1, 0.5));
+  const handleReset = () => setZoom(1);
+
+  // Mouse handlers for panning
+  const onMouseDown = (e: React.MouseEvent) => {
+    if (!isPanMode || !containerRef.current) return;
+    e.preventDefault();
+    setIsDragging(true);
+    setDragStart({
+      x: e.clientX,
+      y: e.clientY,
+      scrollLeft: containerRef.current.scrollLeft,
+      scrollTop: containerRef.current.scrollTop,
+    });
+  };
+
+  const onMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !containerRef.current) return;
+    e.preventDefault();
+    const dx = e.clientX - dragStart.x;
+    const dy = e.clientY - dragStart.y;
+    containerRef.current.scrollLeft = dragStart.scrollLeft - dx;
+    containerRef.current.scrollTop = dragStart.scrollTop - dy;
+  };
+
+  const onMouseUp = () => { setIsDragging(false); };
+  const onMouseLeave = () => { setIsDragging(false); };
+
+  const handlePaperSizeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    updateTheme({ pageSize: e.target.value as PaperSize });
+  };
 
   return (
-    <div className={`flex flex-col h-full bg-muted/30 overflow-hidden relative ${className || ''}`}>
-      {/* Zoom Controls & Page Info */}
-      <div className="absolute top-4 right-6 z-10 flex items-center gap-4 bg-white/90 backdrop-blur-sm border shadow-sm rounded-md px-2 py-1.5">
-        <div className="flex items-center gap-1 border-r pr-3 mr-1">
-          <button
-            type="button"
-            onClick={handleZoomOut}
-            disabled
-            className="p-1.5 rounded-none text-muted-foreground/50 cursor-not-allowed"
-            title="Zoom is locked to 100% for export consistency"
-          >
+    <div className={`flex flex-col h-full ${className || ''}`}>
+      {/* Toolbar */}
+      <div className="flex items-center gap-3 px-4 py-2 bg-card border-b border-border shrink-0 flex-wrap">
+        {/* Hand Tool */}
+        <button 
+          onClick={() => setIsPanMode(!isPanMode)}
+          className={`p-1.5 rounded-none transition-colors ${isPanMode ? 'bg-primary/20 text-primary' : 'hover:bg-muted text-muted-foreground'}`}
+          title="Hand Tool (Pan)"
+        >
+          <Hand className="w-4 h-4" />
+        </button>
+
+        {/* Zoom Controls */}
+        <div className="flex items-center gap-1.5 border-l border-border pl-3">
+          <button onClick={handleZoomOut} className="p-1 hover:bg-muted rounded-none transition-colors">
             <ZoomOut className="w-4 h-4 text-muted-foreground" />
           </button>
-          <span className="text-xs font-medium text-muted-foreground w-12 text-center">
+          <span className="text-xs font-medium text-muted-foreground min-w-[35px] text-center">
             {Math.round(zoom * 100)}%
           </span>
-          <button
-            type="button"
-            onClick={handleZoomIn}
-            disabled
-            className="p-1.5 rounded-none text-muted-foreground/50 cursor-not-allowed"
-            title="Zoom is locked to 100% for export consistency"
-          >
+          <button onClick={handleZoomIn} className="p-1 hover:bg-muted rounded-none transition-colors">
             <ZoomIn className="w-4 h-4 text-muted-foreground" />
           </button>
-          <button
-            type="button"
-            onClick={handleReset}
-            disabled
-            className="p-1.5 rounded-none text-muted-foreground/50 cursor-not-allowed ml-1"
-            title="View is already reset"
-          >
-            <RotateCcw className="w-4 h-4 text-muted-foreground" />
+          <button onClick={handleReset} className="p-1 hover:bg-muted rounded-none transition-colors ml-1" title="Reset zoom">
+            <RotateCcw className="w-3.5 h-3.5 text-muted-foreground" />
           </button>
+        </div>
+
+        {/* Paper Size Selector */}
+        <div className="flex items-center gap-2 border-l border-border pl-3">
+          <select 
+            value={paperSize}
+            onChange={handlePaperSizeChange}
+            className="text-xs bg-muted text-muted-foreground rounded px-2 py-1 border border-border cursor-pointer"
+          >
+            {Object.keys(PAPER_SIZES).map(size => (
+              <option key={size} value={size}>
+                {PAPER_SIZES[size as PaperSize].label}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* Page Navigation */}
         {pageCount > 1 && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 border-l border-border pl-4">
             <button
               onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
               disabled={currentPage === 0}
@@ -105,13 +232,54 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ data, className, resum
         </div>
       </div>
 
+      {/* Hidden Measurement Canvas — positioned offscreen for pagination measurement and PDF export */}
+      <div 
+        style={{ position: 'fixed', top: 0, left: '-9999px', pointerEvents: 'none', zIndex: -100 }}
+      >
+        <div ref={measureRef}>
+          <PreviewCanvas data={data} resumeRef={actualResumeRef} />
+        </div>
+      </div>
+
       {/* Preview Area */}
       <div
         ref={containerRef}
-        className="flex-1 overflow-auto p-4 w-full"
+        className="flex-1 overflow-auto p-8 w-full bg-slate-50 relative"
+        style={{ 
+          cursor: isPanMode ? (isDragging ? 'grabbing' : 'grab') : 'auto',
+          userSelect: isPanMode ? 'none' : 'auto',
+          WebkitUserSelect: isPanMode ? 'none' : 'auto'
+        }}
+        onMouseDown={onMouseDown}
+        onMouseLeave={onMouseLeave}
+        onMouseUp={onMouseUp}
+        onMouseMove={onMouseMove}
       >
-        <div className="preview-wrapper mx-auto border border-border shadow-sm bg-white">
-          <PreviewCanvas data={data} resumeRef={actualResumeRef} />
+        {/* Inner wrapper for centering */}
+        <div className="flex flex-col items-center gap-8 min-w-full w-max mx-auto">
+          {/* Visual Pages — each renders its own PreviewCanvas with spacerMap prop */}
+          {Array.from({ length: pageCount }).map((_, i) => (
+            <div 
+              key={i}
+              className="preview-wrapper bg-white overflow-hidden relative"
+              style={{ 
+                width: pageWidthPx,
+                height: pageHeightPx,
+                zoom: zoom, 
+                transition: 'zoom 0.2s ease-in-out',
+                pointerEvents: isPanMode ? 'none' : 'auto',
+                border: '1px solid #d1d5db',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.06)',
+              }}
+            >
+              <div 
+                className="absolute top-0 left-0 w-full" 
+                style={{ transform: `translateY(-${i * pageHeightPx}px)` }}
+              >
+                <PreviewCanvas data={data} spacerMap={spacerMap} />
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
