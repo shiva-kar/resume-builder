@@ -1,8 +1,6 @@
 import { z } from 'zod';
 
-// ============================================================================
 // LINK ICON TYPES
-// ============================================================================
 
 export const LINK_ICONS = {
   linkedin: { label: 'LinkedIn', pattern: /linkedin\.com/i },
@@ -30,9 +28,7 @@ export const detectLinkIcon = (url: string): LinkIconType => {
   return 'website';
 };
 
-// ============================================================================
 // SKILL LEVELS
-// ============================================================================
 
 export const SKILL_LEVELS = ['Beginner', 'Intermediate', 'Advanced', 'Expert'] as const;
 export type SkillLevel = typeof SKILL_LEVELS[number];
@@ -42,9 +38,7 @@ export interface SkillWithLevel {
   level: SkillLevel;
 }
 
-// ============================================================================
 // ACCENT COLOR PRESETS - Refined Palette
-// ============================================================================
 
 export const ACCENT_COLORS = [
   // Neutrals
@@ -64,9 +58,7 @@ export const ACCENT_COLORS = [
   { color: '#059669', name: 'Emerald' },
 ] as const;
 
-// ============================================================================
 // TEMPLATE METADATA - For UI Display
-// ============================================================================
 
 export const TEMPLATE_INFO = {
   harvard: {
@@ -121,9 +113,7 @@ export const TEMPLATE_INFO = {
   },
 } as const;
 
-// ============================================================================
 // CUSTOM FIELD TYPES - For custom sections
-// ============================================================================
 
 export const CUSTOM_FIELD_TYPES = ['text', 'textarea', 'date', 'dateRange', 'link', 'tags'] as const;
 export type CustomFieldType = typeof CUSTOM_FIELD_TYPES[number];
@@ -181,9 +171,7 @@ export const CUSTOM_FIELD_TEMPLATES = {
   ],
 } as const;
 
-// ============================================================================
 // TYPOGRAPHY SIZE OPTIONS
-// ============================================================================
 
 export const TYPOGRAPHY_SIZES = ['sm', 'md', 'lg', 'xl'] as const;
 export type TypographySize = typeof TYPOGRAPHY_SIZES[number];
@@ -204,9 +192,7 @@ export const DEFAULT_TYPOGRAPHY: TypographySettings = {
   skills: 'sm',
 };
 
-// ============================================================================
 // ZOD SCHEMAS - Validation Layer
-// ============================================================================
 
 export const MetadataSchema = z.object({
   template: z.string(),
@@ -325,9 +311,7 @@ export const ResumeDataSchema = z.object({
   theme: ThemeSchema,
 });
 
-// ============================================================================
 // TYPESCRIPT TYPES - Inferred from Zod Schemas
-// ============================================================================
 
 export type Link = z.infer<typeof LinkSchema>;
 export type PersonalInfo = z.infer<typeof PersonalInfoSchema>;
@@ -344,9 +328,7 @@ export type TextSize = SectionTypeFontSize['heading'];
 export type CustomFieldDef = z.infer<typeof CustomFieldDefinitionSchema>;
 export type CustomFieldVal = z.infer<typeof CustomFieldValueSchema>;
 
-// ============================================================================
 // PAGE SIZE DIMENSIONS (in points for PDF)
-// ============================================================================
 
 export const PAGE_SIZES = {
   A4: { width: 595.28, height: 841.89, label: 'A4 (210 x 297 mm)' },
@@ -360,9 +342,7 @@ export const PAGE_SIZES = {
 // Ordered by height for auto-adjustment (smallest to largest)
 export const PAGE_SIZES_BY_HEIGHT = ['A5', 'EXECUTIVE', 'B5', 'LETTER', 'A4', 'LEGAL'] as const;
 
-// ============================================================================
 // FONT SIZE MAPPINGS (in points for PDF)
-// ============================================================================
 
 export const PDF_FONT_SIZES = {
   xs: 8,
@@ -385,9 +365,7 @@ export const TYPOGRAPHY_SIZE_MAP = {
   xl: { name: 'text-5xl', headers: 'text-xl', body: 'text-[14px]' },
 };
 
-// ============================================================================
 // DEFAULT VALUES - Empty/Placeholder State
-// ============================================================================
 
 export const DEFAULT_SECTION_FONT_SIZE: SectionTypeFontSize = {
   heading: 'lg',

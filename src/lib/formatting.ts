@@ -3,9 +3,7 @@
  * Used by both PreviewCanvas (HTML) and ResumePDF (PDF) renderers.
  */
 
-// ============================================================================
 // DATE FORMATTING
-// ============================================================================
 
 /**
  * Format a month string (YYYY-MM) to display format (e.g., "Jan 2024")
@@ -36,9 +34,7 @@ export const formatDateRange = (
   return endFormatted ? `${startFormatted} - ${endFormatted}` : startFormatted;
 };
 
-// ============================================================================
 // URL UTILITIES
-// ============================================================================
 
 /**
  * Ensure a URL has a proper protocol prefix
@@ -66,9 +62,7 @@ export const isUrl = (str: string): boolean => {
   return /^(?:https?:\/\/|www\.|.*\.(?:com|org|net|io|dev|me|co|app|design)\b)/i.test(str);
 };
 
-// ============================================================================
 // MARKDOWN PARSING
-// ============================================================================
 
 export type TextSegment = {
   type: 'text' | 'bold' | 'italic' | 'boldItalic' | 'link';
@@ -243,9 +237,7 @@ export const parseFormattedText = (text: string): ParsedLine[] => {
   return result;
 };
 
-// ============================================================================
 // TYPOGRAPHY CONFIGURATION
-// ============================================================================
 
 /**
  * Typography pixel sizes - shared between Preview and PDF

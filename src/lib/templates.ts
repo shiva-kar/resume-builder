@@ -5,9 +5,7 @@
 
 import type { TemplateType } from './schema';
 
-// ============================================================================
 // FONT CONFIGURATION
-// ============================================================================
 
 /**
  * Font family mapping for PDF templates
@@ -53,9 +51,7 @@ export const SERIF_TEMPLATES: TemplateType[] = ['harvard', 'elegant'];
 export const isSerifTemplate = (template: TemplateType): boolean =>
   SERIF_TEMPLATES.includes(template);
 
-// ============================================================================
 // PAGE BACKGROUNDS
-// ============================================================================
 
 /**
  * Template-specific page background colors
@@ -71,9 +67,7 @@ export const TEMPLATE_BACKGROUNDS: Partial<Record<TemplateType, string>> = {
 export const getTemplateBackground = (template: TemplateType): string =>
   TEMPLATE_BACKGROUNDS[template] || '#ffffff';
 
-// ============================================================================
 // LAYOUT CONFIGURATION
-// ============================================================================
 
 /**
  * Templates with sidebar layouts
@@ -91,9 +85,7 @@ export const hasSidebarLayout = (template: TemplateType): boolean =>
  */
 export const SIDEBAR_WIDTH_RATIO = 0.35;
 
-// ============================================================================
 // STYLE CONSTANTS
-// ============================================================================
 
 /**
  * Common spacing values (in points for PDF, pixels for Preview)
@@ -116,9 +108,7 @@ export const SECTION_FONT_SIZES = {
   itemDate: 9,
 } as const;
 
-// ============================================================================
 // CONTACT ICON TYPES
-// ============================================================================
 
 export type ContactIconType =
   | 'email'

@@ -23,9 +23,7 @@ import {
   ACCENT_COLORS,
 } from './schema';
 
-// ============================================================================
 // STORE INTERFACE
-// ============================================================================
 
 interface ResumeStore {
   // State
@@ -98,9 +96,7 @@ interface ResumeStore {
   autoGenerateResume: (data: ResumeData) => void;
 }
 
-// ============================================================================
 // HELPER FUNCTIONS
-// ============================================================================
 
 const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -178,9 +174,7 @@ const createSection = (type: SectionType, template?: keyof typeof CUSTOM_FIELD_T
   return baseSection;
 };
 
-// ============================================================================
 // ZUSTAND STORE WITH PERSIST
-// ============================================================================
 
 export const useResumeStore = create<ResumeStore>()(
   persist(
@@ -614,9 +608,7 @@ export const useResumeStore = create<ResumeStore>()(
   )
 );
 
-// ============================================================================
 // SELECTOR HOOKS FOR OPTIMIZED RERENDERS
-// ============================================================================
 
 export const usePersonalInfo = () => useResumeStore((state) => state.data.personalInfo);
 export const useSections = () => useResumeStore((state) => state.data.sections);
