@@ -55,7 +55,7 @@ export const PageBreakable: React.FC<{ children: React.ReactNode; id?: string; c
   return (
     <div className={cn("page-breakable-container", className)}>
       <div className="page-spacer" style={{ height: `${spacerHeight}px` }} />
-      <div className="page-breakable-content" data-breakable-id={id}>
+      <div className="page-breakable-content flow-root" data-breakable-id={id}>
         {children}
       </div>
     </div>
@@ -386,12 +386,19 @@ const ContactItem: React.FC<ContactItemProps> = ({ icon: Icon, value, href, colo
 
 interface PreviewCanvasProps {
   data: ResumeData;
+  spacerMap?: Record<string, number>;
   resumeRef?: React.MutableRefObject<HTMLDivElement | null>;
   className?: string;
-  spacerMap?: Record<string, number>;
+  minHeight?: number;
 }
 
-export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, className, spacerMap }) => {
+export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ 
+  data, 
+  spacerMap, 
+  resumeRef, 
+  className,
+  minHeight 
+}) => {
   const { personalInfo, sections, theme } = data;
   const typography = theme.typography || DEFAULT_TYPOGRAPHY;
 
@@ -1495,7 +1502,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ data, resumeRef, c
           boxSizing: 'border-box',
           position: 'relative',
           width: dimensions.width,
-          minHeight: dimensions.height,
+          minHeight: minHeight || dimensions.height,
         }}
       >
         <div style={{ padding: '40px', width: '100%', height: '100%', boxSizing: 'border-box' }}>

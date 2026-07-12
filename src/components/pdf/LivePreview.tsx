@@ -77,8 +77,8 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ data, className, resum
        const pageOfTop = Math.floor(top / pageHeightPx);
        const pageOfBottom = Math.floor((bottom - 1) / pageHeightPx);
        
-       // If element straddles a page boundary and more than 5px overflows onto the next page
-       if (pageOfBottom > pageOfTop && (bottom - (pageOfBottom * pageHeightPx)) > 5) {
+       // If element straddles a page boundary, break it to the next page
+       if (pageOfBottom > pageOfTop && (bottom - (pageOfBottom * pageHeightPx)) > 0) {
           const nextPageStart = (pageOfTop + 1) * pageHeightPx;
           const spacerHeight = nextPageStart - top;
           newSpacerMap[breakableId] = spacerHeight;
@@ -283,7 +283,7 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ data, className, resum
                   className="absolute top-0 left-0 w-full" 
                   style={{ transform: `translateY(-${i * pageHeightPx}px)` }}
                 >
-                  <PreviewCanvas data={data} spacerMap={spacerMap} />
+                <PreviewCanvas data={data} spacerMap={spacerMap} minHeight={pageCount * pageHeightPx} />
                 </div>
               </div>
             </div>

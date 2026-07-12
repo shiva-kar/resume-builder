@@ -116,10 +116,12 @@ html {
   box-sizing: border-box;
   background: #ffffff;
   white-space: normal;
-  word-break: break-word;
+  word-break: normal;
   overflow-wrap: break-word;
   line-height: 1.4;
   overflow: hidden;
+  container-type: inline-size;
+  container-name: resume;
 }
 
 .preview-wrapper {
@@ -149,6 +151,13 @@ html {
   row-gap: 0;
   align-items: start;
   justify-content: start;
+}
+
+@container resume (max-width: 650px) {
+  .resume-container .main-grid {
+    grid-template-columns: 1fr;
+    row-gap: 24px;
+  }
 }
 
 .resume-container .left-column {
