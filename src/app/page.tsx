@@ -65,6 +65,7 @@ import {
   TYPOGRAPHY_SIZES,
   TEMPLATE_INFO,
 } from '@/lib/schema';
+import * as Popover from '@radix-ui/react-popover';
 import { HexColorPicker, HexColorInput } from 'react-colorful';
 import {
   SectionWrapper,
@@ -329,25 +330,38 @@ const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPrevie
               ))}
 
               {/* Custom color picker */}
-              <div className="relative">
-                {/* Custom color trigger button */}
-                <button
-                  onClick={openColorPicker}
-                  title="Pick custom color"
-                  className={cn(
-                    'w-8 h-8 rounded-lg border-2 border-dashed flex items-center justify-center transition-all',
-                    isCustomThemeColor || isPickingColor
-                      ? 'border-foreground'
-                      : 'border-border hover:border-primary/50 bg-muted/30'
-                  )}
-                >
-                  {(isPresetThemeColor || isRecentThemeColor) && !isPickingColor && (
-                    <Plus className="w-3.5 h-3.5 text-muted-foreground" />
-                  )}
-                </button>
+              <Popover.Root 
+                open={isPickingColor} 
+                onOpenChange={(open) => {
+                  if (open) {
+                    openColorPicker();
+                  } else {
+                    cancelColor();
+                  }
+                }}
+              >
+                <Popover.Trigger asChild>
+                  <button
+                    title="Pick custom color"
+                    className={cn(
+                      'w-8 h-8 rounded-lg border-2 border-dashed flex items-center justify-center transition-all',
+                      isCustomThemeColor || isPickingColor
+                        ? 'border-foreground'
+                        : 'border-border hover:border-primary/50 bg-muted/30'
+                    )}
+                  >
+                    {(isPresetThemeColor || isRecentThemeColor) && !isPickingColor && (
+                      <Plus className="w-3.5 h-3.5 text-muted-foreground" />
+                    )}
+                  </button>
+                </Popover.Trigger>
 
-                {isPickingColor && (
-                  <div className="absolute top-full right-0 mt-2 z-50 bg-background border border-border rounded-xl shadow-xl p-3 w-[220px] flex flex-col gap-3 animate-in fade-in zoom-in-95 duration-200">
+                <Popover.Portal>
+                  <Popover.Content 
+                    align="center"
+                    sideOffset={8}
+                    className="z-50 bg-background border border-border rounded-xl shadow-xl p-3 w-[220px] flex flex-col gap-3 animate-in fade-in zoom-in-95 duration-200"
+                  >
                     <div className="w-full custom-color-picker">
                       <HexColorPicker color={tempColor} onChange={setTempColor} />
                     </div>
@@ -377,9 +391,9 @@ const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPrevie
                         ✓ Apply
                       </button>
                     </div>
-                  </div>
-                )}
-              </div>
+                  </Popover.Content>
+                </Popover.Portal>
+              </Popover.Root>
             </div>
           </div>
 
