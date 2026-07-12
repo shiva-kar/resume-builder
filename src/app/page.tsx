@@ -80,9 +80,7 @@ import { exportToPDF, downloadPDF } from '@/components/pdf';
 import { LivePreview } from '@/components/pdf/LivePreview';
 import { cn } from '@/lib/utils';
 
-// ============================================================================
 // SECTION CONFIGURATION
-// ============================================================================
 
 const SECTION_CONFIG: Record<SectionType, { label: string; icon: React.ReactNode; color: string }> = {
   experience: { label: 'Experience', icon: <Briefcase className="w-4 h-4" />, color: 'bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-950 dark:text-blue-300' },
@@ -95,9 +93,7 @@ const SECTION_CONFIG: Record<SectionType, { label: string; icon: React.ReactNode
 
 const getSectionIcon = (type: SectionType) => SECTION_CONFIG[type]?.icon || <FileText className="w-4 h-4" />;
 
-// ============================================================================
 // SECTION FORM MAPPING
-// ============================================================================
 
 const getSectionForm = (section: ReturnType<typeof useSections>[number]) => {
   switch (section.type) {
@@ -115,9 +111,7 @@ const getSectionForm = (section: ReturnType<typeof useSections>[number]) => {
   }
 };
 
-// ============================================================================
 // DESIGN SETTINGS PANEL
-// ============================================================================
 
 interface DesignSettingsPanelProps {
   onPreviewColorChange?: (color: string | null) => void;
@@ -474,9 +468,7 @@ const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPrevie
 
 DesignSettingsPanel.displayName = 'DesignSettingsPanel';
 
-// ============================================================================
 // SECTION MANAGER PANEL
-// ============================================================================
 
 const SectionManagerPanel: React.FC = memo(() => {
   const sections = useSections();
@@ -614,9 +606,7 @@ const SectionManagerPanel: React.FC = memo(() => {
 
 SectionManagerPanel.displayName = 'SectionManagerPanel';
 
-// ============================================================================
 // MAIN PAGE COMPONENT
-// ============================================================================
 
 export default function ResumeBuilderPage() {
   const [mounted, setMounted] = useState(false);

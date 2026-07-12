@@ -344,9 +344,7 @@ const hasRealContent = (value: string | string[] | undefined | null): boolean =>
   return value.trim().length > 0;
 };
 
-// ============================================================================
 // CONTACT ITEM COMPONENT
-// ============================================================================
 
 interface ContactItemProps {
   icon?: React.FC<{ className?: string; style?: React.CSSProperties }>;
@@ -446,9 +444,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
     }
   };
 
-  // ============================================================================
   // CONTACT INFO RENDERER
-  // ============================================================================
 
   const renderContactInfo = (centered = false, showIcons = true, layout: 'row' | 'column' = 'row') => {
     const rawItems = [
@@ -512,9 +508,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
     );
   };
 
-  // ============================================================================
   // SECTION RENDERERS
-  // ============================================================================
 
   const getSkillsPayload = (section: Section): {
     skillsWithLevels: SkillWithLevel[];
@@ -994,9 +988,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
     }
   };
 
-  // ============================================================================
   // HEADER RENDERERS (BY TEMPLATE)
-  // ============================================================================
 
   const renderHarvardHeader = () => (
     <div className="text-center border-b-2 border-gray-900 pb-4 mb-5">
@@ -1079,9 +1071,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
     </div>
   );
 
-  // ============================================================================
   // CORPORATE HEADER - Professional boxed header with subtle divider
-  // ============================================================================
   const renderCorporateHeader = () => (
     <div className="mb-6 bg-gray-50 p-5 border-l-4" style={{ borderLeftColor: theme.color }}>
       <h1 className="font-semibold tracking-normal mb-1" style={{ fontSize: fontSize.name, color: '#1f2937' }}>
@@ -1099,9 +1089,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
     </div>
   );
 
-  // ============================================================================
   // CREATIVE HEADER - Asymmetric layout with bold accent block (matches PDF: 50x50)
-  // ============================================================================
   const renderCreativeHeader = () => {
     const displayName = personalInfo.fullName || DUMMY_DATA.personalInfo.fullName;
     const isPlaceholder = !personalInfo.fullName;
@@ -1129,9 +1117,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
     );
   };
 
-  // ============================================================================
   // ELEGANT HEADER - Centered serif typography with ornamental line (matches PDF)
-  // ============================================================================
   const renderElegantHeader = () => (
     <div className="mb-5 text-center">
       <h1 className="font-serif font-normal mb-2" style={{ fontSize: Math.round(fontSize.name * 1.05), letterSpacing: '0.2em' }}>
@@ -1152,9 +1138,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
     </div>
   );
 
-  // ============================================================================
   // MODERN HEADER - Clean split layout with accent sidebar
-  // ============================================================================
   const renderModernHeader = () => (
     <div className="mb-6 flex gap-4">
       <div className="w-1 rounded-full" style={{ backgroundColor: theme.color }} />
@@ -1185,9 +1169,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
     return renderTechHeader();
   };
 
-  // ============================================================================
   // SECTION TITLE RENDERER - Template-specific styling
-  // ============================================================================
 
   const renderSectionTitle = (title: string) => {
     // Neo - Geometric square accent (matches PDF 10x10)
@@ -1298,9 +1280,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
     );
   };
 
-  // ============================================================================
   // PORTFOLIO LAYOUT (TWO-COLUMN - Skills sidebar)
-  // ============================================================================
 
   const renderPortfolioLayout = () => {
     const skillsSection = visibleSections.find((s) => s.type === 'skills');
@@ -1342,9 +1322,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
     );
   };
 
-  // ============================================================================
   // CORPORATE LAYOUT - Clean professional with subtle cards
-  // ============================================================================
 
   const renderCorporateLayout = () => (
     <div  className="w-full min-h-full p-8 font-sans bg-white">
@@ -1359,9 +1337,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
     </div>
   );
 
-  // ============================================================================
   // CREATIVE LAYOUT - Asymmetric with visual flair
-  // ============================================================================
 
   const renderCreativeLayout = () => {
     const skillsSection = visibleSections.find((s) => s.type === 'skills');
@@ -1416,9 +1392,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
     </div>
   );
 
-  // ============================================================================
   // MODERN LAYOUT - Clean lines with accent bars
-  // ============================================================================
 
   const renderModernLayout = () => {
     const skillsSection = visibleSections.find((s) => s.type === 'skills');
@@ -1455,9 +1429,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
     );
   };
 
-  // ============================================================================
   // STANDARD LAYOUT (Harvard, Tech, Minimal, Bold, Neo)
-  // ============================================================================
 
   const renderStandardLayout = () => (
     <div  className={cn('w-full min-h-full p-8', isHarvard || isElegant ? 'font-serif' : 'font-sans')}>
@@ -1470,9 +1442,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
     </div>
   );
 
-  // ============================================================================
   // LAYOUT SELECTOR
-  // ============================================================================
 
   const renderLayout = () => {
     if (isPortfolio) return renderPortfolioLayout();
@@ -1483,9 +1453,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
     return renderStandardLayout();
   };
 
-  // ============================================================================
   // MAIN RENDER
-  // ============================================================================
 
   const paperSize = theme.pageSize || 'A4';
   const dimensions = PAPER_SIZES[paperSize as PaperSize];
