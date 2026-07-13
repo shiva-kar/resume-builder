@@ -248,8 +248,72 @@ html {
   display: inline-flex;
   align-items: center;
   padding: 5px 10px;
-  border-radius: 6px;
-  line-height: 1.4;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+/* Dark background overrides for the resume */
+.resume-container.dark-theme .text-gray-900,
+.resume-container.dark-theme .text-stone-900,
+.resume-container.dark-theme .text-slate-900,
+.resume-container.dark-theme .text-zinc-900 {
+  color: #ffffff !important;
+}
+
+.resume-container.dark-theme .text-gray-800,
+.resume-container.dark-theme .text-stone-800,
+.resume-container.dark-theme .text-slate-800,
+.resume-container.dark-theme .text-zinc-800 {
+  color: #f3f4f6 !important;
+}
+
+.resume-container.dark-theme .text-gray-700,
+.resume-container.dark-theme .text-stone-700,
+.resume-container.dark-theme .text-slate-700,
+.resume-container.dark-theme .text-zinc-700 {
+  color: #e5e7eb !important;
+}
+
+.resume-container.dark-theme .text-gray-600,
+.resume-container.dark-theme .text-stone-600,
+.resume-container.dark-theme .text-slate-600,
+.resume-container.dark-theme .text-zinc-600 {
+  color: #d1d5db !important;
+}
+
+.resume-container.dark-theme .text-gray-500,
+.resume-container.dark-theme .text-stone-500,
+.resume-container.dark-theme .text-slate-500,
+.resume-container.dark-theme .text-zinc-500 {
+  color: #9ca3af !important;
+}
+
+.resume-container.dark-theme .text-gray-400,
+.resume-container.dark-theme .text-stone-400,
+.resume-container.dark-theme .text-slate-400,
+.resume-container.dark-theme .text-zinc-400 {
+  color: #6b7280 !important;
+}
+
+.resume-container.dark-theme .bg-gray-100,
+.resume-container.dark-theme .bg-stone-100,
+.resume-container.dark-theme .bg-slate-100,
+.resume-container.dark-theme .bg-zinc-100 {
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+}
+
+.resume-container.dark-theme .border-gray-300,
+.resume-container.dark-theme .border-stone-300,
+.resume-container.dark-theme .border-slate-300 {
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.resume-container.dark-theme .bg-white {
+  background-color: transparent !important;
+}
+
+.resume-container .skill-chip {
   max-width: 100%;
 }
 

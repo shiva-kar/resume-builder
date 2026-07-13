@@ -83,9 +83,9 @@ interface ResumeStore {
   ) => void;
   removeSkillWithLevel: (sectionId: string, itemId: string, skillIndex: number) => void;
 
-  // Theme & Layout
   updateTheme: (theme: Partial<Theme>) => void;
   addRecentColor: (color: string) => void;
+  addRecentBackgroundColor: (color: string) => void;
   updateTypography: (type: keyof TypographySettings, size: TypographySize) => void;
   toggleDarkMode: () => void;
   setMobilePreview: (show: boolean) => void;
@@ -567,6 +567,27 @@ export const useResumeStore = create<ResumeStore>()(
                 ...state.data.theme,
                 // Append custom colors (no limit)
                 recentColors: [...recentColors, color],
+              },
+            },
+          };
+        }),
+
+      addRecentBackgroundColor: (color) =>
+        set((state) => {
+          const recentBackgroundColors = state.data.theme.recentBackgroundColors || [];
+          
+          // Don't add if it's already the most recent
+          if (recentBackgroundColors[recentBackgroundColors.length - 1] === color) {
+            return state;
+          }
+          
+          return {
+            data: {
+              ...state.data,
+              theme: {
+                ...state.data.theme,
+                // Append custom background colors (no limit)
+                recentBackgroundColors: [...recentBackgroundColors, color],
               },
             },
           };

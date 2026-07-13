@@ -44,7 +44,8 @@ import {
   parseFormattedText,
   TextSegment,
 } from '@/lib/formatting';
-import { getTemplateBackground } from '@/lib/templates';
+import { isSerifTemplate } from '@/lib/templates';
+import { isColorDark } from '@/lib/utils';
 
 // Context for passing spacer heights from the pagination engine to PageBreakable components
 const SpacerContext = React.createContext<Record<string, number>>({});
@@ -1380,7 +1381,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
 
   // Elegant layout - Centered serif with generous spacing
   const renderElegantLayout = () => (
-    <div  className="w-full min-h-full px-12 py-10 font-serif" style={{ backgroundColor: getTemplateBackground('elegant') }}>
+    <div  className="w-full min-h-full px-12 py-10 font-serif" style={{ backgroundColor: theme.backgroundColor || '#ffffff' }}>
       {renderElegantHeader()}
       <div className="max-w-2xl mx-auto space-y-8">
         {visibleSections.map((section) => (
@@ -1458,14 +1459,16 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
   const paperSize = theme.pageSize || 'A4';
   const dimensions = PAPER_SIZES[paperSize as PaperSize];
 
+  const isBackgroundDark = isColorDark(theme.backgroundColor || '#ffffff');
+
   return (
     <SpacerContext.Provider value={spacerMap || {}}>
       <div
         ref={setResumeExportNode}
         id="resume-pdf-export-container"
-        className={`resume-container ${className || ''}`}
+        className={cn('resume-container', className, isBackgroundDark && 'dark-theme')}
         style={{
-          backgroundColor: getTemplateBackground(theme.template),
+          backgroundColor: theme.backgroundColor || '#ffffff',
           boxSizing: 'border-box',
           position: 'relative',
           width: dimensions.width,
