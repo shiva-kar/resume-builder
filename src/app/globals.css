@@ -271,6 +271,23 @@ html {
   transition: none !important;
 }
 
+/* Custom Text Color Hierarchy */
+.resume-text-primary {
+  opacity: 1;
+}
+
+.resume-text-secondary {
+  opacity: var(--secondary-opacity, 0.6);
+}
+
+.resume-text-tertiary {
+  opacity: var(--tertiary-opacity, 0.4);
+}
+
+.resume-bg-muted {
+  background-color: color-mix(in srgb, currentColor 8%, transparent);
+}
+
 /* CUSTOM SCROLLBAR */
 
 ::-webkit-scrollbar {

@@ -33,7 +33,7 @@ export const exportToPDF = async (
   });
 
   const paperSize = (_data.theme.pageSize as any) || 'A4';
-  return generateResumePDF(imgData, paperSize);
+  return generateResumePDF(imgData, paperSize, _data.theme.backgroundColor || '#ffffff');
 };
 
 export const downloadPDF = (blob: Blob, filename = "resume.pdf"): void => {

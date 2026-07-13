@@ -698,6 +698,30 @@ const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPrevie
                 </Popover.Portal>
               </Popover.Root>
             </div>
+            
+            {/* Secondary Text Opacity Slider */}
+            <div className="mt-4">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+                  Text Opacity
+                </span>
+                <span className="text-xs font-medium text-foreground">
+                  {theme.secondaryTextOpacity || 60}%
+                </span>
+              </div>
+              <input
+                type="range"
+                min="10"
+                max="100"
+                step="5"
+                value={theme.secondaryTextOpacity || 60}
+                onChange={(e) => updateTheme({ secondaryTextOpacity: parseInt(e.target.value, 10) })}
+                className="w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
+              />
+              <p className="text-[10px] text-muted-foreground mt-1.5 leading-tight">
+                Adjusts the transparency of secondary text (like dates and subtitles) so they blend perfectly with your chosen text color.
+              </p>
+            </div>
           </div>
 
           {/* Global Font Size */}
