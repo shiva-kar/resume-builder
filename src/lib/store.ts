@@ -87,6 +87,7 @@ interface ResumeStore {
   updateTheme: (theme: Partial<Theme>) => void;
   addRecentColor: (color: string) => void;
   addRecentBackgroundColor: (color: string) => void;
+  addRecentTextColor: (color: string) => void;
   updateTypography: (type: keyof TypographySettings, size: TypographySize) => void;
   toggleDarkMode: () => void;
   setMobilePreview: (show: boolean) => void;
@@ -589,6 +590,25 @@ export const useResumeStore = create<ResumeStore>()(
                 ...state.data.theme,
                 // Append custom background colors (no limit)
                 recentBackgroundColors: [...recentBackgroundColors, color],
+              },
+            },
+          };
+        }),
+
+      addRecentTextColor: (color) =>
+        set((state) => {
+          const recentTextColors = state.data.theme.recentTextColors || [];
+          
+          if (recentTextColors[recentTextColors.length - 1] === color) {
+            return state;
+          }
+          
+          return {
+            data: {
+              ...state.data,
+              theme: {
+                ...state.data.theme,
+                recentTextColors: [...recentTextColors, color],
               },
             },
           };

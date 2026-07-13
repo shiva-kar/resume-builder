@@ -24,7 +24,7 @@ export const exportToPDF = async (
   const imgData = await toJpeg(sourceNode, {
     quality: 0.98,
     pixelRatio: 3, // High scale for crisp text
-    backgroundColor: '#ffffff',
+    backgroundColor: _data.theme.backgroundColor || '#ffffff',
     style: {
       transform: 'none',
       transformOrigin: 'top left',

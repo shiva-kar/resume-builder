@@ -1379,7 +1379,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
 
   // Elegant layout - Centered serif with generous spacing
   const renderElegantLayout = () => (
-    <div  className="w-full min-h-full px-12 py-10 font-serif" style={{ backgroundColor: theme.backgroundColor || '#ffffff' }}>
+    <div  className="w-full min-h-full px-12 py-10 font-serif">
       {renderElegantHeader()}
       <div className="max-w-2xl mx-auto space-y-8">
         {visibleSections.map((section) => (
@@ -1465,6 +1465,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
         className={`resume-container ${className || ''}`}
         style={{
           backgroundColor: theme.backgroundColor || '#ffffff',
+          color: theme.textColor || '#1e293b',
           boxSizing: 'border-box',
           position: 'relative',
           width: dimensions.width,

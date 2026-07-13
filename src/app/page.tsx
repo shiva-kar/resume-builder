@@ -119,7 +119,7 @@ interface DesignSettingsPanelProps {
 
 const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPreviewColorChange }) => {
   const theme = useTheme();
-  const { updateTheme, updateTypography, addRecentColor, addRecentBackgroundColor } = useResumeStore();
+  const { updateTheme, updateTypography, addRecentColor, addRecentBackgroundColor, addRecentTextColor } = useResumeStore();
   const [isOpen, setIsOpen] = useState(true);
 
   const [isPickingColor, setIsPickingColor] = useState(false);
@@ -129,6 +129,10 @@ const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPrevie
   const [isPickingBgColor, setIsPickingBgColor] = useState(false);
   const [tempBgColor, setTempBgColor] = useState(theme.backgroundColor || '#ffffff');
   const [originalBgColor, setOriginalBgColor] = useState(theme.backgroundColor || '#ffffff');
+
+  const [isPickingTextColor, setIsPickingTextColor] = useState(false);
+  const [tempTextColor, setTempTextColor] = useState(theme.textColor || '#1e293b');
+  const [originalTextColor, setOriginalTextColor] = useState(theme.textColor || '#1e293b');
 
   const typography = theme.typography || DEFAULT_TYPOGRAPHY;
 
@@ -150,6 +154,15 @@ const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPrevie
       return () => clearTimeout(timer);
     }
   }, [tempBgColor, isPickingBgColor, updateTheme]);
+
+  useEffect(() => {
+    if (isPickingTextColor) {
+      const timer = setTimeout(() => {
+        updateTheme({ textColor: tempTextColor });
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [tempTextColor, isPickingTextColor, updateTheme]);
 
   const openColorPicker = () => {
     setOriginalColor(theme.color);
@@ -185,6 +198,23 @@ const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPrevie
     setIsPickingBgColor(false);
   };
 
+  const openTextColorPicker = () => {
+    setOriginalTextColor(theme.textColor || '#1e293b');
+    setTempTextColor(theme.textColor || '#1e293b');
+    setIsPickingTextColor(true);
+  };
+
+  const confirmTextColor = () => {
+    updateTheme({ textColor: tempTextColor });
+    addRecentTextColor(tempTextColor);
+    setIsPickingTextColor(false);
+  };
+
+  const cancelTextColor = () => {
+    updateTheme({ textColor: originalTextColor });
+    setIsPickingTextColor(false);
+  };
+
   const isPresetThemeColor = ACCENT_COLORS.some((accent) => accent.color === theme.color);
   const isRecentThemeColor = theme.recentColors?.includes(theme.color) ?? false;
   const isCustomThemeColor = !isPresetThemeColor && !isRecentThemeColor;
@@ -201,6 +231,20 @@ const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPrevie
   const isPresetBgColor = bgColors.some((c) => c.color.toLowerCase() === currentBgColor.toLowerCase());
   const isRecentBgColor = theme.recentBackgroundColors?.some(c => c.toLowerCase() === currentBgColor.toLowerCase()) ?? false;
   const isCustomBgColor = !isPresetBgColor && !isRecentBgColor;
+
+  const textColors = [
+    { name: 'Slate 800', color: '#1e293b' },
+    { name: 'Gray 900', color: '#111827' },
+    { name: 'Zinc 900', color: '#18181b' },
+    { name: 'Neutral 900', color: '#171717' },
+    { name: 'Stone 900', color: '#1c1917' },
+    { name: 'White', color: '#ffffff' },
+  ];
+  
+  const currentTextColor = theme.textColor || '#1e293b';
+  const isPresetTextColor = textColors.some((c) => c.color.toLowerCase() === currentTextColor.toLowerCase());
+  const isRecentTextColor = theme.recentTextColors?.some(c => c.toLowerCase() === currentTextColor.toLowerCase()) ?? false;
+  const isCustomTextColor = !isPresetTextColor && !isRecentTextColor;
 
   return (
     <div className="glass rounded-lg bento-card overflow-hidden mb-4">
@@ -536,6 +580,119 @@ const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPrevie
                       >
                         ✓ Apply
                       </button>
+                    </div>
+                  </Popover.Content>
+                </Popover.Portal>
+              </Popover.Root>
+            </div>
+          </div>
+
+          {/* Text Color */}
+          <div>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5 block">
+              Text Color
+            </p>
+            <div className="flex gap-2 flex-wrap items-center">
+              {/* Preset Colors */}
+              {textColors.map((c) => (
+                <button
+                  key={c.color}
+                  onClick={() => updateTheme({ textColor: c.color })}
+                  title={c.name}
+                  className={cn(
+                    'w-8 h-8 rounded-lg border-2 transition-all duration-200 btn-press',
+                    currentTextColor.toLowerCase() === c.color.toLowerCase()
+                      ? 'border-foreground scale-110 shadow-md'
+                      : 'border-border/50 hover:scale-105 hover:shadow-sm'
+                  )}
+                  style={{ backgroundColor: c.color }}
+                />
+              ))}
+
+              {/* Separator between presets and custom colors */}
+              <div className="w-[2px] h-6 bg-border mx-1 rounded-full" />
+
+              {/* Recent custom colors */}
+              {theme.recentTextColors?.filter(c => !textColors.some(ac => ac.color.toLowerCase() === c.toLowerCase())).map((color) => (
+                <button
+                  key={color}
+                  onClick={() => updateTheme({ textColor: color })}
+                  title="Recent custom text color"
+                  className={cn(
+                    'w-8 h-8 rounded-lg border-2 transition-all duration-200 btn-press',
+                    currentTextColor.toLowerCase() === color.toLowerCase()
+                      ? 'border-foreground scale-110 shadow-md'
+                      : 'border-border/50 hover:scale-105 hover:shadow-sm'
+                  )}
+                  style={{ backgroundColor: color }}
+                />
+              ))}
+
+              {/* Custom text color picker */}
+              <Popover.Root 
+                open={isPickingTextColor} 
+                onOpenChange={(open) => {
+                  if (open) {
+                    openTextColorPicker();
+                  } else {
+                    cancelTextColor();
+                  }
+                }}
+              >
+                <Popover.Trigger asChild>
+                  <button
+                    title="Pick custom text color"
+                    className={cn(
+                      'w-8 h-8 rounded-lg border-2 border-dashed flex items-center justify-center transition-all',
+                      isCustomTextColor || isPickingTextColor
+                        ? 'border-foreground'
+                        : 'border-border hover:border-primary/50 bg-muted/30'
+                    )}
+                  >
+                    {(isPresetTextColor || isRecentTextColor) && !isPickingTextColor && (
+                      <Plus className="w-3.5 h-3.5 text-muted-foreground" />
+                    )}
+                    {isCustomTextColor && !isPickingTextColor && (
+                      <div className="w-5 h-5 rounded overflow-hidden shadow-sm" style={{ backgroundColor: currentTextColor }} />
+                    )}
+                    {isPickingTextColor && (
+                      <div className="w-5 h-5 rounded bg-gradient-to-tr from-violet-500 to-pink-500 animate-pulse" />
+                    )}
+                  </button>
+                </Popover.Trigger>
+                <Popover.Portal>
+                  <Popover.Content sideOffset={8} side="right" align="start" className="z-50 animate-in fade-in zoom-in-95 duration-200">
+                    <div className="bg-popover border border-border shadow-xl rounded-xl p-4 w-64 flex flex-col gap-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-foreground">Custom Text Color</span>
+                        <div className="w-6 h-6 rounded-md shadow-sm border border-border/50" style={{ backgroundColor: tempTextColor }} />
+                      </div>
+                      <HexColorPicker color={tempTextColor} onChange={setTempTextColor} className="!w-full !h-48" />
+                      <div className="flex items-center gap-2">
+                        <div className="relative flex-1">
+                          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium">#</span>
+                          <HexColorInput
+                            color={tempTextColor}
+                            onChange={setTempTextColor}
+                            prefixed={false}
+                            className="w-full h-9 rounded-md border border-border bg-muted/50 px-3 pl-6 text-sm text-foreground uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex gap-2 w-full mt-1">
+                        <button
+                          onClick={cancelTextColor}
+                          className="flex-1 text-xs py-2 rounded-md border border-border hover:bg-muted transition-colors font-medium"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={confirmTextColor}
+                          className="flex-1 text-xs py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors font-medium shadow-sm"
+                        >
+                          ✓ Apply
+                        </button>
+                      </div>
                     </div>
                   </Popover.Content>
                 </Popover.Portal>
