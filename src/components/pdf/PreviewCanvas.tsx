@@ -44,7 +44,7 @@ import {
   parseFormattedText,
   TextSegment,
 } from '@/lib/formatting';
-import { getTemplateBackground } from '@/lib/templates';
+import { isSerifTemplate } from '@/lib/templates';
 
 // Context for passing spacer heights from the pagination engine to PageBreakable components
 const SpacerContext = React.createContext<Record<string, number>>({});
@@ -1380,7 +1380,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
 
   // Elegant layout - Centered serif with generous spacing
   const renderElegantLayout = () => (
-    <div  className="w-full min-h-full px-12 py-10 font-serif" style={{ backgroundColor: getTemplateBackground('elegant') }}>
+    <div  className="w-full min-h-full px-12 py-10 font-serif" style={{ backgroundColor: theme.backgroundColor || '#ffffff' }}>
       {renderElegantHeader()}
       <div className="max-w-2xl mx-auto space-y-8">
         {visibleSections.map((section) => (
@@ -1465,7 +1465,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
         id="resume-pdf-export-container"
         className={`resume-container ${className || ''}`}
         style={{
-          backgroundColor: getTemplateBackground(theme.template),
+          backgroundColor: theme.backgroundColor || '#ffffff',
           boxSizing: 'border-box',
           position: 'relative',
           width: dimensions.width,
