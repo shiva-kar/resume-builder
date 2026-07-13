@@ -2,8 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-   SHIVA KAR — Resume & Portfolio Builder
-   A handcrafted design system for professional resumes
+/* SHIVA KAR — Resume & Portfolio Builder
+   A handcrafted design system for professional resumes */
 
 @layer base {
   :root {
