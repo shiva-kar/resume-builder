@@ -24,7 +24,7 @@ export const exportToPDF = async (
   const imgData = await toJpeg(sourceNode, {
     quality: 0.98,
     pixelRatio: 3, // High scale for crisp text
-    backgroundColor: '#ffffff',
+    backgroundColor: _data.theme.backgroundColor || '#ffffff',
     style: {
       transform: 'none',
       transformOrigin: 'top left',
@@ -33,7 +33,7 @@ export const exportToPDF = async (
   });
 
   const paperSize = (_data.theme.pageSize as any) || 'A4';
-  return generateResumePDF(imgData, paperSize);
+  return generateResumePDF(imgData, paperSize, _data.theme.backgroundColor || '#ffffff');
 };
 
 export const downloadPDF = (blob: Blob, filename = "resume.pdf"): void => {

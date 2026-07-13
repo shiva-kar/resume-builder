@@ -2,7 +2,7 @@
 
 [![Version](https://img.shields.io/badge/Version-0.5.0-blue?style=for-the-badge)](https://github.com/shiva-kar/resume-builder/releases)
 [![Status](https://img.shields.io/badge/Status-Beta-orange?style=for-the-badge)](https://github.com/shiva-kar/resume-builder/releases)
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-green?style=for-the-badge&logo=github)](https://shiva-kar.github.io/resume-builder/)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-shivakar.me-green?style=for-the-badge)](https://shivakar.me/resume-builder/)
 [![Next.js](https://img.shields.io/badge/Next.js-14-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
@@ -19,7 +19,7 @@ A resume builder with real-time preview, 10 templates, drag-and-drop sections, a
 
 | | |
 |---|---|
-| 🌐 **Live Demo** | [shiva-kar.github.io/resume-builder](https://shiva-kar.github.io/resume-builder/) |
+| 🌐 **Live Demo** | [shivakar.me/resume-builder](https://shivakar.me/resume-builder/) |
 | 📥 **Downloads** | [Latest Release](https://github.com/shiva-kar/resume-builder/releases/latest) |
 | 💻 **Source Code** | [GitHub Repository](https://github.com/shiva-kar/resume-builder) |
 | 📖 **Documentation** | [See Below](#usage) |
@@ -30,9 +30,9 @@ A resume builder with real-time preview, 10 templates, drag-and-drop sections, a
 
 | Platform | Download | Description |
 |----------|----------|-------------|
-| 🌐 **Web App** | [Launch Online](https://shiva-kar.github.io/resume-builder/) | No installation required |
-| 🖥️ **Windows Installer** | [Resume-Builder-Beta-0.3-win.exe](https://github.com/shiva-kar/resume-builder/releases/latest) | Full installation with uninstaller |
-| 🖥️ **Windows Portable** | [Resume-Builder-Beta-0.3-Portable.exe](https://github.com/shiva-kar/resume-builder/releases/latest) | No installation, run anywhere |
+| 🌐 **Web App** | [Launch Online](https://shivakar.me/resume-builder/) | No installation required |
+| 🖥️ **Windows Installer** | [Resume-Builder-Beta-0.5.0-win.exe](https://github.com/shiva-kar/resume-builder/releases/latest/download/Resume-Builder-Beta-0.5.0-win.exe) | Full installation with uninstaller |
+| 🖥️ **Windows Portable** | [Resume-Builder-Beta-0.5.0-Portable.exe](https://github.com/shiva-kar/resume-builder/releases/latest/download/Resume-Builder-Beta-0.5.0-Portable.exe) | No installation, run anywhere |
 | 📦 **Source Code** | [Clone Repository](https://github.com/shiva-kar/resume-builder) | Build from source |
 
 ---

@@ -2,8 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-   SHIVA KAR — Resume & Portfolio Builder
-   A handcrafted design system for professional resumes
+/* SHIVA KAR — Resume & Portfolio Builder
+   A handcrafted design system for professional resumes */
 
 @layer base {
   :root {
@@ -100,7 +100,7 @@
   }
 }
 
-   PREVIEW SURFACE STYLES
+/* PREVIEW SURFACE STYLES */
 
 html {
   font-size: 16px;
@@ -110,7 +110,6 @@ html {
   display: block;
   visibility: visible;
   box-sizing: border-box;
-  background: #ffffff;
   white-space: normal;
   word-break: normal;
   overflow-wrap: break-word;
@@ -272,7 +271,24 @@ html {
   transition: none !important;
 }
 
-   CUSTOM SCROLLBAR
+/* Custom Text Color Hierarchy */
+.resume-text-primary {
+  opacity: 1;
+}
+
+.resume-text-secondary {
+  opacity: var(--secondary-opacity, 0.6);
+}
+
+.resume-text-tertiary {
+  opacity: var(--tertiary-opacity, 0.4);
+}
+
+.resume-bg-muted {
+  background-color: color-mix(in srgb, currentColor 8%, transparent);
+}
+
+/* CUSTOM SCROLLBAR */
 
 ::-webkit-scrollbar {
   width: 6px;
@@ -297,7 +313,7 @@ html {
   scrollbar-color: hsl(var(--border)) transparent;
 }
 
-   GLASS EFFECT & CARD STYLES
+/* GLASS EFFECT & CARD STYLES */
 
 .glass {
   @apply bg-card/80 backdrop-blur-sm border border-border/50;
@@ -316,7 +332,7 @@ html {
   box-shadow: var(--shadow-md);
 }
 
-   BUTTON ANIMATIONS
+/* BUTTON ANIMATIONS */
 
 .btn-press {
   @apply transition-all duration-150 ease-out;
@@ -340,20 +356,20 @@ html {
   @apply opacity-100;
 }
 
-   FORM FOCUS STATES
+/* FORM FOCUS STATES */
 
 .focus-ring {
   @apply focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40;
   @apply transition-all duration-150;
 }
 
-   PAGE ASPECT RATIOS
+/* PAGE ASPECT RATIOS */
 
 .a4-preview { aspect-ratio: 210 / 297; }
 .letter-preview { aspect-ratio: 8.5 / 11; }
 .legal-preview { aspect-ratio: 8.5 / 14; }
 
-   SMOOTH TRANSITIONS
+/* SMOOTH TRANSITIONS */
 
 .fade-in {
   animation: fadeIn 0.2s ease-out;
@@ -373,7 +389,7 @@ html {
   to { opacity: 1; transform: translateX(0); }
 }
 
-   REDUCED MOTION - ACCESSIBILITY
+/* REDUCED MOTION - ACCESSIBILITY */
 
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -401,13 +417,13 @@ html {
   }
 }
 
-   SELECTION STYLES
+/* SELECTION STYLES */
 
 ::selection {
   @apply bg-primary/20 text-foreground;
 }
 
-   BRAND MONOGRAM
+/* BRAND MONOGRAM */
 
 .monogram {
   font-family: 'Inter', system-ui, sans-serif;

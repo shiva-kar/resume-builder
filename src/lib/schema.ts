@@ -298,11 +298,16 @@ export const ThemeSchema = z.object({
     'modern'
   ]),
   color: z.string(),
+  backgroundColor: z.string().optional(),
+  textColor: z.string().optional(),
+  secondaryTextOpacity: z.number().min(10).max(100).optional(),
   fontSize: z.enum(['small', 'medium', 'large']),
   pageSize: z.enum(['A4', 'LETTER', 'LEGAL', 'EXECUTIVE', 'B5', 'A5']),
   typography: TypographySettingsSchema.optional(),
   autoAdjust: z.boolean().optional(), // Auto-adjust page size/font if content overflows
   recentColors: z.array(z.string()).optional(), // Recently used custom colors
+  recentBackgroundColors: z.array(z.string()).optional(), // Recently used custom background colors
+  recentTextColors: z.array(z.string()).optional(), // Recently used custom text colors
 });
 
 export const ResumeDataSchema = z.object({
@@ -415,6 +420,9 @@ export const createEmptyState = (): ResumeData => ({
   theme: {
     template: 'tech',
     color: '#2563eb',
+    backgroundColor: '#ffffff',
+    textColor: '#1e293b',
+    secondaryTextOpacity: 60,
     fontSize: 'medium',
     pageSize: 'A4',
     typography: { ...DEFAULT_TYPOGRAPHY },
@@ -501,6 +509,9 @@ export const createDummyState = (currentTheme?: Theme): ResumeData => ({
   theme: currentTheme || {
     template: 'tech',
     color: '#2563eb',
+    backgroundColor: '#ffffff',
+    textColor: '#1e293b',
+    secondaryTextOpacity: 60,
     fontSize: 'medium',
     pageSize: 'A4',
     typography: { ...DEFAULT_TYPOGRAPHY },
