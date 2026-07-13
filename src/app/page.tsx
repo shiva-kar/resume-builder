@@ -119,16 +119,12 @@ interface DesignSettingsPanelProps {
 
 const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPreviewColorChange }) => {
   const theme = useTheme();
-  const { updateTheme, updateTypography, addRecentColor, addRecentBackgroundColor } = useResumeStore();
+  const { updateTheme, updateTypography, addRecentColor } = useResumeStore();
   const [isOpen, setIsOpen] = useState(true);
 
   const [isPickingColor, setIsPickingColor] = useState(false);
   const [tempColor, setTempColor] = useState(theme.color);
   const [originalColor, setOriginalColor] = useState(theme.color);
-
-  const [isPickingBgColor, setIsPickingBgColor] = useState(false);
-  const [tempBgColor, setTempBgColor] = useState(theme.backgroundColor || '#ffffff');
-  const [originalBgColor, setOriginalBgColor] = useState(theme.backgroundColor || '#ffffff');
 
   const typography = theme.typography || DEFAULT_TYPOGRAPHY;
 
@@ -162,38 +158,6 @@ const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPrevie
   const isPresetThemeColor = ACCENT_COLORS.some((accent) => accent.color === theme.color);
   const isRecentThemeColor = theme.recentColors?.includes(theme.color) ?? false;
   const isCustomThemeColor = !isPresetThemeColor && !isRecentThemeColor;
-
-  const currentBgColor = theme.backgroundColor || '#ffffff';
-
-  useEffect(() => {
-    if (isPickingBgColor && tempBgColor !== currentBgColor) {
-      const timer = setTimeout(() => {
-        updateTheme({ backgroundColor: tempBgColor });
-      }, 50);
-      return () => clearTimeout(timer);
-    }
-  }, [tempBgColor, isPickingBgColor, currentBgColor, updateTheme]);
-
-  const openBgColorPicker = () => {
-    setOriginalBgColor(currentBgColor);
-    setTempBgColor(currentBgColor);
-    setIsPickingBgColor(true);
-  };
-
-  const confirmBgColor = () => {
-    updateTheme({ backgroundColor: tempBgColor });
-    addRecentBackgroundColor(tempBgColor);
-    setIsPickingBgColor(false);
-  };
-
-  const cancelBgColor = () => {
-    updateTheme({ backgroundColor: originalBgColor });
-    setIsPickingBgColor(false);
-  };
-
-  const isPresetBgColor = currentBgColor === '#ffffff';
-  const isRecentBgColor = theme.recentBackgroundColors?.includes(currentBgColor) ?? false;
-  const isCustomBgColor = !isPresetBgColor && !isRecentBgColor;
 
   return (
     <div className="glass rounded-lg bento-card overflow-hidden mb-4">
@@ -416,114 +380,6 @@ const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPrevie
                       </button>
                       <button
                         onClick={confirmColor}
-                        className="flex-1 text-xs py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors font-medium shadow-sm"
-                      >
-                        ✓ Apply
-                      </button>
-                    </div>
-                  </Popover.Content>
-                </Popover.Portal>
-              </Popover.Root>
-            </div>
-          </div>
-
-          {/* Background Color */}
-          <div>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5 block">
-              Background Color
-            </p>
-            <div className="flex gap-2 flex-wrap items-center">
-              {/* Preset White Background */}
-              <button
-                onClick={() => updateTheme({ backgroundColor: '#ffffff' })}
-                title="White"
-                className={cn(
-                  'w-8 h-8 rounded-lg border-2 transition-all duration-200 btn-press',
-                  currentBgColor === '#ffffff'
-                    ? 'border-foreground scale-110 shadow-md'
-                    : 'border-border/50 hover:scale-105 hover:shadow-sm'
-                )}
-                style={{ backgroundColor: '#ffffff' }}
-              />
-
-              {/* Separator */}
-              {theme.recentBackgroundColors && theme.recentBackgroundColors.length > 0 && (
-                <div className="w-[2px] h-6 bg-border mx-1 rounded-full" />
-              )}
-
-              {/* Recent custom bg colors */}
-              {theme.recentBackgroundColors?.filter(c => c.toLowerCase() !== '#ffffff').map((color) => (
-                <button
-                  key={color}
-                  onClick={() => updateTheme({ backgroundColor: color })}
-                  title="Recent background color"
-                  className={cn(
-                    'w-8 h-8 rounded-lg border-2 transition-all duration-200 btn-press',
-                    currentBgColor === color
-                      ? 'border-foreground scale-110 shadow-md'
-                      : 'border-border/50 hover:scale-105 hover:shadow-sm'
-                  )}
-                  style={{ backgroundColor: color }}
-                />
-              ))}
-
-              {/* Custom bg color picker */}
-              <Popover.Root 
-                open={isPickingBgColor} 
-                onOpenChange={(open) => {
-                  if (open) {
-                    openBgColorPicker();
-                  } else {
-                    cancelBgColor();
-                  }
-                }}
-              >
-                <Popover.Trigger asChild>
-                  <button
-                    title="Pick custom background color"
-                    className={cn(
-                      'w-8 h-8 rounded-lg border-2 border-dashed flex items-center justify-center transition-all',
-                      isCustomBgColor || isPickingBgColor
-                        ? 'border-foreground'
-                        : 'border-border hover:border-primary/50 bg-muted/30'
-                    )}
-                  >
-                    {(isPresetBgColor || isRecentBgColor) && !isPickingBgColor && (
-                      <Plus className="w-3.5 h-3.5 text-muted-foreground" />
-                    )}
-                  </button>
-                </Popover.Trigger>
-
-                <Popover.Portal>
-                  <Popover.Content 
-                    align="center"
-                    sideOffset={8}
-                    className="z-50 bg-background border border-border rounded-xl shadow-xl p-3 w-[220px] flex flex-col gap-3 animate-in fade-in zoom-in-95 duration-200"
-                  >
-                    <div className="w-full custom-color-picker">
-                      <HexColorPicker color={tempBgColor} onChange={setTempBgColor} />
-                    </div>
-                    
-                    <div className="flex items-center gap-2 px-1 w-full">
-                      <span className="text-xs font-mono text-muted-foreground font-medium">HEX</span>
-                      <HexColorInput 
-                        color={tempBgColor} 
-                        onChange={setTempBgColor} 
-                        className="flex-1 min-w-0 bg-muted/50 border border-border rounded px-2 py-1.5 text-sm font-mono focus:outline-none focus:border-primary transition-colors uppercase"
-                        prefixed={true}
-                        alpha={false}
-                      />
-                    </div>
-                    
-                    <div className="flex gap-2 w-full mt-1">
-                      <button
-                        onClick={cancelBgColor}
-                        className="flex-1 text-xs py-2 rounded-md border border-border hover:bg-muted transition-colors font-medium"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={confirmBgColor}
                         className="flex-1 text-xs py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors font-medium shadow-sm"
                       >
                         ✓ Apply
