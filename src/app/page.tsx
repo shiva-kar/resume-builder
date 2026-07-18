@@ -1,5 +1,6 @@
 'use client';
 
+import { useStore } from 'zustand';
 import React, { useState, useEffect, useMemo, useCallback, useRef, memo } from 'react';
 import {
   DndContext,
@@ -46,7 +47,7 @@ import {
   Zap,
   Github,
   ExternalLink,
-} from 'lucide-react';
+  Circle, Droplets, Save, Upload, Undo2, Redo2 } from "lucide-react";
 import {
   useResumeStore,
   useSections,
@@ -64,6 +65,9 @@ import {
   DEFAULT_TYPOGRAPHY,
   TYPOGRAPHY_SIZES,
   TEMPLATE_INFO,
+  OPACITY_LEVELS,
+  DEFAULT_OPACITY,
+  ResumeDataSchema,
 } from '@/lib/schema';
 import * as Popover from '@radix-ui/react-popover';
 import { HexColorPicker, HexColorInput } from 'react-colorful';
@@ -78,6 +82,7 @@ import {
 } from '@/components/editor';
 import { exportToPDF, downloadPDF } from '@/components/pdf';
 import { LivePreview } from '@/components/pdf/LivePreview';
+import { Modal } from '@/components/ui/Modal';
 import { cn } from '@/lib/utils';
 
 // SECTION CONFIGURATION
@@ -119,7 +124,7 @@ interface DesignSettingsPanelProps {
 
 const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPreviewColorChange }) => {
   const theme = useTheme();
-  const { updateTheme, updateTypography, addRecentColor, addRecentBackgroundColor, addRecentTextColor } = useResumeStore();
+  const { updateTheme, updateTypography, updateOpacity, addRecentColor, addRecentBackgroundColor, addRecentTextColor } = useResumeStore();
   const [isOpen, setIsOpen] = useState(true);
 
   const [isPickingColor, setIsPickingColor] = useState(false);
@@ -330,7 +335,7 @@ const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPrevie
                         'text-[10px] font-semibold transition-colors',
                         isSelected
                           ? 'text-foreground dark:text-foreground'
-                          : 'text-muted-foreground group-hover:text-foreground dark:text-muted-foreground dark:group-hover:text-foreground'
+                          : 'text-muted-foreground group-hover:text-foreground dark:group-hover:text-foreground'
                       )}>
                         {t.label}
                       </span>
@@ -699,30 +704,56 @@ const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPrevie
               </Popover.Root>
             </div>
             
-            {/* Secondary Text Opacity Slider */}
-            <div className="mt-4">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
-                  Text Opacity
-                </span>
-                <span className="text-xs font-medium text-foreground">
-                  {theme.secondaryTextOpacity || 60}%
-                </span>
-              </div>
-              <input
-                type="range"
-                min="10"
-                max="100"
-                step="5"
-                value={theme.secondaryTextOpacity || 60}
-                onChange={(e) => updateTheme({ secondaryTextOpacity: parseInt(e.target.value, 10) })}
-                className="w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
-              />
-              <p className="text-[10px] text-muted-foreground mt-1.5 leading-tight">
-                Adjusts the transparency of secondary text (like dates and subtitles) so they blend perfectly with your chosen text color.
-              </p>
             </div>
+
+          
+          {/* Opacity Controls */}
+          <div className="space-y-3 pt-4 border-t border-border/50">
+            <div className="flex items-center gap-2">
+              <Droplets className="w-4 h-4 text-muted-foreground" />
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Fine-Tune Text Opacity
+              </span>
+            </div>
+
+            {[
+              { label: 'Your Name', key: 'name' as const },
+              { label: 'Section Titles', key: 'headers' as const },
+              { label: 'Item Headings', key: 'subheaders' as const },
+              { label: 'Body Content', key: 'body' as const },
+              { label: 'Skills', key: 'skills' as const },
+            ].map((item) => (
+              <div key={item.key} className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">{item.label}</span>
+                <div className="flex bg-muted/50 p-0.5 rounded-md gap-0.5">
+                  {OPACITY_LEVELS.map((level) => {
+                    const fillOpacity = 
+                      level === 'light' ? 'opacity-25' : 
+                      level === 'medium' ? 'opacity-50' : 
+                      level === 'dark' ? 'opacity-75' : 
+                      'opacity-100';
+                      
+                    return (
+                      <button
+                        key={level}
+                        onClick={() => updateOpacity(item.key, level)}
+                        className={cn(
+                          'w-7 h-7 flex items-center justify-center rounded transition-all duration-200',
+                          (theme.opacity?.[item.key] || DEFAULT_OPACITY[item.key] || 'solid') === level
+                            ? 'bg-primary text-primary-foreground shadow-md font-bold ring-1 ring-primary/50'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                        )}
+                        title={level.toUpperCase()}
+                      >
+                        <Circle className={cn("w-4 h-4 fill-current", fillOpacity)} strokeWidth={1} />
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
+
 
           {/* Global Font Size */}
           <div>
@@ -759,8 +790,8 @@ const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPrevie
             {[
               { label: 'Your Name', key: 'name' as keyof typeof typography },
               { label: 'Section Titles', key: 'headers' as keyof typeof typography },
+              { label: 'Item Headings', key: 'experience' as keyof typeof typography },
               { label: 'Body Content', key: 'body' as keyof typeof typography },
-              { label: 'Experience & Items', key: 'experience' as keyof typeof typography },
               { label: 'Skills', key: 'skills' as keyof typeof typography },
             ].map((item) => (
               <div key={item.key} className="flex items-center justify-between">
@@ -780,7 +811,7 @@ const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPrevie
                         className={cn(
                           'w-7 h-7 flex items-center justify-center rounded transition-all duration-200',
                           (typography[item.key] || typography.body || 'sm') === s
-                            ? 'bg-background text-foreground shadow-sm'
+                            ? 'bg-primary text-primary-foreground shadow-md font-bold ring-1 ring-primary/50'
                             : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                         )}
                         title={s.toUpperCase()}
@@ -946,9 +977,57 @@ export default function ResumeBuilderPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const resumeExportRef = useRef<HTMLDivElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [showDevMode, setShowDevMode] = useState(false);
   // Color picker preview state - allows live preview without saving
   const [previewColor, setPreviewColor] = useState<string | null>(null);
+
+  // Custom Modal State
+  const [modalConfig, setModalConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: 'alert' | 'confirm';
+    onConfirm: () => void;
+    onCancel?: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'alert',
+    onConfirm: () => {},
+  });
+
+  const showAlert = useCallback((title: string, message: string, onConfirm?: () => void) => {
+    setModalConfig({
+      isOpen: true,
+      title,
+      message,
+      type: 'alert',
+      onConfirm: () => {
+        setModalConfig(prev => ({ ...prev, isOpen: false }));
+        if (onConfirm) setTimeout(onConfirm, 10);
+      },
+      onCancel: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
+    });
+  }, []);
+
+  const showConfirm = useCallback((title: string, message: string, onConfirm: () => void, onCancel?: () => void) => {
+    setModalConfig({
+      isOpen: true,
+      title,
+      message,
+      type: 'confirm',
+      onConfirm: () => {
+        setModalConfig(prev => ({ ...prev, isOpen: false }));
+        setTimeout(onConfirm, 10);
+      },
+      onCancel: () => {
+        setModalConfig(prev => ({ ...prev, isOpen: false }));
+        if (onCancel) setTimeout(onCancel, 10);
+      }
+    });
+  }, []);
 
   const sections = useSections();
   const theme = useTheme();
@@ -959,9 +1038,34 @@ export default function ResumeBuilderPage() {
     data,
     reorderSections,
     toggleDarkMode,
-    setMobilePreview,
     resetStore,
+    setMobilePreview,
+    updateSection,
+    importData,
   } = useResumeStore();
+
+  const { undo, redo, pastStates, futureStates } = useStore(useResumeStore.temporal, (state) => state);
+
+  // Keyboard Shortcuts for Undo/Redo
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        if (e.shiftKey) {
+          e.preventDefault();
+          if (futureStates.length > 0) redo();
+        } else {
+          e.preventDefault();
+          if (pastStates.length > 0) undo();
+        }
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+        e.preventDefault();
+        if (futureStates.length > 0) redo();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [undo, redo, pastStates.length, futureStates.length]);
 
   // DnD sensors
   const sensors = useSensors(
@@ -1002,11 +1106,81 @@ export default function ResumeBuilderPage() {
       console.info('[PDF Export] Download triggered', { filename, size: blob.size });
     } catch (error) {
       console.error('[PDF Export] Export failed', error);
-      alert('PDF Export failed: ' + (error instanceof Error ? error.message : String(error)));
+      showAlert('Export Failed', 'PDF Export failed: ' + (error instanceof Error ? error.message : String(error)));
     } finally {
       setIsExporting(false);
     }
   }, [data]);
+
+  const handleSaveFile = useCallback(() => {
+    const currentState = useResumeStore.getState().data;
+    const savePayload = {
+      _type: "resume-builder-sk",
+      version: "1.0",
+      data: currentState
+    };
+    const blob = new Blob([JSON.stringify(savePayload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    
+    const firstName = currentState.personalInfo.fullName.split(' ')[0] || 'My';
+    link.download = `${firstName}_Resume.sk`;
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, []);
+
+  const handleLoadFile = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const content = e.target?.result as string;
+        const parsed = JSON.parse(content);
+        
+        if (parsed._type !== "resume-builder-sk") {
+          showAlert("Invalid File", "Please upload a valid .sk resume file.");
+          return;
+        }
+
+        const currentData = useResumeStore.getState().data;
+        const hasContent = currentData.personalInfo.fullName.trim() !== '' || currentData.sections.length > 3;
+        
+        const loadParsedData = () => {
+          const result = ResumeDataSchema.safeParse(parsed.data);
+          if (result.success) {
+            useResumeStore.getState().importData(result.data);
+            showAlert("Success", "Resume data loaded successfully!");
+          } else {
+            console.error(result.error);
+            showAlert("Error", "Failed to load resume. The file data is corrupted or incompatible.");
+          }
+          if (fileInputRef.current) fileInputRef.current.value = '';
+        };
+
+        if (hasContent) {
+          showConfirm(
+            "Replace Current Data?",
+            "Loading this file will replace your current data. Any unsaved changes will be lost. Proceed?",
+            loadParsedData,
+            () => { if (fileInputRef.current) fileInputRef.current.value = ''; }
+          );
+        } else {
+          loadParsedData();
+        }
+      } catch (error) {
+        console.error("Error parsing file", error);
+        showAlert("Error", "Failed to read file.");
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      }
+    };
+    reader.readAsText(file);
+  }, [showAlert, showConfirm]);
 
   // Hydration fix
   useEffect(() => {
@@ -1067,12 +1241,36 @@ export default function ResumeBuilderPage() {
                 )}
               </button>
 
+              {/* Undo Button */}
+              <button
+                onClick={() => pastStates.length > 0 && undo()}
+                disabled={pastStates.length === 0}
+                className="p-2.5 hover:bg-muted rounded-lg transition-all duration-200 text-muted-foreground hover:text-foreground btn-press disabled:opacity-30 disabled:cursor-not-allowed"
+                title="Undo (Ctrl+Z)"
+                aria-label="Undo"
+              >
+                <Undo2 className="w-[18px] h-[18px]" />
+              </button>
+
+              {/* Redo Button */}
+              <button
+                onClick={() => futureStates.length > 0 && redo()}
+                disabled={futureStates.length === 0}
+                className="p-2.5 hover:bg-muted rounded-lg transition-all duration-200 text-muted-foreground hover:text-foreground btn-press disabled:opacity-30 disabled:cursor-not-allowed"
+                title="Redo (Ctrl+Y)"
+                aria-label="Redo"
+              >
+                <Redo2 className="w-[18px] h-[18px]" />
+              </button>
+
               {/* Reset Button */}
               <button
                 onClick={() => {
-                  if (confirm('Start fresh? This will clear all your data.')) {
-                    resetStore();
-                  }
+                  showConfirm(
+                    "Start Fresh?",
+                    "This will clear all your data. Are you sure you want to proceed?",
+                    resetStore
+                  );
                 }}
                 className="p-2.5 hover:bg-muted rounded-lg transition-all duration-200 text-muted-foreground hover:text-foreground btn-press"
                 title="Start Fresh"
@@ -1095,6 +1293,28 @@ export default function ResumeBuilderPage() {
                 aria-label="Toggle Dev Mode"
               >
                 <Sparkles className="w-[18px] h-[18px]" />
+              </button>
+
+              {/* Load Button */}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="p-2.5 hover:bg-muted rounded-lg transition-all duration-200 text-muted-foreground hover:text-foreground btn-press"
+                title="Load Backup (.sk)"
+                aria-label="Load Resume"
+              >
+                <Upload className="w-[18px] h-[18px]" />
+              </button>
+
+              {/* Save Button */}
+              <button
+                type="button"
+                onClick={handleSaveFile}
+                className="p-2.5 hover:bg-muted rounded-lg transition-all duration-200 text-muted-foreground hover:text-foreground btn-press"
+                title="Save Backup (.sk)"
+                aria-label="Save Resume"
+              >
+                <Save className="w-[18px] h-[18px]" />
               </button>
 
               {/* Export Button */}
@@ -1136,10 +1356,28 @@ export default function ResumeBuilderPage() {
               <div className="flex gap-2">
                 <button
                   onClick={toggleDarkMode}
-                  className="p-2.5 border border-border rounded-lg hover:bg-muted transition-colors"
+                  className="p-2.5 border border-border rounded-lg hover:bg-muted transition-colors flex justify-center items-center"
                   aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
                 >
                   {isDarkMode ? <Sun className="w-5 h-5 text-amber-500" /> : <Moon className="w-5 h-5 text-slate-500" />}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="p-2.5 border border-border rounded-lg hover:bg-muted transition-colors flex justify-center items-center"
+                  title="Load Backup"
+                  aria-label="Load Resume"
+                >
+                  <Upload className="w-5 h-5 text-muted-foreground" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveFile}
+                  className="p-2.5 border border-border rounded-lg hover:bg-muted transition-colors flex justify-center items-center"
+                  title="Save Backup"
+                  aria-label="Save Resume"
+                >
+                  <Save className="w-5 h-5 text-muted-foreground" />
                 </button>
                 <button
                   type="button"
@@ -1279,6 +1517,15 @@ export default function ResumeBuilderPage() {
           </div>
         </div>
       </main>
+
+      <input
+        type="file"
+        accept=".sk"
+        ref={fileInputRef}
+        style={{ display: 'none' }}
+        onChange={handleLoadFile}
+      />
+      <Modal {...modalConfig} />
     </div>
   );
 }

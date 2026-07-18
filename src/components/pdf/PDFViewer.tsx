@@ -1,6 +1,6 @@
 "use client";
 
-import { toJpeg } from "html-to-image";
+import { toPng } from "html-to-image";
 import type { ResumeData } from "@/lib/schema";
 import { generateResumePDF } from "./ResumePDF";
 
@@ -21,10 +21,10 @@ export const exportToPDF = async (
 
   // We use html-to-image because it natively wraps the DOM into an SVG <foreignObject>,
   // which guarantees 100% pixel-perfect text baseline metrics, line-heights, and custom font parsing.
-  const imgData = await toJpeg(sourceNode, {
+  const imgData = await toPng(sourceNode, {
     quality: 0.98,
     pixelRatio: 3, // High scale for crisp text
-    backgroundColor: _data.theme.backgroundColor || '#ffffff',
+    
     style: {
       transform: 'none',
       transformOrigin: 'top left',

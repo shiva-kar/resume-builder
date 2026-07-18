@@ -5,6 +5,7 @@ import { Trash2, Plus } from 'lucide-react';
 import { Section } from '@/lib/schema';
 import { useResumeStore } from '@/lib/store';
 import { FormInput, FormTextarea, FormCheckbox } from './FormInput';
+import { MonthPicker } from '@/components/ui/MonthPicker';
 
 interface ExperienceFormProps {
   section: Section;
@@ -54,32 +55,22 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ section }) => {
                 }
               />
 
-              <div className="flex gap-3 items-center flex-wrap">
-                <FormInput
-                  type="month"
-                  placeholder="Start Date"
-                  value={item.startDate || ''}
-                  onChange={(e) =>
-                    updateSectionItem(section.id, item.id, {
-                      startDate: e.target.value,
-                    })
-                  }
-                  className="w-auto"
-                />
-                <span className="text-muted-foreground">to</span>
-                {!item.current && (
-                  <FormInput
-                    type="month"
-                    placeholder="End Date"
-                    value={item.endDate || ''}
-                    onChange={(e) =>
-                      updateSectionItem(section.id, item.id, {
-                        endDate: e.target.value,
-                      })
-                    }
-                    className="w-auto"
+              <div className="flex gap-3 items-end flex-wrap">
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Start Date</label>
+                  <MonthPicker
+                    value={item.startDate || ''}
+                    onChange={(val) => updateSectionItem(section.id, item.id, { startDate: val })}
                   />
-                )}
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">End Date</label>
+                  <MonthPicker
+                    value={item.current ? '' : (item.endDate || '')}
+                    onChange={(val) => updateSectionItem(section.id, item.id, { endDate: val })}
+                    disabled={item.current}
+                  />
+                </div>
                 <FormCheckbox
                   label="Currently working here"
                   checked={item.current || false}
