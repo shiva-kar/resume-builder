@@ -273,6 +273,10 @@ html {
 
 /* Custom Text Color Hierarchy */
 
+.resume-opacity-name {
+  opacity: var(--opacity-name, 1);
+}
+
 .resume-opacity-headers {
   opacity: var(--opacity-headers, 1);
 }

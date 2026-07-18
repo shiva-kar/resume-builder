@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.6.1] - 2026-07-18
+
+### Fixed
+- fix: "Your Name" opacity control now works — CSS variable `--opacity-name` was not being set in the container inline styles.
+- fix: "Section Titles" opacity control now works across all templates — `resume-opacity-headers` class was missing from Corporate, Creative, Elegant, Harvard, Minimal, Bold, and Tech section title elements.
+- fix: Skills opacity is now consistent across all templates — moved `resume-opacity-skills` to container level so backgrounds, borders, and text all fade together uniformly.
+- fix: Portfolio layout summary text now responds to "Body Content" opacity — was missing `resume-opacity-body` class.
+- fix: Added `name` field to `OpacitySettings` schema so the "Your Name" opacity persists correctly.
+- fix: Elegant section titles were incorrectly using `resume-opacity-skills` instead of `resume-opacity-headers`.
+- fix: Minimal section titles were using `resume-opacity-body` instead of `resume-opacity-headers`.
+
+---
+
 ## [0.6.0] - 2026-07-18
 
 ### Added

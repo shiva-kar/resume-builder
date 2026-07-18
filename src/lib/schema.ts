@@ -290,6 +290,7 @@ export const OPACITY_LEVELS = ['light', 'medium', 'dark', 'solid'] as const;
 export type OpacityLevel = typeof OPACITY_LEVELS[number];
 
 export interface OpacitySettings {
+  name: OpacityLevel;
   headers: OpacityLevel;
   subheaders: OpacityLevel;
   body: OpacityLevel;
@@ -297,6 +298,7 @@ export interface OpacitySettings {
 }
 
 export const DEFAULT_OPACITY: OpacitySettings = {
+  name: 'solid',
   headers: 'solid',
   subheaders: 'solid',
   body: 'solid',
@@ -304,6 +306,7 @@ export const DEFAULT_OPACITY: OpacitySettings = {
 };
 
 export const OpacitySettingsSchema = z.object({
+  name: z.enum(['light', 'medium', 'dark', 'solid']),
   headers: z.enum(['light', 'medium', 'dark', 'solid']),
   subheaders: z.enum(['light', 'medium', 'dark', 'solid']),
   body: z.enum(['light', 'medium', 'dark', 'solid']),

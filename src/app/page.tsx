@@ -714,8 +714,9 @@ const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPrevie
             </div>
 
             {[
-              { label: 'Headers', key: 'headers' as const },
-              { label: 'Subheaders', key: 'subheaders' as const },
+              { label: 'Your Name', key: 'name' as const },
+              { label: 'Section Titles', key: 'headers' as const },
+              { label: 'Item Headings', key: 'subheaders' as const },
               { label: 'Body Content', key: 'body' as const },
               { label: 'Skills', key: 'skills' as const },
             ].map((item) => (
@@ -786,8 +787,8 @@ const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPrevie
             {[
               { label: 'Your Name', key: 'name' as keyof typeof typography },
               { label: 'Section Titles', key: 'headers' as keyof typeof typography },
+              { label: 'Item Headings', key: 'experience' as keyof typeof typography },
               { label: 'Body Content', key: 'body' as keyof typeof typography },
-              { label: 'Experience & Items', key: 'experience' as keyof typeof typography },
               { label: 'Skills', key: 'skills' as keyof typeof typography },
             ].map((item) => (
               <div key={item.key} className="flex items-center justify-between">

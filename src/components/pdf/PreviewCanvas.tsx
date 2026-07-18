@@ -532,20 +532,20 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
   const renderElegantSkills = (skillsWithLevels: SkillWithLevel[], displaySkills: string[], isDummy: boolean) => {
     const keyedLevels = toKeyedItems(skillsWithLevels, (skill) => `${skill.name}-${skill.level}`, 'skill-level');
     return (
-      <div className="text-center space-y-1">
+      <div className="text-center space-y-1 resume-opacity-skills">
         {keyedLevels.length > 0 && (
-          <p className="resume-opacity-body font-serif" style={{ fontSize: fontSize.itemBody }}>
+          <p className="font-serif" style={{ fontSize: fontSize.itemBody }}>
             {keyedLevels.map(({ key, item }, index) => (
               <span key={key}>
                 <span className="font-medium">{item.name}</span>
-                <span className="resume-opacity-skills text-[9px] ml-1">({item.level})</span>
-                {index !== keyedLevels.length - 1 && <span className="mx-2 resume-opacity-body">·</span>}
+                <span className="text-[9px] ml-1">({item.level})</span>
+                {index !== keyedLevels.length - 1 && <span className="mx-2">·</span>}
               </span>
             ))}
           </p>
         )}
         {displaySkills.length > 0 && (
-          <p className={cn('font-serif', isDummy ? 'resume-opacity-body italic' : 'resume-opacity-body')} style={{ fontSize: fontSize.itemBody }}>
+          <p className={cn('font-serif', isDummy ? 'italic' : '')} style={{ fontSize: fontSize.itemBody }}>
             {displaySkills.join(' · ')}
           </p>
         )}
@@ -557,13 +557,13 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
     const keyedLevels = toKeyedItems(skillsWithLevels, (skill) => `${skill.name}-${skill.level}`, 'skill-level');
     const keyedSkills = toKeyedItems(displaySkills, (skill) => skill, 'skill');
     return (
-      <div className="space-y-2">
+      <div className="space-y-2 resume-opacity-skills">
         {keyedLevels.length > 0 && (
           <div className="skills-container">
             {keyedLevels.map(({ key, item }) => (
               <span key={key} className="skill-chip border border-gray-200" style={{ fontSize: fontSize.skills }}>
-                <span className="font-medium resume-opacity-body">{item.name}</span>
-                <span className="ml-1.5 resume-opacity-skills" style={{ fontSize: Math.max(8, fontSize.skills - 2) }}>{item.level}</span>
+                <span className="font-medium">{item.name}</span>
+                <span className="ml-1.5 opacity-70" style={{ fontSize: Math.max(8, fontSize.skills - 2) }}>{item.level}</span>
               </span>
             ))}
           </div>
@@ -571,7 +571,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
         {keyedSkills.length > 0 && (
           <div className={cn('skills-container', isDummy && 'opacity-60')}>
             {keyedSkills.map(({ key, item }) => (
-              <span key={key} className={cn('skill-chip', isDummy ? 'resume-bg-muted resume-opacity-body italic' : 'resume-bg-muted resume-opacity-body')} style={{ fontSize: fontSize.skills }}>
+              <span key={key} className={cn('skill-chip', isDummy ? 'resume-bg-muted italic' : 'resume-bg-muted')} style={{ fontSize: fontSize.skills }}>
                 {item}
               </span>
             ))}
@@ -585,7 +585,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
     const keyedLevels = toKeyedItems(skillsWithLevels, (skill) => `${skill.name}-${skill.level}`, 'skill-level');
     const keyedSkills = toKeyedItems(displaySkills, (skill) => skill, 'skill');
     return (
-      <div className="space-y-2">
+      <div className="space-y-2 resume-opacity-skills">
         {keyedLevels.length > 0 && (
           <div className="skills-container skills-container-compact">
             {keyedLevels.map(({ key, item }) => (
@@ -617,12 +617,12 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
     const keyedLevels = toKeyedItems(skillsWithLevels, (skill) => `${skill.name}-${skill.level}`, 'skill-level');
     const keyedSkills = toKeyedItems(displaySkills, (skill) => skill, 'skill');
     return (
-      <div className="space-y-1.5">
+      <div className="space-y-1.5 resume-opacity-skills">
         {keyedLevels.map(({ key, item }) => (
           <div key={key} className="flex items-center gap-2" style={{ fontSize: fontSize.skills }}>
             <div className="w-1 h-1 rounded-full" style={{ backgroundColor: theme.color }} />
-            <span className="font-medium resume-opacity-body">{item.name}</span>
-            <span className="resume-opacity-skills" style={{ fontSize: Math.max(8, fontSize.skills - 2) }}>{item.level}</span>
+            <span className="font-medium">{item.name}</span>
+            <span className="opacity-70" style={{ fontSize: Math.max(8, fontSize.skills - 2) }}>{item.level}</span>
           </div>
         ))}
         {keyedSkills.length > 0 && (
@@ -630,7 +630,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
             {keyedSkills.map(({ key, item }) => (
               <div key={key} className="flex items-center gap-2" style={{ fontSize: fontSize.skills }}>
                 <div className="w-1 h-1 rounded-full" style={{ backgroundColor: isDummy ? theme.textColor || '#1e293b' : theme.color }} />
-                <span className={isDummy ? 'resume-opacity-body italic' : 'resume-opacity-body'}>{item}</span>
+                <span className={isDummy ? 'italic' : ''}>{item}</span>
               </div>
             ))}
           </div>
@@ -645,7 +645,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
 
     const containerClass = "skills-container skills-container-compact";
     return (
-      <div className="space-y-2">
+      <div className="space-y-2 resume-opacity-skills">
         {keyedLevels.length > 0 && (
           <div className={containerClass}>
             {keyedLevels.map(({ key, item }) => (
@@ -653,7 +653,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                 <span className="font-semibold" style={{ color: isTech || isBold ? theme.color : 'inherit' }}>
                   {item.name}
                 </span>
-                <span className="ml-1 resume-opacity-skills uppercase" style={{ fontSize: Math.max(8, fontSize.skills - 2) }}>{item.level}</span>
+                <span className="ml-1 opacity-70 uppercase" style={{ fontSize: Math.max(8, fontSize.skills - 2) }}>{item.level}</span>
               </span>
             ))}
           </div>
@@ -687,7 +687,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
         return renderModernSkills(skillsWithLevels, displaySkills, isDummy);
       case 'harvard':
         return (
-          <div className={cn('font-serif space-y-1', isDummy ? 'resume-opacity-body italic' : 'resume-opacity-body')} style={{ fontSize: fontSize.itemBody }}>
+          <div className={cn('font-serif space-y-1 resume-opacity-skills', isDummy ? 'italic' : '')} style={{ fontSize: fontSize.itemBody }}>
             {skillsWithLevels.length > 0 && (
               <p>
                 {skillsWithLevels.map((skill) => `${skill.name} (${skill.level})`).join(', ')}
@@ -993,7 +993,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
 
   const renderHarvardHeader = () => (
     <div className="text-center border-b-2 border-gray-900 pb-4 mb-5">
-      <h1 className="font-bold uppercase tracking-widest mb-2" style={{ fontSize: fontSize.name }}>
+      <h1 className="font-bold uppercase tracking-widest mb-2 resume-opacity-name" style={{ fontSize: fontSize.name }}>
         {personalInfo.fullName || <span className="resume-opacity-body italic normal-case">{DUMMY_DATA.personalInfo.fullName}</span>}
       </h1>
       <div className="resume-opacity-body mb-1 font-medium" style={{ fontSize: fontSize.summary }}>
@@ -1008,7 +1008,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
 
   const renderTechHeader = () => (
     <div className="mb-6">
-      <h1 className="font-extrabold tracking-tight mb-1" style={{ fontSize: fontSize.name, color: theme.color }}>
+      <h1 className="font-extrabold tracking-tight mb-1 resume-opacity-name" style={{ fontSize: fontSize.name, color: theme.color }}>
         {personalInfo.fullName || <span className="resume-opacity-body italic font-normal">{DUMMY_DATA.personalInfo.fullName}</span>}
       </h1>
       <div className="resume-opacity-body font-semibold mb-1" style={{ fontSize: Math.round(fontSize.summary * 1.1) }}>
@@ -1023,7 +1023,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
 
   const renderMinimalHeader = () => (
     <div className="mb-8 text-center">
-      <h1 className="font-light tracking-wide mb-2" style={{ fontSize: fontSize.name }}>
+      <h1 className="font-light tracking-wide mb-2 resume-opacity-name" style={{ fontSize: fontSize.name }}>
         {personalInfo.fullName || <span className="resume-opacity-body italic">{DUMMY_DATA.personalInfo.fullName}</span>}
       </h1>
       <div className="resume-opacity-body tracking-widest uppercase mb-2" style={{ fontSize: fontSize.itemSubtitle }}>
@@ -1039,7 +1039,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
   const renderBoldHeader = () => (
     <div className="mb-6 border-b-4 pb-4" style={{ borderColor: theme.color }}>
       <h1
-        className="font-black uppercase tracking-tight mb-1"
+        className="font-black uppercase tracking-tight mb-1 resume-opacity-name"
         style={{ fontSize: Math.round(fontSize.name * 1.15), color: theme.color }}
       >
         {personalInfo.fullName || <span className="resume-opacity-body italic font-normal normal-case">{DUMMY_DATA.personalInfo.fullName}</span>}
@@ -1058,7 +1058,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
     <div className="mb-6">
       <div className="flex items-center gap-2 mb-2">
         <div className="w-3 h-3" style={{ backgroundColor: theme.color }} />
-        <h1 className="font-bold tracking-tight" style={{ fontSize: fontSize.name }}>
+        <h1 className="font-bold tracking-tight resume-opacity-name" style={{ fontSize: fontSize.name }}>
           {personalInfo.fullName || <span className="resume-opacity-body italic font-normal">{DUMMY_DATA.personalInfo.fullName}</span>}
         </h1>
       </div>
@@ -1075,7 +1075,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
   // CORPORATE HEADER - Professional boxed header with subtle divider
   const renderCorporateHeader = () => (
     <div className="mb-6 resume-bg-muted p-5 border-l-4" style={{ borderLeftColor: theme.color }}>
-      <h1 className="font-semibold tracking-normal mb-1" style={{ fontSize: fontSize.name, /* removed */ }}>
+      <h1 className="font-semibold tracking-normal mb-1 resume-opacity-name" style={{ fontSize: fontSize.name, /* removed */ }}>
         {personalInfo.fullName || <span className="resume-opacity-body italic font-normal">{DUMMY_DATA.personalInfo.fullName}</span>}
       </h1>
       <div className="font-medium resume-opacity-body mb-1.5" style={{ fontSize: Math.round(fontSize.summary * 1.05) }}>
@@ -1098,7 +1098,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
       <div className="mb-5 relative">
         <div className="absolute top-0 left-0" style={{ width: 50, height: 50, backgroundColor: theme.color, opacity: 0.2 }} />
         <div className="pl-5 pt-3">
-          <h1 className="font-bold mb-1" style={{ fontSize: Math.round(fontSize.name * 1.1) }}>
+          <h1 className="font-bold mb-1 resume-opacity-name" style={{ fontSize: Math.round(fontSize.name * 1.1) }}>
             <span style={{ color: isPlaceholder ? theme.textColor || '#1e293b' : theme.color }}>{displayName.charAt(0)}</span>
             <span className={isPlaceholder ? 'resume-opacity-body italic font-normal' : 'resume-opacity-body'}>{displayName.slice(1)}</span>
           </h1>
@@ -1121,7 +1121,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
   // ELEGANT HEADER - Centered serif typography with ornamental line (matches PDF)
   const renderElegantHeader = () => (
     <div className="mb-5 text-center">
-      <h1 className="font-serif font-normal mb-2" style={{ fontSize: Math.round(fontSize.name * 1.05), letterSpacing: '0.2em' }}>
+      <h1 className="font-serif font-normal mb-2 resume-opacity-name" style={{ fontSize: Math.round(fontSize.name * 1.05), letterSpacing: '0.2em' }}>
         {personalInfo.fullName?.toUpperCase() || <span className="resume-opacity-body italic normal-case">{DUMMY_DATA.personalInfo.fullName}</span>}
       </h1>
       <div className="font-serif resume-opacity-body tracking-wide mb-2" style={{ fontSize: Math.round(fontSize.summary * 1.1) }}>
@@ -1144,7 +1144,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
     <div className="mb-6 flex gap-4">
       <div className="w-1 rounded-full" style={{ backgroundColor: theme.color }} />
       <div className="flex-1">
-        <h1 className="font-bold tracking-tight mb-1" style={{ fontSize: fontSize.name }}>
+        <h1 className="font-bold tracking-tight mb-1 resume-opacity-name" style={{ fontSize: fontSize.name }}>
           {personalInfo.fullName || <span className="resume-opacity-body italic font-normal">{DUMMY_DATA.personalInfo.fullName}</span>}
         </h1>
         <div className="font-semibold resume-opacity-body mb-1" style={{ fontSize: Math.round(fontSize.summary * 1.05) }}>
@@ -1189,7 +1189,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
     if (isCorporate) {
       return (
         <div className="mb-2 pb-1 border-b-2 border-gray-200">
-          <h2 className="font-bold" style={{ fontSize: fontSize.sectionHeading, /* removed */ }}>
+          <h2 className="font-bold resume-opacity-headers" style={{ fontSize: fontSize.sectionHeading, /* removed */ }}>
             {title}
           </h2>
         </div>
@@ -1201,7 +1201,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
       return (
         <div className="mb-2 flex">
           <div className="px-1.5 py-0.5" style={{ backgroundColor: theme.color + '30' }}>
-            <h2 className="font-bold uppercase" style={{ fontSize: fontSize.sectionHeading, color: theme.color, letterSpacing: '0.05em' }}>
+            <h2 className="font-bold uppercase resume-opacity-headers" style={{ fontSize: fontSize.sectionHeading, color: theme.color, letterSpacing: '0.05em' }}>
               {title}
             </h2>
           </div>
@@ -1213,7 +1213,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
     if (isElegant) {
       return (
         <div className="mb-2 text-center">
-          <h2 className="font-serif font-normal resume-opacity-skills uppercase" style={{ fontSize: Math.round(fontSize.sectionHeading * 0.9), letterSpacing: '0.2em' }}>
+          <h2 className="font-serif font-normal resume-opacity-headers uppercase" style={{ fontSize: Math.round(fontSize.sectionHeading * 0.9), letterSpacing: '0.2em' }}>
             {title}
           </h2>
           <div className="flex items-center justify-center gap-1.5 mt-1">
@@ -1240,7 +1240,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
     // Harvard - Classic with full underline
     if (isHarvard) {
       return (
-        <h2 className="font-bold mb-2 uppercase tracking-wider border-b border-gray-900 pb-1" style={{ fontSize: fontSize.sectionHeading }}>
+        <h2 className="font-bold mb-2 uppercase tracking-wider border-b border-gray-900 pb-1 resume-opacity-headers" style={{ fontSize: fontSize.sectionHeading }}>
           {title}
         </h2>
       );
@@ -1249,7 +1249,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
     // Minimal - Simple and light (matches PDF: font-bold, color #9ca3af)
     if (isMinimal) {
       return (
-        <h2 className="font-bold mb-1.5 uppercase resume-opacity-body" style={{ fontSize: Math.round(fontSize.sectionHeading * 0.85), letterSpacing: '0.15em' }}>
+        <h2 className="font-bold mb-1.5 uppercase resume-opacity-headers" style={{ fontSize: Math.round(fontSize.sectionHeading * 0.85), letterSpacing: '0.15em' }}>
           {title}
         </h2>
       );
@@ -1260,7 +1260,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
       return (
         <div className="flex items-center gap-1.5 mb-2">
           <div className="w-[3px] h-3.5" style={{ backgroundColor: theme.color }} />
-          <h2 className="font-bold uppercase" style={{ fontSize: fontSize.sectionHeading, /* removed */ }}>
+          <h2 className="font-bold uppercase resume-opacity-headers" style={{ fontSize: fontSize.sectionHeading, /* removed */ }}>
             {title}
           </h2>
         </div>
@@ -1270,7 +1270,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
     // Tech (default) - Accent colored (matches PDF: no uppercase, no tracking)
     return (
       <h2
-        className="font-bold mb-2"
+        className="font-bold mb-2 resume-opacity-headers"
         style={{
           color: theme.color,
           fontSize: fontSize.sectionHeading,
@@ -1290,13 +1290,13 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
     return (
       <div className="flex min-h-full">
         <div className="w-1/3 p-6 resume-bg-muted border-r border-gray-200">
-          <h1 className="font-bold mb-1" style={{ fontSize: fontSize.name }}>
+          <h1 className="font-bold mb-1 resume-opacity-name" style={{ fontSize: fontSize.name }}>
             {personalInfo.fullName || <span className="resume-opacity-body italic font-normal">{DUMMY_DATA.personalInfo.fullName}</span>}
           </h1>
           <div className="font-semibold resume-opacity-body mb-1.5" style={{ fontSize: Math.round(fontSize.summary * 1.05) }}>
             {personalInfo.title || <span className="resume-opacity-body italic font-normal">{DUMMY_DATA.personalInfo.title}</span>}
           </div>
-          <p className="mb-4" style={{ fontSize: fontSize.summary, color: personalInfo.summary ? theme.color : theme.textColor || '#1e293b' }}>
+          <p className="resume-opacity-body mb-4" style={{ fontSize: fontSize.summary, color: personalInfo.summary ? theme.color : theme.textColor || '#1e293b' }}>
             {personalInfo.summary || <span className="italic">{DUMMY_DATA.personalInfo.summary}</span>}
           </p>
 
@@ -1467,6 +1467,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
         className={`resume-container ${className || ''}`}
         style={{
           backgroundColor: theme.backgroundColor || '#ffffff',
+          '--opacity-name': OPACITY_LEVEL_MAP[theme.opacity?.name || DEFAULT_OPACITY.name],
           '--opacity-headers': OPACITY_LEVEL_MAP[theme.opacity?.headers || DEFAULT_OPACITY.headers],
           '--opacity-subheaders': OPACITY_LEVEL_MAP[theme.opacity?.subheaders || DEFAULT_OPACITY.subheaders],
           '--opacity-body': OPACITY_LEVEL_MAP[theme.opacity?.body || DEFAULT_OPACITY.body],
