@@ -46,7 +46,7 @@ import {
   Zap,
   Github,
   ExternalLink,
-Circle, Droplets } from "lucide-react";
+  Circle, Droplets, Save, Upload } from "lucide-react";
 import {
   useResumeStore,
   useSections,
@@ -66,6 +66,7 @@ import {
   TEMPLATE_INFO,
   OPACITY_LEVELS,
   DEFAULT_OPACITY,
+  ResumeDataSchema,
 } from '@/lib/schema';
 import * as Popover from '@radix-ui/react-popover';
 import { HexColorPicker, HexColorInput } from 'react-colorful';
@@ -80,6 +81,7 @@ import {
 } from '@/components/editor';
 import { exportToPDF, downloadPDF } from '@/components/pdf';
 import { LivePreview } from '@/components/pdf/LivePreview';
+import { Modal } from '@/components/ui/Modal';
 import { cn } from '@/lib/utils';
 
 // SECTION CONFIGURATION
@@ -974,9 +976,57 @@ export default function ResumeBuilderPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const resumeExportRef = useRef<HTMLDivElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [showDevMode, setShowDevMode] = useState(false);
   // Color picker preview state - allows live preview without saving
   const [previewColor, setPreviewColor] = useState<string | null>(null);
+
+  // Custom Modal State
+  const [modalConfig, setModalConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: 'alert' | 'confirm';
+    onConfirm: () => void;
+    onCancel?: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'alert',
+    onConfirm: () => {},
+  });
+
+  const showAlert = useCallback((title: string, message: string, onConfirm?: () => void) => {
+    setModalConfig({
+      isOpen: true,
+      title,
+      message,
+      type: 'alert',
+      onConfirm: () => {
+        setModalConfig(prev => ({ ...prev, isOpen: false }));
+        if (onConfirm) setTimeout(onConfirm, 10);
+      },
+      onCancel: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
+    });
+  }, []);
+
+  const showConfirm = useCallback((title: string, message: string, onConfirm: () => void, onCancel?: () => void) => {
+    setModalConfig({
+      isOpen: true,
+      title,
+      message,
+      type: 'confirm',
+      onConfirm: () => {
+        setModalConfig(prev => ({ ...prev, isOpen: false }));
+        setTimeout(onConfirm, 10);
+      },
+      onCancel: () => {
+        setModalConfig(prev => ({ ...prev, isOpen: false }));
+        if (onCancel) setTimeout(onCancel, 10);
+      }
+    });
+  }, []);
 
   const sections = useSections();
   const theme = useTheme();
@@ -1030,11 +1080,81 @@ export default function ResumeBuilderPage() {
       console.info('[PDF Export] Download triggered', { filename, size: blob.size });
     } catch (error) {
       console.error('[PDF Export] Export failed', error);
-      alert('PDF Export failed: ' + (error instanceof Error ? error.message : String(error)));
+      showAlert('Export Failed', 'PDF Export failed: ' + (error instanceof Error ? error.message : String(error)));
     } finally {
       setIsExporting(false);
     }
   }, [data]);
+
+  const handleSaveFile = useCallback(() => {
+    const currentState = useResumeStore.getState().data;
+    const savePayload = {
+      _type: "resume-builder-sk",
+      version: "1.0",
+      data: currentState
+    };
+    const blob = new Blob([JSON.stringify(savePayload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    
+    const firstName = currentState.personalInfo.fullName.split(' ')[0] || 'My';
+    link.download = `${firstName}_Resume.sk`;
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, []);
+
+  const handleLoadFile = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const content = e.target?.result as string;
+        const parsed = JSON.parse(content);
+        
+        if (parsed._type !== "resume-builder-sk") {
+          showAlert("Invalid File", "Please upload a valid .sk resume file.");
+          return;
+        }
+
+        const currentData = useResumeStore.getState().data;
+        const hasContent = currentData.personalInfo.fullName.trim() !== '' || currentData.sections.length > 3;
+        
+        const loadParsedData = () => {
+          const result = ResumeDataSchema.safeParse(parsed.data);
+          if (result.success) {
+            useResumeStore.getState().importData(result.data);
+            showAlert("Success", "Resume data loaded successfully!");
+          } else {
+            console.error(result.error);
+            showAlert("Error", "Failed to load resume. The file data is corrupted or incompatible.");
+          }
+          if (fileInputRef.current) fileInputRef.current.value = '';
+        };
+
+        if (hasContent) {
+          showConfirm(
+            "Replace Current Data?",
+            "Loading this file will replace your current data. Any unsaved changes will be lost. Proceed?",
+            loadParsedData,
+            () => { if (fileInputRef.current) fileInputRef.current.value = ''; }
+          );
+        } else {
+          loadParsedData();
+        }
+      } catch (error) {
+        console.error("Error parsing file", error);
+        showAlert("Error", "Failed to read file.");
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      }
+    };
+    reader.readAsText(file);
+  }, [showAlert, showConfirm]);
 
   // Hydration fix
   useEffect(() => {
@@ -1098,9 +1218,11 @@ export default function ResumeBuilderPage() {
               {/* Reset Button */}
               <button
                 onClick={() => {
-                  if (confirm('Start fresh? This will clear all your data.')) {
-                    resetStore();
-                  }
+                  showConfirm(
+                    "Start Fresh?",
+                    "This will clear all your data. Are you sure you want to proceed?",
+                    resetStore
+                  );
                 }}
                 className="p-2.5 hover:bg-muted rounded-lg transition-all duration-200 text-muted-foreground hover:text-foreground btn-press"
                 title="Start Fresh"
@@ -1123,6 +1245,28 @@ export default function ResumeBuilderPage() {
                 aria-label="Toggle Dev Mode"
               >
                 <Sparkles className="w-[18px] h-[18px]" />
+              </button>
+
+              {/* Load Button */}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="p-2.5 hover:bg-muted rounded-lg transition-all duration-200 text-muted-foreground hover:text-foreground btn-press"
+                title="Load Backup (.sk)"
+                aria-label="Load Resume"
+              >
+                <Upload className="w-[18px] h-[18px]" />
+              </button>
+
+              {/* Save Button */}
+              <button
+                type="button"
+                onClick={handleSaveFile}
+                className="p-2.5 hover:bg-muted rounded-lg transition-all duration-200 text-muted-foreground hover:text-foreground btn-press"
+                title="Save Backup (.sk)"
+                aria-label="Save Resume"
+              >
+                <Save className="w-[18px] h-[18px]" />
               </button>
 
               {/* Export Button */}
@@ -1164,10 +1308,28 @@ export default function ResumeBuilderPage() {
               <div className="flex gap-2">
                 <button
                   onClick={toggleDarkMode}
-                  className="p-2.5 border border-border rounded-lg hover:bg-muted transition-colors"
+                  className="p-2.5 border border-border rounded-lg hover:bg-muted transition-colors flex justify-center items-center"
                   aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
                 >
                   {isDarkMode ? <Sun className="w-5 h-5 text-amber-500" /> : <Moon className="w-5 h-5 text-slate-500" />}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="p-2.5 border border-border rounded-lg hover:bg-muted transition-colors flex justify-center items-center"
+                  title="Load Backup"
+                  aria-label="Load Resume"
+                >
+                  <Upload className="w-5 h-5 text-muted-foreground" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveFile}
+                  className="p-2.5 border border-border rounded-lg hover:bg-muted transition-colors flex justify-center items-center"
+                  title="Save Backup"
+                  aria-label="Save Resume"
+                >
+                  <Save className="w-5 h-5 text-muted-foreground" />
                 </button>
                 <button
                   type="button"
@@ -1307,6 +1469,15 @@ export default function ResumeBuilderPage() {
           </div>
         </div>
       </main>
+
+      <input
+        type="file"
+        accept=".sk"
+        ref={fileInputRef}
+        style={{ display: 'none' }}
+        onChange={handleLoadFile}
+      />
+      <Modal {...modalConfig} />
     </div>
   );
 }
