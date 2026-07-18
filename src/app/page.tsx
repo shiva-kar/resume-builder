@@ -46,7 +46,7 @@ import {
   Zap,
   Github,
   ExternalLink,
-} from 'lucide-react';
+Circle, Droplets } from "lucide-react";
 import {
   useResumeStore,
   useSections,
@@ -64,6 +64,8 @@ import {
   DEFAULT_TYPOGRAPHY,
   TYPOGRAPHY_SIZES,
   TEMPLATE_INFO,
+  OPACITY_LEVELS,
+  DEFAULT_OPACITY,
 } from '@/lib/schema';
 import * as Popover from '@radix-ui/react-popover';
 import { HexColorPicker, HexColorInput } from 'react-colorful';
@@ -119,7 +121,7 @@ interface DesignSettingsPanelProps {
 
 const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPreviewColorChange }) => {
   const theme = useTheme();
-  const { updateTheme, updateTypography, addRecentColor, addRecentBackgroundColor, addRecentTextColor } = useResumeStore();
+  const { updateTheme, updateTypography, updateOpacity, addRecentColor, addRecentBackgroundColor, addRecentTextColor } = useResumeStore();
   const [isOpen, setIsOpen] = useState(true);
 
   const [isPickingColor, setIsPickingColor] = useState(false);
@@ -699,30 +701,55 @@ const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPrevie
               </Popover.Root>
             </div>
             
-            {/* Secondary Text Opacity Slider */}
-            <div className="mt-4">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
-                  Text Opacity
-                </span>
-                <span className="text-xs font-medium text-foreground">
-                  {theme.secondaryTextOpacity || 60}%
-                </span>
-              </div>
-              <input
-                type="range"
-                min="10"
-                max="100"
-                step="5"
-                value={theme.secondaryTextOpacity || 60}
-                onChange={(e) => updateTheme({ secondaryTextOpacity: parseInt(e.target.value, 10) })}
-                className="w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
-              />
-              <p className="text-[10px] text-muted-foreground mt-1.5 leading-tight">
-                Adjusts the transparency of secondary text (like dates and subtitles) so they blend perfectly with your chosen text color.
-              </p>
             </div>
+
+          
+          {/* Opacity Controls */}
+          <div className="space-y-3 pt-4 border-t border-border/50">
+            <div className="flex items-center gap-2">
+              <Droplets className="w-4 h-4 text-muted-foreground" />
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Fine-Tune Text Opacity
+              </span>
+            </div>
+
+            {[
+              { label: 'Headers', key: 'headers' as const },
+              { label: 'Subheaders', key: 'subheaders' as const },
+              { label: 'Body Content', key: 'body' as const },
+              { label: 'Skills', key: 'skills' as const },
+            ].map((item) => (
+              <div key={item.key} className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">{item.label}</span>
+                <div className="flex bg-muted/50 p-0.5 rounded-md gap-0.5">
+                  {OPACITY_LEVELS.map((level) => {
+                    const fillOpacity = 
+                      level === 'light' ? 'opacity-25' : 
+                      level === 'medium' ? 'opacity-50' : 
+                      level === 'dark' ? 'opacity-75' : 
+                      'opacity-100';
+                      
+                    return (
+                      <button
+                        key={level}
+                        onClick={() => updateOpacity(item.key, level)}
+                        className={cn(
+                          'w-7 h-7 flex items-center justify-center rounded transition-all duration-200',
+                          (theme.opacity?.[item.key] || DEFAULT_OPACITY[item.key] || 'solid') === level
+                            ? 'bg-primary text-primary-foreground shadow-md font-bold ring-1 ring-primary/50'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                        )}
+                        title={level.toUpperCase()}
+                      >
+                        <Circle className={cn("w-4 h-4 fill-current", fillOpacity)} strokeWidth={1} />
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
+
 
           {/* Global Font Size */}
           <div>
@@ -780,7 +807,7 @@ const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPrevie
                         className={cn(
                           'w-7 h-7 flex items-center justify-center rounded transition-all duration-200',
                           (typography[item.key] || typography.body || 'sm') === s
-                            ? 'bg-background text-foreground shadow-sm'
+                            ? 'bg-primary text-primary-foreground shadow-md font-bold ring-1 ring-primary/50'
                             : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                         )}
                         title={s.toUpperCase()}

@@ -272,6 +272,23 @@ html {
 }
 
 /* Custom Text Color Hierarchy */
+
+.resume-opacity-headers {
+  opacity: var(--opacity-headers, 1);
+}
+
+.resume-opacity-subheaders {
+  opacity: var(--opacity-subheaders, 0.6);
+}
+
+.resume-opacity-body {
+  opacity: var(--opacity-body, 1);
+}
+
+.resume-opacity-skills {
+  opacity: var(--opacity-skills, 1);
+}
+
 .resume-text-primary {
   opacity: 1;
 }

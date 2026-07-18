@@ -284,6 +284,40 @@ export const TypographySettingsSchema = z.object({
   skills: z.enum(['sm', 'md', 'lg', 'xl']).default('sm'),
 });
 
+
+// OPACITY LEVELS
+export const OPACITY_LEVELS = ['light', 'medium', 'dark', 'solid'] as const;
+export type OpacityLevel = typeof OPACITY_LEVELS[number];
+
+export interface OpacitySettings {
+  headers: OpacityLevel;
+  subheaders: OpacityLevel;
+  body: OpacityLevel;
+  skills: OpacityLevel;
+}
+
+export const DEFAULT_OPACITY: OpacitySettings = {
+  headers: 'solid',
+  subheaders: 'solid',
+  body: 'solid',
+  skills: 'solid',
+};
+
+export const OpacitySettingsSchema = z.object({
+  headers: z.enum(['light', 'medium', 'dark', 'solid']),
+  subheaders: z.enum(['light', 'medium', 'dark', 'solid']),
+  body: z.enum(['light', 'medium', 'dark', 'solid']),
+  skills: z.enum(['light', 'medium', 'dark', 'solid']),
+});
+
+export const OPACITY_LEVEL_MAP = {
+  light: 0.4,
+  medium: 0.6,
+  dark: 0.8,
+  solid: 1.0,
+};
+
+
 export const ThemeSchema = z.object({
   template: z.enum([
     'harvard',
@@ -300,7 +334,7 @@ export const ThemeSchema = z.object({
   color: z.string(),
   backgroundColor: z.string().optional(),
   textColor: z.string().optional(),
-  secondaryTextOpacity: z.number().min(10).max(100).optional(),
+  opacity: OpacitySettingsSchema.optional(),
   fontSize: z.enum(['small', 'medium', 'large']),
   pageSize: z.enum(['A4', 'LETTER', 'LEGAL', 'EXECUTIVE', 'B5', 'A5']),
   typography: TypographySettingsSchema.optional(),
@@ -422,7 +456,7 @@ export const createEmptyState = (): ResumeData => ({
     color: '#2563eb',
     backgroundColor: '#ffffff',
     textColor: '#1e293b',
-    secondaryTextOpacity: 60,
+    opacity: { ...DEFAULT_OPACITY },
     fontSize: 'medium',
     pageSize: 'A4',
     typography: { ...DEFAULT_TYPOGRAPHY },
@@ -511,7 +545,7 @@ export const createDummyState = (currentTheme?: Theme): ResumeData => ({
     color: '#2563eb',
     backgroundColor: '#ffffff',
     textColor: '#1e293b',
-    secondaryTextOpacity: 60,
+    opacity: { ...DEFAULT_OPACITY },
     fontSize: 'medium',
     pageSize: 'A4',
     typography: { ...DEFAULT_TYPOGRAPHY },

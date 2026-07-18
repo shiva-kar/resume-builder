@@ -1,4 +1,17 @@
 # Changelog
+
+## [0.6.0] - 2026-07-18
+
+### Added
+- feat: Fine-Tune Text Opacity controls for Headers, Subheaders, Body Content, and Skills.
+- feat: Opacity configurations are mapped to CSS variables for dynamic themes without altering text colors.
+- feat: UI enhancements to highlight selected states clearly for Typography and Opacity controls.
+
+### Fixed
+- fix: Type inference and state syncing issues in typography and opacity components.
+
+---
+
 ## [0.5.0] - 2026-07-12
 
 ### Added

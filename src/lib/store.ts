@@ -16,6 +16,9 @@ import {
   TypographySettings,
   TypographySize,
   DEFAULT_TYPOGRAPHY,
+  OpacitySettings,
+  OpacityLevel,
+  DEFAULT_OPACITY,
   SkillWithLevel,
   CustomFieldDefinition,
   CustomFieldValue,
@@ -89,6 +92,7 @@ interface ResumeStore {
   addRecentBackgroundColor: (color: string) => void;
   addRecentTextColor: (color: string) => void;
   updateTypography: (type: keyof TypographySettings, size: TypographySize) => void;
+  updateOpacity: (type: keyof OpacitySettings, level: OpacityLevel) => void;
   toggleDarkMode: () => void;
   setMobilePreview: (show: boolean) => void;
 
@@ -623,6 +627,19 @@ export const useResumeStore = create<ResumeStore>()(
               typography: {
                 ...(state.data.theme.typography || DEFAULT_TYPOGRAPHY),
                 [type]: size,
+              },
+            },
+          },
+        })),
+      updateOpacity: (type, level) =>
+        set((state) => ({
+          data: {
+            ...state.data,
+            theme: {
+              ...state.data.theme,
+              opacity: {
+                ...(state.data.theme.opacity || DEFAULT_OPACITY),
+                [type]: level,
               },
             },
           },
