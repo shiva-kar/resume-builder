@@ -5,6 +5,7 @@ import { Trash2, Plus } from 'lucide-react';
 import { Section } from '@/lib/schema';
 import { useResumeStore } from '@/lib/store';
 import { FormInput, FormTextarea } from './FormInput';
+import { MonthPicker } from '@/components/ui/MonthPicker';
 
 interface EducationFormProps {
   section: Section;
@@ -54,30 +55,21 @@ export const EducationForm: React.FC<EducationFormProps> = ({ section }) => {
                 }
               />
 
-              <div className="flex gap-3 items-center flex-wrap">
-                <FormInput
-                  type="month"
-                  placeholder="Start Date"
-                  value={item.startDate || ''}
-                  onChange={(e) =>
-                    updateSectionItem(section.id, item.id, {
-                      startDate: e.target.value,
-                    })
-                  }
-                  className="w-auto"
-                />
-                <span className="text-muted-foreground">to</span>
-                <FormInput
-                  type="month"
-                  placeholder="End Date"
-                  value={item.endDate || ''}
-                  onChange={(e) =>
-                    updateSectionItem(section.id, item.id, {
-                      endDate: e.target.value,
-                    })
-                  }
-                  className="w-auto"
-                />
+              <div className="flex gap-3 items-end flex-wrap">
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Start Date</label>
+                  <MonthPicker
+                    value={item.startDate || ''}
+                    onChange={(val) => updateSectionItem(section.id, item.id, { startDate: val })}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">End Date</label>
+                  <MonthPicker
+                    value={item.endDate || ''}
+                    onChange={(val) => updateSectionItem(section.id, item.id, { endDate: val })}
+                  />
+                </div>
               </div>
 
               <FormTextarea

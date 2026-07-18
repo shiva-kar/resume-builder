@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { temporal } from 'zundo';
 import {
   ResumeData,
   PersonalInfo,
@@ -43,6 +44,7 @@ interface ResumeStore {
   // Section Actions
   addSection: (type: SectionType) => void;
   addCustomSection: (template?: keyof typeof CUSTOM_FIELD_TEMPLATES) => void;
+  convertToCustomSection: (sectionId: string) => void;
   removeSection: (id: string) => void;
   updateSection: (id: string, updates: Partial<Section>) => void;
   toggleSectionVisibility: (id: string) => void;
@@ -183,8 +185,9 @@ const createSection = (type: SectionType, template?: keyof typeof CUSTOM_FIELD_T
 // ZUSTAND STORE WITH PERSIST
 
 export const useResumeStore = create<ResumeStore>()(
-  persist(
-    (set, get) => ({
+  temporal(
+    persist(
+      (set, get) => ({
       // Initial State
       data: createEmptyState(),
       isDarkMode: false,
@@ -259,6 +262,96 @@ export const useResumeStore = create<ResumeStore>()(
             sections: [...state.data.sections, createSection('custom', template)],
           },
         })),
+
+      convertToCustomSection: (id) =>
+        set((state) => {
+          const sectionIndex = state.data.sections.findIndex(s => s.id === id);
+          if (sectionIndex === -1) return state;
+
+          const section = state.data.sections[sectionIndex];
+          if (section.type === 'custom') return state; // Already custom
+
+          let newFieldDefinitions: CustomFieldDefinition[] = [];
+          
+          if (section.type === 'experience') {
+            newFieldDefinitions = [
+              { id: 'position', type: 'text', label: 'Position / Title', required: true },
+              { id: 'company', type: 'text', label: 'Company Name' },
+              { id: 'location', type: 'text', label: 'Location' },
+              { id: 'date', type: 'dateRange', label: 'Duration' },
+              { id: 'description', type: 'textarea', label: 'Description' }
+            ];
+          } else if (section.type === 'education') {
+            newFieldDefinitions = [
+              { id: 'degree', type: 'text', label: 'Degree / Program', required: true },
+              { id: 'institution', type: 'text', label: 'Institution' },
+              { id: 'location', type: 'text', label: 'Location' },
+              { id: 'date', type: 'dateRange', label: 'Duration' },
+              { id: 'description', type: 'textarea', label: 'Description' }
+            ];
+          } else if (section.type === 'skills') {
+            newFieldDefinitions = [
+              { id: 'category', type: 'text', label: 'Category', required: true },
+              { id: 'skills', type: 'tags', label: 'Skills' }
+            ];
+          } else if (section.type === 'projects') {
+            newFieldDefinitions = [...CUSTOM_FIELD_TEMPLATES.project];
+          } else if (section.type === 'certifications') {
+            newFieldDefinitions = [...CUSTOM_FIELD_TEMPLATES.certification];
+          }
+
+          const newItems = section.items.map(item => {
+            const customFields = [];
+            if (section.type === 'experience') {
+              customFields.push({ fieldId: 'position', value: item.position || '' });
+              customFields.push({ fieldId: 'company', value: item.company || '' });
+              customFields.push({ fieldId: 'location', value: item.location || '' });
+              customFields.push({ fieldId: 'date', value: `${item.startDate || ''}|${item.current ? 'Present' : (item.endDate || '')}` });
+              customFields.push({ fieldId: 'description', value: item.description || '' });
+            } else if (section.type === 'education') {
+              customFields.push({ fieldId: 'degree', value: item.degree || '' });
+              customFields.push({ fieldId: 'institution', value: item.institution || '' });
+              customFields.push({ fieldId: 'location', value: item.location || '' });
+              customFields.push({ fieldId: 'date', value: `${item.startDate || ''}|${item.current ? 'Present' : (item.endDate || '')}` });
+              customFields.push({ fieldId: 'description', value: item.description || '' });
+            } else if (section.type === 'skills') {
+              const combinedSkills = [
+                ...(item.skillsWithLevels || []).map(s => `${s.name}${s.level ? ` (${s.level})` : ''}`),
+                ...(item.skills || [])
+              ];
+              customFields.push({ fieldId: 'category', value: item.title || '' });
+              customFields.push({ fieldId: 'skills', value: combinedSkills });
+            } else if (section.type === 'projects') {
+              customFields.push({ fieldId: 'title', value: item.title || '' });
+              customFields.push({ fieldId: 'link', value: item.subtitle || '' });
+              customFields.push({ fieldId: 'date', value: `${item.startDate || ''}|${item.current ? 'Present' : (item.endDate || '')}` });
+              customFields.push({ fieldId: 'description', value: item.description || '' });
+            } else if (section.type === 'certifications') {
+              customFields.push({ fieldId: 'title', value: item.title || '' });
+              customFields.push({ fieldId: 'issuer', value: item.institution || '' });
+              customFields.push({ fieldId: 'date', value: item.startDate || '' });
+            }
+            return {
+              id: item.id,
+              customFields
+            };
+          });
+
+          const newSections = [...state.data.sections];
+          newSections[sectionIndex] = {
+            ...section,
+            type: 'custom',
+            fieldDefinitions: newFieldDefinitions,
+            items: newItems
+          };
+
+          return {
+            data: {
+              ...state.data,
+              sections: newSections
+            }
+          };
+        }),
 
       removeSection: (id) =>
         set((state) => ({
@@ -664,7 +757,12 @@ export const useResumeStore = create<ResumeStore>()(
         isDarkMode: state.isDarkMode,
       }),
     }
-  )
+  ),
+  {
+    partialize: (state) => ({ data: state.data }),
+    limit: 50,
+  }
+)
 );
 
 // SELECTOR HOOKS FOR OPTIMIZED RERENDERS

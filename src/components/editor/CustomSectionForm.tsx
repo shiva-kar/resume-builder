@@ -25,6 +25,7 @@ import {
 } from '@/lib/schema';
 import { useResumeStore } from '@/lib/store';
 import { FormInput, FormTextarea } from './FormInput';
+import { MonthPicker } from '@/components/ui/MonthPicker';
 import { cn } from '@/lib/utils';
 
 interface CustomSectionFormProps {
@@ -181,36 +182,44 @@ const CustomFieldRenderer: React.FC<{
 
     case 'date':
       return (
-        <FormInput
-          type="month"
-          label={field.label}
-          value={(value as string) || ''}
-          onChange={(e) => onChange(e.target.value)}
-        />
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-muted-foreground">{field.label}</label>
+          <MonthPicker
+            value={(value as string) || ''}
+            onChange={(val) => onChange(val)}
+          />
+        </div>
       );
 
     case 'dateRange':
       const [start, end] = ((value as string) || '|').split('|');
+      const isPresent = end === 'Present';
       return (
-        <div className="space-y-1">
+        <div className="space-y-2">
           <label className="text-xs font-medium text-muted-foreground">{field.label}</label>
           <div className="flex items-center gap-2">
-            <FormInput
-              type="month"
-              placeholder="Start"
+            <MonthPicker
               value={start || ''}
-              onChange={(e) => onChange(`${e.target.value}|${end || ''}`)}
+              onChange={(val) => onChange(`${val}|${end || ''}`)}
               className="flex-1"
             />
             <span className="text-muted-foreground text-sm">to</span>
-            <FormInput
-              type="month"
-              placeholder="End"
-              value={end || ''}
-              onChange={(e) => onChange(`${start || ''}|${e.target.value}`)}
+            <MonthPicker
+              value={isPresent ? '' : (end || '')}
+              onChange={(val) => onChange(`${start || ''}|${val}`)}
               className="flex-1"
+              disabled={isPresent}
             />
           </div>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={isPresent}
+              onChange={(e) => onChange(`${start || ''}|${e.target.checked ? 'Present' : ''}`)}
+              className="rounded border-border text-primary focus:ring-primary/20 bg-background/50 cursor-pointer"
+            />
+            <span className="text-xs text-muted-foreground">Present / Currently working here</span>
+          </label>
         </div>
       );
 

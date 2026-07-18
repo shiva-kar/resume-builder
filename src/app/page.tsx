@@ -1,5 +1,6 @@
 'use client';
 
+import { useStore } from 'zustand';
 import React, { useState, useEffect, useMemo, useCallback, useRef, memo } from 'react';
 import {
   DndContext,
@@ -46,7 +47,7 @@ import {
   Zap,
   Github,
   ExternalLink,
-  Circle, Droplets, Save, Upload } from "lucide-react";
+  Circle, Droplets, Save, Upload, Undo2, Redo2 } from "lucide-react";
 import {
   useResumeStore,
   useSections,
@@ -334,7 +335,7 @@ const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPrevie
                         'text-[10px] font-semibold transition-colors',
                         isSelected
                           ? 'text-foreground dark:text-foreground'
-                          : 'text-muted-foreground group-hover:text-foreground dark:text-muted-foreground dark:group-hover:text-foreground'
+                          : 'text-muted-foreground group-hover:text-foreground dark:group-hover:text-foreground'
                       )}>
                         {t.label}
                       </span>
@@ -1037,9 +1038,34 @@ export default function ResumeBuilderPage() {
     data,
     reorderSections,
     toggleDarkMode,
-    setMobilePreview,
     resetStore,
+    setMobilePreview,
+    updateSection,
+    importData,
   } = useResumeStore();
+
+  const { undo, redo, pastStates, futureStates } = useStore(useResumeStore.temporal, (state) => state);
+
+  // Keyboard Shortcuts for Undo/Redo
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        if (e.shiftKey) {
+          e.preventDefault();
+          if (futureStates.length > 0) redo();
+        } else {
+          e.preventDefault();
+          if (pastStates.length > 0) undo();
+        }
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+        e.preventDefault();
+        if (futureStates.length > 0) redo();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [undo, redo, pastStates.length, futureStates.length]);
 
   // DnD sensors
   const sensors = useSensors(
@@ -1213,6 +1239,28 @@ export default function ResumeBuilderPage() {
                 ) : (
                   <Moon className="w-[18px] h-[18px] text-slate-500" />
                 )}
+              </button>
+
+              {/* Undo Button */}
+              <button
+                onClick={() => pastStates.length > 0 && undo()}
+                disabled={pastStates.length === 0}
+                className="p-2.5 hover:bg-muted rounded-lg transition-all duration-200 text-muted-foreground hover:text-foreground btn-press disabled:opacity-30 disabled:cursor-not-allowed"
+                title="Undo (Ctrl+Z)"
+                aria-label="Undo"
+              >
+                <Undo2 className="w-[18px] h-[18px]" />
+              </button>
+
+              {/* Redo Button */}
+              <button
+                onClick={() => futureStates.length > 0 && redo()}
+                disabled={futureStates.length === 0}
+                className="p-2.5 hover:bg-muted rounded-lg transition-all duration-200 text-muted-foreground hover:text-foreground btn-press disabled:opacity-30 disabled:cursor-not-allowed"
+                title="Redo (Ctrl+Y)"
+                aria-label="Redo"
+              >
+                <Redo2 className="w-[18px] h-[18px]" />
               </button>
 
               {/* Reset Button */}
