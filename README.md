@@ -1,6 +1,6 @@
 # Resume Builder
 
-[![Version](https://img.shields.io/badge/Version-0.5.0-blue?style=for-the-badge)](https://github.com/shiva-kar/resume-builder/releases)
+[![Version](https://img.shields.io/badge/Version-0.6.1-blue?style=for-the-badge)](https://github.com/shiva-kar/resume-builder/releases)
 [![Status](https://img.shields.io/badge/Status-Beta-orange?style=for-the-badge)](https://github.com/shiva-kar/resume-builder/releases)
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-shivakar.me-green?style=for-the-badge)](https://shivakar.me/resume-builder/)
 [![Next.js](https://img.shields.io/badge/Next.js-14-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
@@ -10,8 +10,6 @@
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
 A resume builder with real-time preview, 10 templates, drag-and-drop sections, and desktop support.
-
-> **Built with AI assistance.** See [AI_WORKFLOW.md](AI_WORKFLOW.md) for details.
 
 ---
 
@@ -31,8 +29,8 @@ A resume builder with real-time preview, 10 templates, drag-and-drop sections, a
 | Platform | Download | Description |
 |----------|----------|-------------|
 | 🌐 **Web App** | [Launch Online](https://shivakar.me/resume-builder/) | No installation required |
-| 🖥️ **Windows Installer** | [Resume-Builder-Beta-0.5.0-win.exe](https://github.com/shiva-kar/resume-builder/releases/latest/download/Resume-Builder-Beta-0.5.0-win.exe) | Full installation with uninstaller |
-| 🖥️ **Windows Portable** | [Resume-Builder-Beta-0.5.0-Portable.exe](https://github.com/shiva-kar/resume-builder/releases/latest/download/Resume-Builder-Beta-0.5.0-Portable.exe) | No installation, run anywhere |
+| 🖥️ **Windows Installer** | [Resume-Builder-Beta-0.6.1-win.exe](https://github.com/shiva-kar/resume-builder/releases/latest/download/Resume-Builder-Beta-0.6.1-win.exe) | Full installation with uninstaller |
+| 🖥️ **Windows Portable** | [Resume-Builder-Beta-0.6.1-Portable.exe](https://github.com/shiva-kar/resume-builder/releases/latest/download/Resume-Builder-Beta-0.6.1-Portable.exe) | No installation, run anywhere |
 | 📦 **Source Code** | [Clone Repository](https://github.com/shiva-kar/resume-builder) | Build from source |
 
 ---
@@ -81,33 +79,6 @@ A resume builder with real-time preview, 10 templates, drag-and-drop sections, a
 - Offline functionality
 - Fast startup
 - Portable version available
-
----
-
-## 🧠 How This Was Built
-
-I built this project using AI tools (like GitHub Copilot and Claude) inside VS Code. Instead of writing every line manually, I:
-
-- Wrote clear prompts to describe what I needed
-- Let AI generate code, then reviewed and tested it
-- Fixed issues by explaining the problem to AI
-- Learned from the code AI produced
-
-This is how I approach most of my projects — using AI as a tool to build things faster while learning along the way.
-
----
-
-## ⚙️ Development Approach
-
-I'm a student learning to code, and I use AI tools to help me build projects that would otherwise take much longer.
-
-My workflow:
-- Describe what I want to build
-- Get AI to generate code
-- Test and fix any issues
-- Learn from the process
-
-This project is a good example of what's possible when you combine basic programming knowledge with AI assistance.
 
 ---
 
@@ -281,7 +252,7 @@ This project is currently in **Beta**.
 | Phase | Versions | Status |
 |-------|----------|--------|
 | **Alpha** | 0.1.0-alpha - 0.7.0-alpha | ✅ Completed |
-| **Beta** | 0.1.0-beta - 0.4.0-beta | 🚧 Current |
+| **Beta** | 0.1.0-beta - 0.6.1-beta | 🚧 Current |
 | **Stable** | 1.0+ | ⏳ Planned |
 
 Earlier versions were released as **Alpha** builds for testing and experimentation.
@@ -297,6 +268,22 @@ No stable (1.0) release yet.
 See [CHANGELOG.md](CHANGELOG.md) for full version history.
 
 ### Recent Releases
+
+#### [0.6.1-beta] - 2026-07-18
+- Fix opacity control across all templates (name, titles, skills, body)
+- Add `name` field to `OpacitySettings` for accurate persistence
+
+#### [0.6.0-beta] - 2026-07-18
+- Fine-Tune Text Opacity controls for Headers, Subheaders, Body Content, and Skills
+- Opacity configurations mapped to CSS variables for dynamic themes
+- UI enhancements for Typography and Opacity controls
+
+#### [0.5.0-beta] - 2026-07-12
+- Add unlimited custom colors, simplify color picker, use Radix Popover
+- Add Typography controls for all sections and quick skills support
+- Dynamic DOM pagination engine with page-break avoidance
+- Add paper size selector and paginated preview UI
+- Separate Job Title and Headline, fix Portfolio layout
 
 #### [0.4.0-beta] - 2026-02-21
 - Fixed skills, custom sections, and markdown not rendering in PDF export

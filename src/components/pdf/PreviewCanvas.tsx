@@ -460,6 +460,7 @@ interface PreviewCanvasProps {
   resumeRef?: React.MutableRefObject<HTMLDivElement | null>;
   className?: string;
   minHeight?: number;
+  isExportMode?: boolean;
 }
 
 export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ 
@@ -467,10 +468,17 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
   spacerMap, 
   resumeRef, 
   className,
-  minHeight 
+  minHeight,
+  isExportMode = false 
 }) => {
   const { personalInfo, sections, theme } = data;
   const typography = theme.typography || DEFAULT_TYPOGRAPHY;
+
+  // Use empty dummy data during export so placeholder sections disappear
+  const ACTIVE_DUMMY_DATA = isExportMode ? {
+    personalInfo: { fullName: '', title: '', email: '', phone: '', location: '', summary: '' },
+    experience: [], education: [], projects: [], certifications: [], volunteer: [], awards: [], publications: [], custom: [], skills: []
+  } as unknown as typeof DUMMY_DATA : DUMMY_DATA;
 
   // Template checks
   const isHarvard = theme.template === 'harvard';
@@ -508,7 +516,19 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
   }, [typography, scale]);
 
   // Visible sections
-  const visibleSections = useMemo(() => sections.filter((s) => s.isVisible), [sections]);
+  const visibleSections = useMemo(() => {
+    const visible = sections.filter((s) => s.isVisible);
+    if (!isExportMode) return visible;
+    
+    // Completely remove empty sections from the DOM during export
+    return visible.filter(s => {
+      if (s.type === 'skills') {
+        const item = s.items[0];
+        return item?.skills?.length || item?.skillsWithLevels?.length;
+      }
+      return s.items.length > 0;
+    });
+  }, [sections, isExportMode]);
 
   const setResumeExportNode = (node: HTMLDivElement | null): void => {
     if (resumeRef) {
@@ -595,7 +615,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
 
     return {
       skillsWithLevels,
-      displaySkills: hasPlainSkills ? (item?.skills || []) : DUMMY_DATA.skills,
+      displaySkills: hasPlainSkills ? (item?.skills || []) : ACTIVE_DUMMY_DATA.skills,
       isDummy: !hasAnySkills,
     };
   };
@@ -814,28 +834,28 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
 
   const getDummyItemsBySectionType = (sectionType: Section['type']): SectionItem[] => {
     if (sectionType === 'experience') {
-      return DUMMY_DATA.experience as SectionItem[];
+      return ACTIVE_DUMMY_DATA.experience as SectionItem[];
     }
     if (sectionType === 'education') {
-      return DUMMY_DATA.education as SectionItem[];
+      return ACTIVE_DUMMY_DATA.education as SectionItem[];
     }
     if (sectionType === 'projects') {
-      return DUMMY_DATA.projects as SectionItem[];
+      return ACTIVE_DUMMY_DATA.projects as SectionItem[];
     }
     if (sectionType === 'certifications') {
-      return DUMMY_DATA.certifications as SectionItem[];
+      return ACTIVE_DUMMY_DATA.certifications as SectionItem[];
     }
     if (sectionType === 'volunteer') {
-      return DUMMY_DATA.volunteer as SectionItem[];
+      return ACTIVE_DUMMY_DATA.volunteer as SectionItem[];
     }
     if (sectionType === 'awards') {
-      return DUMMY_DATA.awards as SectionItem[];
+      return ACTIVE_DUMMY_DATA.awards as SectionItem[];
     }
     if (sectionType === 'publications') {
-      return DUMMY_DATA.publications as SectionItem[];
+      return ACTIVE_DUMMY_DATA.publications as SectionItem[];
     }
     if (sectionType === 'custom') {
-      return DUMMY_DATA.custom as SectionItem[];
+      return ACTIVE_DUMMY_DATA.custom as SectionItem[];
     }
     return [];
   };
@@ -1108,13 +1128,13 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
   const renderHarvardHeader = () => (
     <div className="text-center border-b-2 border-gray-900 pb-4 mb-5">
       <h1 className="font-bold uppercase tracking-widest mb-2 resume-opacity-name" style={{ fontSize: fontSize.name }}>
-        {personalInfo.fullName || <span className="resume-opacity-body italic normal-case">{DUMMY_DATA.personalInfo.fullName}</span>}
+        {personalInfo.fullName || <span className="resume-opacity-body italic normal-case">{ACTIVE_DUMMY_DATA.personalInfo.fullName}</span>}
       </h1>
       <div className="resume-opacity-body mb-1 font-medium" style={{ fontSize: fontSize.summary }}>
-        {personalInfo.title || <span className="resume-opacity-body italic font-normal">{DUMMY_DATA.personalInfo.title}</span>}
+        {personalInfo.title || <span className="resume-opacity-body italic font-normal">{ACTIVE_DUMMY_DATA.personalInfo.title}</span>}
       </div>
       <p className="resume-opacity-body mb-2" style={{ fontSize: fontSize.summary }}>
-        {personalInfo.summary || <span className="resume-opacity-body italic">{DUMMY_DATA.personalInfo.summary}</span>}
+        {personalInfo.summary || <span className="resume-opacity-body italic">{ACTIVE_DUMMY_DATA.personalInfo.summary}</span>}
       </p>
       {renderContactInfo(true, false)}
     </div>
@@ -1123,13 +1143,13 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
   const renderTechHeader = () => (
     <div className="mb-6">
       <h1 className="font-extrabold tracking-tight mb-1 resume-opacity-name" style={{ fontSize: fontSize.name, color: theme.color }}>
-        {personalInfo.fullName || <span className="resume-opacity-body italic font-normal">{DUMMY_DATA.personalInfo.fullName}</span>}
+        {personalInfo.fullName || <span className="resume-opacity-body italic font-normal">{ACTIVE_DUMMY_DATA.personalInfo.fullName}</span>}
       </h1>
       <div className="resume-opacity-body font-semibold mb-1" style={{ fontSize: Math.round(fontSize.summary * 1.1) }}>
-        {personalInfo.title || <span className="resume-opacity-body italic font-normal">{DUMMY_DATA.personalInfo.title}</span>}
+        {personalInfo.title || <span className="resume-opacity-body italic font-normal">{ACTIVE_DUMMY_DATA.personalInfo.title}</span>}
       </div>
       <p className="resume-opacity-body mb-3" style={{ fontSize: fontSize.summary }}>
-        {personalInfo.summary || <span className="resume-opacity-body italic">{DUMMY_DATA.personalInfo.summary}</span>}
+        {personalInfo.summary || <span className="resume-opacity-body italic">{ACTIVE_DUMMY_DATA.personalInfo.summary}</span>}
       </p>
       {renderContactInfo(false, true)}
     </div>
@@ -1138,13 +1158,13 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
   const renderMinimalHeader = () => (
     <div className="mb-8 text-center">
       <h1 className="font-light tracking-wide mb-2 resume-opacity-name" style={{ fontSize: fontSize.name }}>
-        {personalInfo.fullName || <span className="resume-opacity-body italic">{DUMMY_DATA.personalInfo.fullName}</span>}
+        {personalInfo.fullName || <span className="resume-opacity-body italic">{ACTIVE_DUMMY_DATA.personalInfo.fullName}</span>}
       </h1>
       <div className="resume-opacity-body tracking-widest uppercase mb-2" style={{ fontSize: fontSize.itemSubtitle }}>
-        {personalInfo.title || <span className="resume-opacity-body italic normal-case">{DUMMY_DATA.personalInfo.title}</span>}
+        {personalInfo.title || <span className="resume-opacity-body italic normal-case">{ACTIVE_DUMMY_DATA.personalInfo.title}</span>}
       </div>
       <p className="resume-opacity-body mb-3" style={{ fontSize: fontSize.summary }}>
-        {personalInfo.summary || <span className="resume-opacity-body italic">{DUMMY_DATA.personalInfo.summary}</span>}
+        {personalInfo.summary || <span className="resume-opacity-body italic">{ACTIVE_DUMMY_DATA.personalInfo.summary}</span>}
       </p>
       {renderContactInfo(true, false)}
     </div>
@@ -1156,13 +1176,13 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
         className="font-black uppercase tracking-tight mb-1 resume-opacity-name"
         style={{ fontSize: Math.round(fontSize.name * 1.15), color: theme.color }}
       >
-        {personalInfo.fullName || <span className="resume-opacity-body italic font-normal normal-case">{DUMMY_DATA.personalInfo.fullName}</span>}
+        {personalInfo.fullName || <span className="resume-opacity-body italic font-normal normal-case">{ACTIVE_DUMMY_DATA.personalInfo.fullName}</span>}
       </h1>
       <div className="font-bold resume-opacity-body mb-1" style={{ fontSize: Math.round(fontSize.summary * 1.1) }}>
-        {personalInfo.title || <span className="resume-opacity-body italic font-normal">{DUMMY_DATA.personalInfo.title}</span>}
+        {personalInfo.title || <span className="resume-opacity-body italic font-normal">{ACTIVE_DUMMY_DATA.personalInfo.title}</span>}
       </div>
       <p className="resume-opacity-body font-medium mb-3" style={{ fontSize: fontSize.summary }}>
-        {personalInfo.summary || <span className="resume-opacity-body italic font-normal">{DUMMY_DATA.personalInfo.summary}</span>}
+        {personalInfo.summary || <span className="resume-opacity-body italic font-normal">{ACTIVE_DUMMY_DATA.personalInfo.summary}</span>}
       </p>
       {renderContactInfo(false, true)}
     </div>
@@ -1173,14 +1193,14 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
       <div className="flex items-center gap-2 mb-2">
         <div className="w-3 h-3" style={{ backgroundColor: theme.color }} />
         <h1 className="font-bold tracking-tight resume-opacity-name" style={{ fontSize: fontSize.name }}>
-          {personalInfo.fullName || <span className="resume-opacity-body italic font-normal">{DUMMY_DATA.personalInfo.fullName}</span>}
+          {personalInfo.fullName || <span className="resume-opacity-body italic font-normal">{ACTIVE_DUMMY_DATA.personalInfo.fullName}</span>}
         </h1>
       </div>
       <div className="font-medium resume-opacity-body mb-1" style={{ fontSize: fontSize.summary }}>
-        {personalInfo.title || <span className="resume-opacity-body italic font-normal">{DUMMY_DATA.personalInfo.title}</span>}
+        {personalInfo.title || <span className="resume-opacity-body italic font-normal">{ACTIVE_DUMMY_DATA.personalInfo.title}</span>}
       </div>
       <p className="resume-opacity-body mb-3" style={{ fontSize: fontSize.summary }}>
-        {personalInfo.summary || <span className="resume-opacity-body italic">{DUMMY_DATA.personalInfo.summary}</span>}
+        {personalInfo.summary || <span className="resume-opacity-body italic">{ACTIVE_DUMMY_DATA.personalInfo.summary}</span>}
       </p>
       {renderContactInfo(false, true)}
     </div>
@@ -1190,13 +1210,13 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
   const renderCorporateHeader = () => (
     <div className="mb-6 resume-bg-muted p-5 border-l-4" style={{ borderLeftColor: theme.color }}>
       <h1 className="font-semibold tracking-normal mb-1 resume-opacity-name" style={{ fontSize: fontSize.name, /* removed */ }}>
-        {personalInfo.fullName || <span className="resume-opacity-body italic font-normal">{DUMMY_DATA.personalInfo.fullName}</span>}
+        {personalInfo.fullName || <span className="resume-opacity-body italic font-normal">{ACTIVE_DUMMY_DATA.personalInfo.fullName}</span>}
       </h1>
       <div className="font-medium resume-opacity-body mb-1.5" style={{ fontSize: Math.round(fontSize.summary * 1.05) }}>
-        {personalInfo.title || <span className="resume-opacity-body italic font-normal">{DUMMY_DATA.personalInfo.title}</span>}
+        {personalInfo.title || <span className="resume-opacity-body italic font-normal">{ACTIVE_DUMMY_DATA.personalInfo.title}</span>}
       </div>
       <p className="resume-opacity-body mb-3 leading-relaxed" style={{ fontSize: fontSize.summary }}>
-        {personalInfo.summary || <span className="resume-opacity-body italic">{DUMMY_DATA.personalInfo.summary}</span>}
+        {personalInfo.summary || <span className="resume-opacity-body italic">{ACTIVE_DUMMY_DATA.personalInfo.summary}</span>}
       </p>
       <div className="pt-3 border-t border-gray-200">
         {renderContactInfo(false, true)}
@@ -1206,7 +1226,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
 
   // CREATIVE HEADER - Asymmetric layout with bold accent block (matches PDF: 50x50)
   const renderCreativeHeader = () => {
-    const displayName = personalInfo.fullName || DUMMY_DATA.personalInfo.fullName;
+    const displayName = personalInfo.fullName || ACTIVE_DUMMY_DATA.personalInfo.fullName;
     const isPlaceholder = !personalInfo.fullName;
     return (
       <div className="mb-5 relative">
@@ -1217,13 +1237,13 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
             <span className={isPlaceholder ? 'resume-opacity-body italic font-normal' : 'resume-opacity-body'}>{displayName.slice(1)}</span>
           </h1>
           <div className="font-semibold resume-opacity-body mb-1" style={{ fontSize: Math.round(fontSize.summary * 1.05) }}>
-            {personalInfo.title || <span className="resume-opacity-body italic font-normal">{DUMMY_DATA.personalInfo.title}</span>}
+            {personalInfo.title || <span className="resume-opacity-body italic font-normal">{ACTIVE_DUMMY_DATA.personalInfo.title}</span>}
           </div>
           <p className="resume-opacity-body italic mb-2" style={{ fontSize: fontSize.summary }}>
             {personalInfo.summary ? (
               <>&ldquo;{personalInfo.summary}&rdquo;</>
             ) : (
-              <span className="resume-opacity-body">&ldquo;{DUMMY_DATA.personalInfo.summary}&rdquo;</span>
+              <span className="resume-opacity-body">&ldquo;{ACTIVE_DUMMY_DATA.personalInfo.summary}&rdquo;</span>
             )}
           </p>
           {renderContactInfo(false, true)}
@@ -1236,10 +1256,10 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
   const renderElegantHeader = () => (
     <div className="mb-5 text-center">
       <h1 className="font-serif font-normal mb-2 resume-opacity-name" style={{ fontSize: Math.round(fontSize.name * 1.05), letterSpacing: '0.2em' }}>
-        {personalInfo.fullName?.toUpperCase() || <span className="resume-opacity-body italic normal-case">{DUMMY_DATA.personalInfo.fullName}</span>}
+        {personalInfo.fullName?.toUpperCase() || <span className="resume-opacity-body italic normal-case">{ACTIVE_DUMMY_DATA.personalInfo.fullName}</span>}
       </h1>
       <div className="font-serif resume-opacity-body tracking-wide mb-2" style={{ fontSize: Math.round(fontSize.summary * 1.1) }}>
-        {personalInfo.title?.toUpperCase() || <span className="resume-opacity-body italic normal-case">{DUMMY_DATA.personalInfo.title.toUpperCase()}</span>}
+        {personalInfo.title?.toUpperCase() || <span className="resume-opacity-body italic normal-case">{ACTIVE_DUMMY_DATA.personalInfo.title.toUpperCase()}</span>}
       </div>
       <div className="flex items-center justify-center gap-3 mb-2">
         <div style={{ width: 40, height: 1, backgroundColor: '#d1d5db' }} />
@@ -1247,7 +1267,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
         <div style={{ width: 40, height: 1, backgroundColor: '#d1d5db' }} />
       </div>
       <p className="resume-opacity-body font-serif italic mb-2.5" style={{ fontSize: fontSize.summary }}>
-        {personalInfo.summary || <span className="resume-opacity-body">{DUMMY_DATA.personalInfo.summary}</span>}
+        {personalInfo.summary || <span className="resume-opacity-body">{ACTIVE_DUMMY_DATA.personalInfo.summary}</span>}
       </p>
       {renderContactInfo(true, false)}
     </div>
@@ -1259,13 +1279,13 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
       <div className="w-1 rounded-full" style={{ backgroundColor: theme.color }} />
       <div className="flex-1">
         <h1 className="font-bold tracking-tight mb-1 resume-opacity-name" style={{ fontSize: fontSize.name }}>
-          {personalInfo.fullName || <span className="resume-opacity-body italic font-normal">{DUMMY_DATA.personalInfo.fullName}</span>}
+          {personalInfo.fullName || <span className="resume-opacity-body italic font-normal">{ACTIVE_DUMMY_DATA.personalInfo.fullName}</span>}
         </h1>
         <div className="font-semibold resume-opacity-body mb-1" style={{ fontSize: Math.round(fontSize.summary * 1.05) }}>
-          {personalInfo.title || <span className="resume-opacity-body italic font-normal">{DUMMY_DATA.personalInfo.title}</span>}
+          {personalInfo.title || <span className="resume-opacity-body italic font-normal">{ACTIVE_DUMMY_DATA.personalInfo.title}</span>}
         </div>
         <p className="resume-opacity-body mb-3 leading-relaxed" style={{ fontSize: fontSize.summary }}>
-          {personalInfo.summary || <span className="resume-opacity-body italic">{DUMMY_DATA.personalInfo.summary}</span>}
+          {personalInfo.summary || <span className="resume-opacity-body italic">{ACTIVE_DUMMY_DATA.personalInfo.summary}</span>}
         </p>
         {renderContactInfo(false, true)}
       </div>
@@ -1405,13 +1425,13 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
       <div className="flex min-h-full">
         <div className="w-1/3 p-6 resume-bg-muted border-r border-gray-200">
           <h1 className="font-bold mb-1 resume-opacity-name" style={{ fontSize: fontSize.name }}>
-            {personalInfo.fullName || <span className="resume-opacity-body italic font-normal">{DUMMY_DATA.personalInfo.fullName}</span>}
+            {personalInfo.fullName || <span className="resume-opacity-body italic font-normal">{ACTIVE_DUMMY_DATA.personalInfo.fullName}</span>}
           </h1>
           <div className="font-semibold resume-opacity-body mb-1.5" style={{ fontSize: Math.round(fontSize.summary * 1.05) }}>
-            {personalInfo.title || <span className="resume-opacity-body italic font-normal">{DUMMY_DATA.personalInfo.title}</span>}
+            {personalInfo.title || <span className="resume-opacity-body italic font-normal">{ACTIVE_DUMMY_DATA.personalInfo.title}</span>}
           </div>
           <p className="resume-opacity-body mb-4" style={{ fontSize: fontSize.summary, color: personalInfo.summary ? theme.color : theme.textColor || '#1e293b' }}>
-            {personalInfo.summary || <span className="italic">{DUMMY_DATA.personalInfo.summary}</span>}
+            {personalInfo.summary || <span className="italic">{ACTIVE_DUMMY_DATA.personalInfo.summary}</span>}
           </p>
 
           <div className="space-y-2 mb-6">{renderContactInfo(false, true, 'column')}</div>
