@@ -278,144 +278,6 @@ const RichText: React.FC<RichTextProps> = ({ text, className, style, themeColor 
   );
 };
 
-// Dummy data for preview (shows realistic layout when sections are empty)
-
-const DUMMY_DATA = {
-  personalInfo: {
-    fullName: 'Your Full Name',
-    title: 'Senior Software Engineer',
-    email: 'email@example.com',
-    phone: '(555) 123-4567',
-    location: 'City, State',
-    summary: 'A brief professional summary highlighting key skills, experience, and career objectives.',
-  },
-  experience: [
-    {
-      id: 'dummy-exp-1',
-      title: 'Senior Software Engineer',
-      position: 'Senior Software Engineer',
-      company: 'Technology Company',
-      institution: '',
-      degree: '',
-      subtitle: 'Technology Company',
-      location: 'San Francisco, CA',
-      startDate: '2021-01',
-      endDate: '',
-      current: true,
-      description: '• Led development of key features resulting in 40% performance improvement\n• Mentored junior developers and conducted code reviews\n• Collaborated with cross-functional teams on product roadmap',
-    },
-    {
-      id: 'dummy-exp-2',
-      title: 'Software Developer',
-      position: 'Software Developer',
-      company: 'Digital Agency',
-      institution: '',
-      degree: '',
-      subtitle: 'Digital Agency',
-      location: 'New York, NY',
-      startDate: '2018-06',
-      endDate: '2020-12',
-      current: false,
-      description: '• Built responsive web applications using modern frameworks\n• Implemented CI/CD pipelines reducing deployment time by 60%',
-    },
-  ],
-  education: [
-    {
-      id: 'dummy-edu-1',
-      title: 'Bachelor of Science in Computer Science',
-      position: '',
-      company: '',
-      degree: 'Bachelor of Science in Computer Science',
-      institution: 'State University',
-      subtitle: 'State University',
-      location: 'Boston, MA',
-      startDate: '2014-09',
-      endDate: '2018-05',
-      current: false,
-      description: 'Relevant coursework: Data Structures, Algorithms, Software Engineering',
-    },
-  ],
-  projects: [
-    {
-      id: 'dummy-proj-1',
-      title: 'E-Commerce Platform',
-      subtitle: 'https://github.com/example/ecommerce',
-      startDate: '2022-01',
-      endDate: '2022-06',
-      current: false,
-      skills: ['React', 'Node.js', 'MongoDB', 'Stripe'],
-      description: '• Developed a full-stack e-commerce platform serving 10k+ monthly users\n• Implemented secure payment processing and real-time inventory management',
-    } as SectionItem
-  ],
-  certifications: [
-    {
-      id: 'dummy-cert-1',
-      title: 'AWS Certified Solutions Architect',
-      institution: 'Amazon Web Services',
-      subtitle: 'https://aws.amazon.com/verification',
-      startDate: '2023-08',
-      endDate: '',
-      current: false,
-      description: '• Validates expertise in designing distributed systems on AWS',
-    } as SectionItem
-  ],
-  volunteer: [
-    {
-      id: 'dummy-vol-1',
-      position: 'Community Outreach Lead',
-      company: 'Habitat for Humanity',
-      location: 'Austin, TX',
-      startDate: '2020-03',
-      endDate: '2022-12',
-      current: false,
-      description: '• Organized weekly building events with 50+ volunteers\n• Coordinated logistics for 12 housing projects',
-    } as SectionItem
-  ],
-  awards: [
-    {
-      id: 'dummy-award-1',
-      title: 'Dean\'s List',
-      institution: 'State University',
-      startDate: '2017-05',
-      description: '• Recognized for maintaining a 3.9+ GPA across 4 consecutive semesters',
-    } as SectionItem
-  ],
-  publications: [
-    {
-      id: 'dummy-pub-1',
-      title: 'Scalable Microservice Architectures',
-      institution: 'IEEE Software Journal',
-      subtitle: 'https://doi.org/example',
-      startDate: '2023-03',
-      description: '• Published peer-reviewed paper on event-driven microservice patterns',
-    } as SectionItem
-  ],
-  custom: [
-    {
-      id: 'dummy-custom-1',
-      customFields: [
-        { fieldId: 'field-1', value: 'English' },
-        { fieldId: 'field-2', value: 'Native/Bilingual' }
-      ]
-    } as SectionItem,
-    {
-      id: 'dummy-custom-2',
-      customFields: [
-        { fieldId: 'field-1', value: 'Spanish' },
-        { fieldId: 'field-2', value: 'Professional Working' }
-      ]
-    } as SectionItem
-  ],
-  skills: ['JavaScript', 'TypeScript', 'React', 'Node.js', 'Python', 'SQL', 'Git', 'AWS', 'Docker', 'Agile'],
-};
-
-// Helper to check if data has any real user content
-const hasRealContent = (value: string | string[] | undefined | null): boolean => {
-  if (!value) return false;
-  if (Array.isArray(value)) return value.length > 0;
-  return value.trim().length > 0;
-};
-
 // CONTACT ITEM COMPONENT
 
 interface ContactItemProps {
@@ -585,22 +447,19 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
   const getSkillsPayload = (section: Section): {
     skillsWithLevels: SkillWithLevel[];
     displaySkills: string[];
-    isDummy: boolean;
   } => {
     const item = section.items[0];
     const skillsWithLevels = item?.skillsWithLevels || [];
     const hasLevelSkills = skillsWithLevels.length > 0;
     const hasPlainSkills = Boolean(item?.skills?.length);
-    const hasAnySkills = hasLevelSkills || hasPlainSkills;
 
     return {
       skillsWithLevels,
-      displaySkills: hasPlainSkills ? (item?.skills || []) : DUMMY_DATA.skills,
-      isDummy: !hasAnySkills,
+      displaySkills: hasPlainSkills ? (item?.skills || []) : [],
     };
   };
 
-  const renderElegantSkills = (skillsWithLevels: SkillWithLevel[], displaySkills: string[], isDummy: boolean) => {
+  const renderElegantSkills = (skillsWithLevels: SkillWithLevel[], displaySkills: string[]) => {
     const keyedLevels = toKeyedItems(skillsWithLevels, (skill) => `${skill.name}-${skill.level}`, 'skill-level');
     return (
       <div className="text-center space-y-1 resume-opacity-skills">
@@ -616,7 +475,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
           </p>
         )}
         {displaySkills.length > 0 && (
-          <p className={cn('font-serif', isDummy ? 'italic' : '')} style={{ fontSize: fontSize.itemBody }}>
+          <p className="font-serif" style={{ fontSize: fontSize.itemBody }}>
             {displaySkills.join(' · ')}
           </p>
         )}
@@ -624,7 +483,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
     );
   };
 
-  const renderCorporateSkills = (skillsWithLevels: SkillWithLevel[], displaySkills: string[], isDummy: boolean) => {
+  const renderCorporateSkills = (skillsWithLevels: SkillWithLevel[], displaySkills: string[]) => {
     const keyedLevels = toKeyedItems(skillsWithLevels, (skill) => `${skill.name}-${skill.level}`, 'skill-level');
     const keyedSkills = toKeyedItems(displaySkills, (skill) => skill, 'skill');
     return (
@@ -640,9 +499,9 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
           </div>
         )}
         {keyedSkills.length > 0 && (
-          <div className={cn('skills-container', isDummy && 'opacity-60')}>
+          <div className="skills-container">
             {keyedSkills.map(({ key, item }) => (
-              <span key={key} className={cn('skill-chip', isDummy ? 'resume-bg-muted italic' : 'resume-bg-muted')} style={{ fontSize: fontSize.skills }}>
+              <span key={key} className="skill-chip resume-bg-muted" style={{ fontSize: fontSize.skills }}>
                 {item}
               </span>
             ))}
@@ -652,7 +511,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
     );
   };
 
-  const renderCreativeSkills = (skillsWithLevels: SkillWithLevel[], displaySkills: string[], isDummy: boolean) => {
+  const renderCreativeSkills = (skillsWithLevels: SkillWithLevel[], displaySkills: string[]) => {
     const keyedLevels = toKeyedItems(skillsWithLevels, (skill) => `${skill.name}-${skill.level}`, 'skill-level');
     const keyedSkills = toKeyedItems(displaySkills, (skill) => skill, 'skill');
     return (
@@ -668,12 +527,12 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
           </div>
         )}
         {keyedSkills.length > 0 && (
-          <div className={cn('skills-container skills-container-compact', isDummy && 'opacity-60')}>
+          <div className="skills-container skills-container-compact">
             {keyedSkills.map(({ key, item }) => (
               <span
                 key={key}
-                className={cn('skill-chip', isDummy ? 'font-normal italic' : 'font-bold')}
-                style={{ backgroundColor: isDummy ? theme.textColor ? theme.textColor + '15' : '#f3f4f6' : theme.color + '15', color: isDummy ? theme.textColor || '#1e293b' : theme.color, fontSize: fontSize.skills }}
+                className="skill-chip font-bold"
+                style={{ backgroundColor: theme.color + '15', color: theme.color, fontSize: fontSize.skills }}
               >
                 {item}
               </span>
@@ -684,7 +543,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
     );
   };
 
-  const renderModernSkills = (skillsWithLevels: SkillWithLevel[], displaySkills: string[], isDummy: boolean) => {
+  const renderModernSkills = (skillsWithLevels: SkillWithLevel[], displaySkills: string[]) => {
     const keyedLevels = toKeyedItems(skillsWithLevels, (skill) => `${skill.name}-${skill.level}`, 'skill-level');
     const keyedSkills = toKeyedItems(displaySkills, (skill) => skill, 'skill');
     return (
@@ -697,11 +556,11 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
           </div>
         ))}
         {keyedSkills.length > 0 && (
-          <div className={cn("flex flex-wrap gap-x-4 gap-y-1.5", keyedLevels.length > 0 ? "mt-1" : "", isDummy ? 'opacity-60' : '')}>
+          <div className={cn("flex flex-wrap gap-x-4 gap-y-1.5", keyedLevels.length > 0 ? "mt-1" : "")}>
             {keyedSkills.map(({ key, item }) => (
               <div key={key} className="flex items-center gap-2" style={{ fontSize: fontSize.skills }}>
-                <div className="w-1 h-1 rounded-full" style={{ backgroundColor: isDummy ? theme.textColor || '#1e293b' : theme.color }} />
-                <span className={isDummy ? 'italic' : ''}>{item}</span>
+                <div className="w-1 h-1 rounded-full" style={{ backgroundColor: theme.color }} />
+                <span>{item}</span>
               </div>
             ))}
           </div>
@@ -710,7 +569,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
     );
   };
 
-  const renderDefaultSkills = (skillsWithLevels: SkillWithLevel[], displaySkills: string[], isDummy: boolean) => {
+  const renderDefaultSkills = (skillsWithLevels: SkillWithLevel[], displaySkills: string[]) => {
     const keyedLevels = toKeyedItems(skillsWithLevels, (skill) => `${skill.name}-${skill.level}`, 'skill-level');
     const keyedSkills = toKeyedItems(displaySkills, (skill) => skill, 'skill');
 
@@ -729,12 +588,12 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
             ))}
           </div>
         )}
-        <div className={cn(containerClass, isDummy && 'opacity-60')}>
+        <div className={containerClass}>
           {keyedSkills.map(({ key, item }) => (
             <span
               key={key}
-              className={cn('skill-chip', isNeo ? 'rounded-none' : 'rounded-sm', isDummy && 'italic')}
-              style={{ backgroundColor: isDummy ? theme.textColor ? theme.textColor + '15' : '#f3f4f6' : theme.color + '20', color: isDummy ? theme.textColor || '#1e293b' : theme.color, fontSize: fontSize.skills }}
+              className={cn('skill-chip', isNeo ? 'rounded-none' : 'rounded-sm')}
+              style={{ backgroundColor: theme.color + '20', color: theme.color, fontSize: fontSize.skills }}
             >
               {item}
             </span>
@@ -745,20 +604,20 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
   };
 
   const renderSkillsSection = (section: Section) => {
-    const { skillsWithLevels, displaySkills, isDummy } = getSkillsPayload(section);
+    const { skillsWithLevels, displaySkills } = getSkillsPayload(section);
 
     switch (theme.template) {
       case 'elegant':
-        return renderElegantSkills(skillsWithLevels, displaySkills, isDummy);
+        return renderElegantSkills(skillsWithLevels, displaySkills);
       case 'corporate':
-        return renderCorporateSkills(skillsWithLevels, displaySkills, isDummy);
+        return renderCorporateSkills(skillsWithLevels, displaySkills);
       case 'creative':
-        return renderCreativeSkills(skillsWithLevels, displaySkills, isDummy);
+        return renderCreativeSkills(skillsWithLevels, displaySkills);
       case 'modern':
-        return renderModernSkills(skillsWithLevels, displaySkills, isDummy);
+        return renderModernSkills(skillsWithLevels, displaySkills);
       case 'harvard':
         return (
-          <div className={cn('font-serif space-y-1 resume-opacity-skills', isDummy ? 'italic' : '')} style={{ fontSize: fontSize.itemBody }}>
+          <div className='font-serif space-y-1 resume-opacity-skills' style={{ fontSize: fontSize.itemBody }}>
             {skillsWithLevels.length > 0 && (
               <p>
                 {skillsWithLevels.map((skill) => `${skill.name} (${skill.level})`).join(', ')}
@@ -772,7 +631,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
           </div>
         );
       default:
-        return renderDefaultSkills(skillsWithLevels, displaySkills, isDummy);
+        return renderDefaultSkills(skillsWithLevels, displaySkills);
     }
   };
 
@@ -794,56 +653,26 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
 
   const getItemTitleContent = (sectionType: Section['type'], item: SectionItem): React.ReactNode => {
     if (sectionType === 'experience' || sectionType === 'volunteer') {
-      return item.position || <span className="resume-opacity-subheaders italic font-normal">Position</span>;
+      return item.position;
     }
     if (sectionType === 'education') {
-      return item.degree || <span className="resume-opacity-subheaders italic font-normal">Degree</span>;
+      return item.degree;
     }
-    return item.title || <span className="resume-opacity-subheaders italic font-normal">Title</span>;
+    return item.title;
   };
 
   const getItemSubtitleContent = (sectionType: Section['type'], item: SectionItem): React.ReactNode => {
     if (sectionType === 'experience' || sectionType === 'volunteer') {
-      return item.company || <span className="resume-opacity-subheaders">Organization</span>;
+      return item.company;
     }
     if (sectionType === 'education') {
-      return item.institution || <span className="resume-opacity-subheaders">Institution</span>;
+      return item.institution;
     }
-    return item.subtitle || '';
-  };
-
-  const getDummyItemsBySectionType = (sectionType: Section['type']): SectionItem[] => {
-    if (sectionType === 'experience') {
-      return DUMMY_DATA.experience as SectionItem[];
-    }
-    if (sectionType === 'education') {
-      return DUMMY_DATA.education as SectionItem[];
-    }
-    if (sectionType === 'projects') {
-      return DUMMY_DATA.projects as SectionItem[];
-    }
-    if (sectionType === 'certifications') {
-      return DUMMY_DATA.certifications as SectionItem[];
-    }
-    if (sectionType === 'volunteer') {
-      return DUMMY_DATA.volunteer as SectionItem[];
-    }
-    if (sectionType === 'awards') {
-      return DUMMY_DATA.awards as SectionItem[];
-    }
-    if (sectionType === 'publications') {
-      return DUMMY_DATA.publications as SectionItem[];
-    }
-    if (sectionType === 'custom') {
-      return DUMMY_DATA.custom as SectionItem[];
-    }
-    return [];
+    return item.subtitle;
   };
 
   const renderCustomSection = (section: Section, sectionTitle?: string) => {
-    const isDummy = !section.items.length;
-    const dummyItems = getDummyItemsBySectionType(section.type);
-    const itemsToRender = isDummy && dummyItems.length ? dummyItems : section.items;
+    const itemsToRender = section.items;
 
     if (!itemsToRender.length) {
       return null;
@@ -875,7 +704,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
       }
 
       return (
-        <PageBreakable key={item.id} id={item.id} className={cn('mb-2.5', isDummy && 'opacity-60')}>
+        <PageBreakable key={item.id} id={item.id} className="mb-2.5">
           {index === 0 && sectionTitle && renderSectionTitle(sectionTitle)}
           <div className="flex justify-between items-baseline mb-0.5">
             <div className="flex items-center gap-2">
@@ -888,12 +717,12 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                   style={{ fontSize: fontSize.itemTitle, color: theme.color }}
                   onClick={(e) => e.stopPropagation()}
                 >
-                  {title || 'Title'}
+                  {title}
                   <ExternalLink className="w-3 h-3" />
                 </a>
               ) : (
                 <h3 className="font-bold resume-opacity-headers" style={{ fontSize: fontSize.itemTitle }}>
-                  {title || <span className="resume-opacity-body italic font-normal">Title</span>}
+                  {title}
                 </h3>
               )}
             </div>
@@ -943,29 +772,26 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
   };
 
   const renderExperienceEducation = (section: Section, sectionTitle?: string) => {
-    // Use dummy data if section is empty
-    const isDummy = !section.items.length;
-    const dummyItems = getDummyItemsBySectionType(section.type);
-    const itemsToRender = isDummy ? dummyItems : section.items;
+    const itemsToRender = section.items;
 
     if (!itemsToRender.length) {
-      return <p className="resume-opacity-body italic" style={{ fontSize: fontSize.itemBody }}>Add items to this section</p>;
+      return null;
     }
 
     if (isModern || isNeo || isCreative || isElegant) {
       return itemsToRender.map((item, index) => (
-        <PageBreakable key={item.id} id={item.id} className={cn('mb-4', isDummy && 'opacity-60')}>
+        <PageBreakable key={item.id} id={item.id} className="mb-4">
           {index === 0 && sectionTitle && renderSectionTitle(sectionTitle)}
           <div className="flex justify-between items-baseline mb-0.5">
-            <h3 className={cn('font-bold', isDummy ? 'resume-opacity-body italic font-normal' : 'resume-opacity-body')} style={{ fontSize: fontSize.itemTitle, color: isModern ? theme.color : undefined }}>
+            <h3 className="font-bold resume-opacity-body" style={{ fontSize: fontSize.itemTitle, color: isModern ? theme.color : undefined }}>
               {getItemTitleContent(section.type, item)}
             </h3>
             <span className="resume-opacity-subheaders" style={{ fontSize: fontSize.itemDate }}>
-              {formatDate(item.startDate, item.endDate, item.current) || 'Date'}
+              {formatDate(item.startDate, item.endDate, item.current)}
             </span>
           </div>
           <div className="flex items-center gap-2 mt-0.5" style={{ fontSize: fontSize.itemSubtitle }}>
-            <span className={isDummy ? 'resume-opacity-body' : 'resume-opacity-body'}>
+            <span className="resume-opacity-body">
               {getItemSubtitleContent(section.type, item)}
             </span>
             {item.location && (
@@ -978,7 +804,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
           {item.description && (
             <RichText
               text={item.description}
-              className={cn('mt-1.5', isDummy ? 'resume-opacity-body' : 'resume-opacity-body')}
+              className="mt-1.5 resume-opacity-body"
               style={{ fontSize: fontSize.itemBody }}
               themeColor={theme.color}
             />
@@ -987,20 +813,19 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
       ));
     }
 
-    // Default layout for Harvard, Tech, Minimal, Bold, Neo, Portfolio
     return itemsToRender.map((item, index) => (
-      <PageBreakable key={item.id} id={item.id} className={cn('mb-2.5', isDummy && 'opacity-60')}>
+      <PageBreakable key={item.id} id={item.id} className="mb-2.5">
         {index === 0 && sectionTitle && renderSectionTitle(sectionTitle)}
         <div className="flex justify-between items-baseline mb-0.5">
-          <h3 className={cn('font-bold', isDummy ? 'resume-opacity-body italic font-normal' : 'resume-opacity-body')} style={{ fontSize: fontSize.itemTitle }}>
+          <h3 className="font-bold resume-opacity-body" style={{ fontSize: fontSize.itemTitle }}>
             {getItemTitleContent(section.type, item)}
           </h3>
           <span className="resume-opacity-subheaders italic ml-4 whitespace-nowrap" style={{ fontSize: fontSize.itemDate }}>
-            {formatDate(item.startDate, item.endDate, item.current) || 'Date'}
+            {formatDate(item.startDate, item.endDate, item.current)}
           </span>
         </div>
         <div className="flex justify-between items-center" style={{ fontSize: fontSize.itemSubtitle }}>
-          <span className={isDummy ? 'resume-opacity-body' : 'resume-opacity-body'}>
+          <span className="resume-opacity-body">
             {getItemSubtitleContent(section.type, item)}
           </span>
           {item.location && <span className="resume-opacity-subheaders">{item.location}</span>}
@@ -1008,7 +833,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
         {item.description && (
           <RichText
             text={item.description}
-            className={cn('mt-1', isDummy ? 'resume-opacity-body' : 'resume-opacity-body')}
+            className="mt-1 resume-opacity-body"
             style={{ fontSize: fontSize.itemBody }}
             themeColor={theme.color}
           />
@@ -1018,16 +843,14 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
   };
 
   const renderProjectsCertifications = (section: Section, sectionTitle?: string) => {
-    const isDummy = !section.items.length;
-    const dummyItems = getDummyItemsBySectionType(section.type);
-    const itemsToRender = isDummy && dummyItems.length ? dummyItems : section.items;
+    const itemsToRender = section.items;
 
     if (!itemsToRender.length) {
       return null;
     }
 
     return itemsToRender.map((item, index) => (
-      <PageBreakable key={item.id} id={item.id} className={cn('mb-2.5', isDummy && 'opacity-60')}>
+      <PageBreakable key={item.id} id={item.id} className="mb-2.5">
         {index === 0 && sectionTitle && renderSectionTitle(sectionTitle)}
         <div className="flex justify-between items-baseline mb-0.5">
           <div className="flex items-center gap-2">
@@ -1039,16 +862,16 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                 className="font-bold text-blue-600 hover:underline"
                 style={{ fontSize: fontSize.itemTitle, color: theme.color }}
               >
-                {item.title || 'Link'}
+                {item.title}
               </a>
             ) : (
               <h3 className="font-bold resume-opacity-headers" style={{ fontSize: fontSize.itemTitle }}>
-                {item.title || <span className="resume-opacity-body italic font-normal">Title</span>}
+                {item.title}
               </h3>
             )}
           </div>
           <span className="resume-opacity-subheaders italic ml-4 whitespace-nowrap" style={{ fontSize: fontSize.itemDate }}>
-            {formatDate(item.startDate, item.endDate, item.current) || 'Date'}
+            {formatDate(item.startDate, item.endDate, item.current)}
           </span>
         </div>
         {item.subtitle && !isUrl(item.subtitle) && (
@@ -1108,13 +931,13 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
   const renderHarvardHeader = () => (
     <div className="text-center border-b-2 border-gray-900 pb-4 mb-5">
       <h1 className="font-bold uppercase tracking-widest mb-2 resume-opacity-name" style={{ fontSize: fontSize.name }}>
-        {personalInfo.fullName || <span className="resume-opacity-body italic normal-case">{DUMMY_DATA.personalInfo.fullName}</span>}
+        {personalInfo.fullName}
       </h1>
       <div className="resume-opacity-body mb-1 font-medium" style={{ fontSize: fontSize.summary }}>
-        {personalInfo.title || <span className="resume-opacity-body italic font-normal">{DUMMY_DATA.personalInfo.title}</span>}
+        {personalInfo.title}
       </div>
       <p className="resume-opacity-body mb-2" style={{ fontSize: fontSize.summary }}>
-        {personalInfo.summary || <span className="resume-opacity-body italic">{DUMMY_DATA.personalInfo.summary}</span>}
+        {personalInfo.summary}
       </p>
       {renderContactInfo(true, false)}
     </div>
@@ -1123,13 +946,13 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
   const renderTechHeader = () => (
     <div className="mb-6">
       <h1 className="font-extrabold tracking-tight mb-1 resume-opacity-name" style={{ fontSize: fontSize.name, color: theme.color }}>
-        {personalInfo.fullName || <span className="resume-opacity-body italic font-normal">{DUMMY_DATA.personalInfo.fullName}</span>}
+        {personalInfo.fullName}
       </h1>
       <div className="resume-opacity-body font-semibold mb-1" style={{ fontSize: Math.round(fontSize.summary * 1.1) }}>
-        {personalInfo.title || <span className="resume-opacity-body italic font-normal">{DUMMY_DATA.personalInfo.title}</span>}
+        {personalInfo.title}
       </div>
       <p className="resume-opacity-body mb-3" style={{ fontSize: fontSize.summary }}>
-        {personalInfo.summary || <span className="resume-opacity-body italic">{DUMMY_DATA.personalInfo.summary}</span>}
+        {personalInfo.summary}
       </p>
       {renderContactInfo(false, true)}
     </div>
@@ -1138,13 +961,13 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
   const renderMinimalHeader = () => (
     <div className="mb-8 text-center">
       <h1 className="font-light tracking-wide mb-2 resume-opacity-name" style={{ fontSize: fontSize.name }}>
-        {personalInfo.fullName || <span className="resume-opacity-body italic">{DUMMY_DATA.personalInfo.fullName}</span>}
+        {personalInfo.fullName}
       </h1>
       <div className="resume-opacity-body tracking-widest uppercase mb-2" style={{ fontSize: fontSize.itemSubtitle }}>
-        {personalInfo.title || <span className="resume-opacity-body italic normal-case">{DUMMY_DATA.personalInfo.title}</span>}
+        {personalInfo.title}
       </div>
       <p className="resume-opacity-body mb-3" style={{ fontSize: fontSize.summary }}>
-        {personalInfo.summary || <span className="resume-opacity-body italic">{DUMMY_DATA.personalInfo.summary}</span>}
+        {personalInfo.summary}
       </p>
       {renderContactInfo(true, false)}
     </div>
@@ -1156,13 +979,13 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
         className="font-black uppercase tracking-tight mb-1 resume-opacity-name"
         style={{ fontSize: Math.round(fontSize.name * 1.15), color: theme.color }}
       >
-        {personalInfo.fullName || <span className="resume-opacity-body italic font-normal normal-case">{DUMMY_DATA.personalInfo.fullName}</span>}
+        {personalInfo.fullName}
       </h1>
       <div className="font-bold resume-opacity-body mb-1" style={{ fontSize: Math.round(fontSize.summary * 1.1) }}>
-        {personalInfo.title || <span className="resume-opacity-body italic font-normal">{DUMMY_DATA.personalInfo.title}</span>}
+        {personalInfo.title}
       </div>
       <p className="resume-opacity-body font-medium mb-3" style={{ fontSize: fontSize.summary }}>
-        {personalInfo.summary || <span className="resume-opacity-body italic font-normal">{DUMMY_DATA.personalInfo.summary}</span>}
+        {personalInfo.summary}
       </p>
       {renderContactInfo(false, true)}
     </div>
@@ -1173,30 +996,29 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
       <div className="flex items-center gap-2 mb-2">
         <div className="w-3 h-3" style={{ backgroundColor: theme.color }} />
         <h1 className="font-bold tracking-tight resume-opacity-name" style={{ fontSize: fontSize.name }}>
-          {personalInfo.fullName || <span className="resume-opacity-body italic font-normal">{DUMMY_DATA.personalInfo.fullName}</span>}
+          {personalInfo.fullName}
         </h1>
       </div>
       <div className="font-medium resume-opacity-body mb-1" style={{ fontSize: fontSize.summary }}>
-        {personalInfo.title || <span className="resume-opacity-body italic font-normal">{DUMMY_DATA.personalInfo.title}</span>}
+        {personalInfo.title}
       </div>
       <p className="resume-opacity-body mb-3" style={{ fontSize: fontSize.summary }}>
-        {personalInfo.summary || <span className="resume-opacity-body italic">{DUMMY_DATA.personalInfo.summary}</span>}
+        {personalInfo.summary}
       </p>
       {renderContactInfo(false, true)}
     </div>
   );
 
-  // CORPORATE HEADER - Professional boxed header with subtle divider
   const renderCorporateHeader = () => (
     <div className="mb-6 resume-bg-muted p-5 border-l-4" style={{ borderLeftColor: theme.color }}>
-      <h1 className="font-semibold tracking-normal mb-1 resume-opacity-name" style={{ fontSize: fontSize.name, /* removed */ }}>
-        {personalInfo.fullName || <span className="resume-opacity-body italic font-normal">{DUMMY_DATA.personalInfo.fullName}</span>}
+      <h1 className="font-semibold tracking-normal mb-1 resume-opacity-name" style={{ fontSize: fontSize.name }}>
+        {personalInfo.fullName}
       </h1>
       <div className="font-medium resume-opacity-body mb-1.5" style={{ fontSize: Math.round(fontSize.summary * 1.05) }}>
-        {personalInfo.title || <span className="resume-opacity-body italic font-normal">{DUMMY_DATA.personalInfo.title}</span>}
+        {personalInfo.title}
       </div>
       <p className="resume-opacity-body mb-3 leading-relaxed" style={{ fontSize: fontSize.summary }}>
-        {personalInfo.summary || <span className="resume-opacity-body italic">{DUMMY_DATA.personalInfo.summary}</span>}
+        {personalInfo.summary}
       </p>
       <div className="pt-3 border-t border-gray-200">
         {renderContactInfo(false, true)}
@@ -1204,27 +1026,23 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
     </div>
   );
 
-  // CREATIVE HEADER - Asymmetric layout with bold accent block (matches PDF: 50x50)
   const renderCreativeHeader = () => {
-    const displayName = personalInfo.fullName || DUMMY_DATA.personalInfo.fullName;
-    const isPlaceholder = !personalInfo.fullName;
+    const displayName = personalInfo.fullName || '';
     return (
       <div className="mb-5 relative">
         <div className="absolute top-0 left-0" style={{ width: 50, height: 50, backgroundColor: theme.color, opacity: 0.2 }} />
         <div className="pl-5 pt-3">
           <h1 className="font-bold mb-1 resume-opacity-name" style={{ fontSize: Math.round(fontSize.name * 1.1) }}>
-            <span style={{ color: isPlaceholder ? theme.textColor || '#1e293b' : theme.color }}>{displayName.charAt(0)}</span>
-            <span className={isPlaceholder ? 'resume-opacity-body italic font-normal' : 'resume-opacity-body'}>{displayName.slice(1)}</span>
+            <span style={{ color: theme.color }}>{displayName.charAt(0)}</span>
+            <span className='resume-opacity-body'>{displayName.slice(1)}</span>
           </h1>
           <div className="font-semibold resume-opacity-body mb-1" style={{ fontSize: Math.round(fontSize.summary * 1.05) }}>
-            {personalInfo.title || <span className="resume-opacity-body italic font-normal">{DUMMY_DATA.personalInfo.title}</span>}
+            {personalInfo.title}
           </div>
           <p className="resume-opacity-body italic mb-2" style={{ fontSize: fontSize.summary }}>
             {personalInfo.summary ? (
               <>&ldquo;{personalInfo.summary}&rdquo;</>
-            ) : (
-              <span className="resume-opacity-body">&ldquo;{DUMMY_DATA.personalInfo.summary}&rdquo;</span>
-            )}
+            ) : null}
           </p>
           {renderContactInfo(false, true)}
         </div>
@@ -1232,14 +1050,13 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
     );
   };
 
-  // ELEGANT HEADER - Centered serif typography with ornamental line (matches PDF)
   const renderElegantHeader = () => (
     <div className="mb-5 text-center">
       <h1 className="font-serif font-normal mb-2 resume-opacity-name" style={{ fontSize: Math.round(fontSize.name * 1.05), letterSpacing: '0.2em' }}>
-        {personalInfo.fullName?.toUpperCase() || <span className="resume-opacity-body italic normal-case">{DUMMY_DATA.personalInfo.fullName}</span>}
+        {personalInfo.fullName?.toUpperCase()}
       </h1>
       <div className="font-serif resume-opacity-body tracking-wide mb-2" style={{ fontSize: Math.round(fontSize.summary * 1.1) }}>
-        {personalInfo.title?.toUpperCase() || <span className="resume-opacity-body italic normal-case">{DUMMY_DATA.personalInfo.title.toUpperCase()}</span>}
+        {personalInfo.title?.toUpperCase()}
       </div>
       <div className="flex items-center justify-center gap-3 mb-2">
         <div style={{ width: 40, height: 1, backgroundColor: '#d1d5db' }} />
@@ -1247,25 +1064,24 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
         <div style={{ width: 40, height: 1, backgroundColor: '#d1d5db' }} />
       </div>
       <p className="resume-opacity-body font-serif italic mb-2.5" style={{ fontSize: fontSize.summary }}>
-        {personalInfo.summary || <span className="resume-opacity-body">{DUMMY_DATA.personalInfo.summary}</span>}
+        {personalInfo.summary}
       </p>
       {renderContactInfo(true, false)}
     </div>
   );
 
-  // MODERN HEADER - Clean split layout with accent sidebar
   const renderModernHeader = () => (
     <div className="mb-6 flex gap-4">
       <div className="w-1 rounded-full" style={{ backgroundColor: theme.color }} />
       <div className="flex-1">
         <h1 className="font-bold tracking-tight mb-1 resume-opacity-name" style={{ fontSize: fontSize.name }}>
-          {personalInfo.fullName || <span className="resume-opacity-body italic font-normal">{DUMMY_DATA.personalInfo.fullName}</span>}
+          {personalInfo.fullName}
         </h1>
         <div className="font-semibold resume-opacity-body mb-1" style={{ fontSize: Math.round(fontSize.summary * 1.05) }}>
-          {personalInfo.title || <span className="resume-opacity-body italic font-normal">{DUMMY_DATA.personalInfo.title}</span>}
+          {personalInfo.title}
         </div>
         <p className="resume-opacity-body mb-3 leading-relaxed" style={{ fontSize: fontSize.summary }}>
-          {personalInfo.summary || <span className="resume-opacity-body italic">{DUMMY_DATA.personalInfo.summary}</span>}
+          {personalInfo.summary}
         </p>
         {renderContactInfo(false, true)}
       </div>
@@ -1284,10 +1100,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
     return renderTechHeader();
   };
 
-  // SECTION TITLE RENDERER - Template-specific styling
-
   const renderSectionTitle = (title: string) => {
-    // Neo - Geometric square accent (matches PDF 10x10)
     if (isNeo) {
       return (
         <div className="flex items-center gap-1.5 mb-2">
@@ -1299,18 +1112,16 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
       );
     }
 
-    // Corporate - Professional underline with accent (matches PDF: font-bold, #1f2937)
     if (isCorporate) {
       return (
         <div className="mb-2 pb-1 border-b-2 border-gray-200">
-          <h2 className="font-bold resume-opacity-headers" style={{ fontSize: fontSize.sectionHeading, /* removed */ }}>
+          <h2 className="font-bold resume-opacity-headers" style={{ fontSize: fontSize.sectionHeading }}>
             {title}
           </h2>
         </div>
       );
     }
 
-    // Creative - Bold with accent color background (matches PDF)
     if (isCreative) {
       return (
         <div className="mb-2 flex">
@@ -1323,7 +1134,6 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
       );
     }
 
-    // Elegant - Serif with decorative elements (matches PDF)
     if (isElegant) {
       return (
         <div className="mb-2 text-center">
@@ -1339,7 +1149,6 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
       );
     }
 
-    // Modern - Clean with vertical accent bar (matches PDF 2x14)
     if (isModern) {
       return (
         <div className="mb-2 flex items-center gap-1.5">
@@ -1351,7 +1160,6 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
       );
     }
 
-    // Harvard - Classic with full underline
     if (isHarvard) {
       return (
         <h2 className="font-bold mb-2 uppercase tracking-wider border-b border-gray-900 pb-1 resume-opacity-headers" style={{ fontSize: fontSize.sectionHeading }}>
@@ -1360,7 +1168,6 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
       );
     }
 
-    // Minimal - Simple and light (matches PDF: font-bold, color #9ca3af)
     if (isMinimal) {
       return (
         <h2 className="font-bold mb-1.5 uppercase resume-opacity-headers" style={{ fontSize: Math.round(fontSize.sectionHeading * 0.85), letterSpacing: '0.15em' }}>
@@ -1369,19 +1176,17 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
       );
     }
 
-    // Bold - Strong with accent bar (matches PDF)
     if (isBold) {
       return (
         <div className="flex items-center gap-1.5 mb-2">
           <div className="w-[3px] h-3.5" style={{ backgroundColor: theme.color }} />
-          <h2 className="font-bold uppercase resume-opacity-headers" style={{ fontSize: fontSize.sectionHeading, /* removed */ }}>
+          <h2 className="font-bold uppercase resume-opacity-headers" style={{ fontSize: fontSize.sectionHeading }}>
             {title}
           </h2>
         </div>
       );
     }
 
-    // Tech (default) - Accent colored (matches PDF: no uppercase, no tracking)
     return (
       <h2
         className="font-bold mb-2 resume-opacity-headers"
@@ -1395,8 +1200,6 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
     );
   };
 
-  // PORTFOLIO LAYOUT (TWO-COLUMN - Skills sidebar)
-
   const renderPortfolioLayout = () => {
     const skillsSection = visibleSections.find((s) => s.type === 'skills');
     const mainSections = visibleSections.filter((s) => s.type !== 'skills');
@@ -1405,13 +1208,13 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
       <div className="flex min-h-full">
         <div className="w-1/3 p-6 resume-bg-muted border-r border-gray-200">
           <h1 className="font-bold mb-1 resume-opacity-name" style={{ fontSize: fontSize.name }}>
-            {personalInfo.fullName || <span className="resume-opacity-body italic font-normal">{DUMMY_DATA.personalInfo.fullName}</span>}
+            {personalInfo.fullName}
           </h1>
           <div className="font-semibold resume-opacity-body mb-1.5" style={{ fontSize: Math.round(fontSize.summary * 1.05) }}>
-            {personalInfo.title || <span className="resume-opacity-body italic font-normal">{DUMMY_DATA.personalInfo.title}</span>}
+            {personalInfo.title}
           </div>
           <p className="resume-opacity-body mb-4" style={{ fontSize: fontSize.summary, color: personalInfo.summary ? theme.color : theme.textColor || '#1e293b' }}>
-            {personalInfo.summary || <span className="italic">{DUMMY_DATA.personalInfo.summary}</span>}
+            {personalInfo.summary}
           </p>
 
           <div className="space-y-2 mb-6">{renderContactInfo(false, true, 'column')}</div>

@@ -25,7 +25,9 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ data, className, resum
   
   // Zoom state
   const [zoom, setZoom] = useState(1);
-  const [containerWidth, setContainerWidth] = useState(0);
+  const [containerWidth, setContainerWidth] = useState(
+    typeof window !== 'undefined' ? (window.innerWidth < 1024 ? window.innerWidth : 1000) : 1000
+  );
   const containerRef = useRef<HTMLDivElement>(null);
   const localResumeRef = useRef<HTMLDivElement | null>(null);
   const actualResumeRef = resumeRef || localResumeRef;
@@ -132,8 +134,12 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ data, className, resum
   // 1. Update width on window resize / orientation change
   useEffect(() => {
     const handleResize = () => {
-      if (containerRef.current && containerRef.current.clientWidth > 0) {
-        setContainerWidth(containerRef.current.clientWidth);
+      if (typeof window !== 'undefined') {
+        const isMobile = window.innerWidth < 1024;
+        const width = isMobile ? window.innerWidth : (containerRef.current?.clientWidth || window.innerWidth);
+        if (width > 0) {
+          setContainerWidth(width);
+        }
       }
     };
     window.addEventListener('resize', handleResize);
@@ -145,7 +151,8 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ data, className, resum
   // 2. Update width when it becomes visible (e.g. switching tabs on mobile triggers a re-render)
   useEffect(() => {
     if (containerRef.current) {
-      const width = containerRef.current.clientWidth;
+      const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
+      const width = isMobile ? window.innerWidth : containerRef.current.clientWidth;
       if (width > 0 && width !== containerWidth) {
         setContainerWidth(width);
       }
