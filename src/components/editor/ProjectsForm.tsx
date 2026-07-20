@@ -6,7 +6,6 @@ import { Section } from '@/lib/schema';
 import { useResumeStore } from '@/lib/store';
 import { FormInput, FormTextarea, FormCheckbox } from './FormInput';
 import { MonthPicker } from '@/components/ui/MonthPicker';
-import { AIRewriteButton } from '@/components/ui/AIRewriteButton';
 
 interface ProjectsFormProps {
   section: Section;
@@ -120,11 +119,6 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({ section }) => {
               <div className="space-y-1.5">
                 <div className="flex justify-between items-center">
                   <label className="text-sm font-medium text-muted-foreground">Description</label>
-                  <AIRewriteButton 
-                    text={item.description || ''} 
-                    context={`Project: ${item.title || 'Untitled'}`}
-                    onRewrite={(newText) => updateSectionItem(section.id, item.id, { description: newText })}
-                  />
                 </div>
                 <FormTextarea
                   placeholder="Describe your contributions, architecture, and impact... (Supports Markdown)"

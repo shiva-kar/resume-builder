@@ -318,5 +318,6 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ data, className, resum
         </div>
       </div>
     </div>
+    </div>
   );
 };

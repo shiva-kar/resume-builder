@@ -10,4 +10,3 @@ export { AwardsForm } from './AwardsForm';
 export { PublicationsForm } from './PublicationsForm';
 export { CustomSectionForm } from './CustomSectionForm';
 export { PersonalInfoForm } from './PersonalInfoForm';
-export { AutoGenerateForm } from './AutoGenerateForm';

@@ -83,13 +83,10 @@ import {
   PublicationsForm,
   CustomSectionForm,
   PersonalInfoForm,
-  AutoGenerateForm,
 } from '@/components/editor';
 import { exportToPDF, downloadPDF } from '@/components/pdf';
 import { LivePreview } from '@/components/pdf/LivePreview';
 import { Modal } from '@/components/ui/Modal';
-import { AtsScoreModal } from '@/components/ui/AtsScoreModal';
-import { ImportResumeModal } from '@/components/editor/ImportResumeModal';
 import { cn } from '@/lib/utils';
 import {
   Select,
@@ -311,7 +308,7 @@ const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPrevie
                 { value: 'neo', label: 'Neo', icon: Grid3X3, lightBg: 'from-violet-50 to-purple-50/30', darkBg: 'dark:from-violet-950/40 dark:to-purple-950/20', iconColor: 'text-violet-600 dark:text-violet-400', accentBorder: 'border-violet-500/60' },
                 { value: 'portfolio', label: 'Portfolio', icon: Layout, lightBg: 'from-emerald-50 to-teal-50/30', darkBg: 'dark:from-emerald-950/40 dark:to-teal-950/20', iconColor: 'text-emerald-600 dark:text-emerald-400', accentBorder: 'border-emerald-500/60' },
                 { value: 'corporate', label: 'Corporate', icon: Building2, lightBg: 'from-sky-50 to-blue-50/30', darkBg: 'dark:from-sky-950/40 dark:to-blue-950/20', iconColor: 'text-sky-600 dark:text-sky-400', accentBorder: 'border-sky-500/60' },
-                { value: 'creative', label: 'Creative', icon: Sparkles, lightBg: 'from-pink-50 to-rose-50/30', darkBg: 'dark:from-pink-950/40 dark:to-rose-950/20', iconColor: 'text-pink-600 dark:text-pink-400', accentBorder: 'border-pink-500/60' },
+                { value: 'creative', label: 'Creative', icon: Zap, lightBg: 'from-pink-50 to-rose-50/30', darkBg: 'dark:from-pink-950/40 dark:to-rose-950/20', iconColor: 'text-pink-600 dark:text-pink-400', accentBorder: 'border-pink-500/60' },
                 { value: 'elegant', label: 'Elegant', icon: Pen, lightBg: 'from-stone-50 to-neutral-50/30', darkBg: 'dark:from-stone-900/40 dark:to-neutral-900/20', iconColor: 'text-stone-600 dark:text-stone-300', accentBorder: 'border-stone-500/60' },
                 { value: 'modern', label: 'Modern', icon: FolderKanban, lightBg: 'from-cyan-50 to-sky-50/30', darkBg: 'dark:from-cyan-950/40 dark:to-sky-950/20', iconColor: 'text-cyan-600 dark:text-cyan-400', accentBorder: 'border-cyan-500/60' },
               ].map((t) => {
@@ -1011,9 +1008,6 @@ export default function ResumeBuilderPage() {
   const [isExporting, setIsExporting] = useState(false);
   const resumeExportRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [showDevMode, setShowDevMode] = useState(false);
-  const [showAtsModal, setShowAtsModal] = useState(false);
-  const [showImportModal, setShowImportModal] = useState(false);
   // Color picker preview state - allows live preview without saving
   const [previewColor, setPreviewColor] = useState<string | null>(null);
 
@@ -1075,8 +1069,6 @@ export default function ResumeBuilderPage() {
     toggleDarkMode,
     resetStore,
     setMobilePreview,
-    updateSection,
-    importData,
   } = useResumeStore();
 
   const { undo, redo, pastStates, futureStates } = useStore(useResumeStore.temporal, (state) => state);
@@ -1314,44 +1306,6 @@ export default function ResumeBuilderPage() {
                 <RotateCcw className="w-[18px] h-[18px]" />
               </button>
 
-              {/* Dev Mode Toggle */}
-              <button
-                type="button"
-                onClick={() => setShowDevMode(!showDevMode)}
-                className={cn(
-                  "p-2.5 rounded-lg transition-all duration-200 btn-press",
-                  showDevMode 
-                    ? "bg-primary/10 text-primary" 
-                    : "hover:bg-muted text-muted-foreground hover:text-foreground"
-                )}
-                title="Toggle Dev Mode (AI Tools)"
-                aria-label="Toggle Dev Mode"
-              >
-                <Sparkles className="w-[18px] h-[18px]" />
-              </button>
-
-              {/* ATS Score Check */}
-              <button
-                type="button"
-                onClick={() => setShowAtsModal(true)}
-                className="p-2.5 hover:bg-muted rounded-lg transition-all duration-200 text-muted-foreground hover:text-foreground btn-press"
-                title="Check ATS Score"
-                aria-label="Check ATS Score"
-              >
-                <Target className="w-[18px] h-[18px]" />
-              </button>
-
-              {/* Import Resume / LinkedIn Button */}
-              <button
-                type="button"
-                onClick={() => setShowImportModal(true)}
-                className="p-2.5 hover:bg-muted rounded-lg transition-all duration-200 text-muted-foreground hover:text-foreground btn-press"
-                title="Import PDF / LinkedIn"
-                aria-label="Import PDF / LinkedIn"
-              >
-                <FileText className="w-[18px] h-[18px]" />
-              </button>
-
               {/* Load Button */}
               <button
                 type="button"
@@ -1462,8 +1416,6 @@ export default function ResumeBuilderPage() {
             {/* Design Settings */}
             <DesignSettingsPanel onPreviewColorChange={setPreviewColor} />
 
-            {/* Auto Generate - Hidden behind Dev Mode */}
-            {showDevMode && <AutoGenerateForm />}
 
             {/* Section Manager */}
             <SectionManagerPanel showConfirm={showConfirm} />
@@ -1582,8 +1534,6 @@ export default function ResumeBuilderPage() {
         onChange={handleLoadFile}
       />
       <Modal {...modalConfig} />
-      <AtsScoreModal isOpen={showAtsModal} onClose={() => setShowAtsModal(false)} />
-      <ImportResumeModal isOpen={showImportModal} onClose={() => setShowImportModal(false)} />
     </div>
   );
 }
