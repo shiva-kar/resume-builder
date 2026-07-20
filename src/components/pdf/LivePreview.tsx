@@ -129,29 +129,37 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ data, className, resum
   const baseScale = isMobileScale ? (containerWidth - 32) / pageWidthPx : 1;
   const effectiveZoom = baseScale * zoom;
 
-  // Track container width for responsive scaling without triggering ResizeObserver loop errors
+  // Track container width for responsive scaling using safe APIs (avoids ResizeObserver loops)
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
 
-    let frameId: number;
-    const observer = new ResizeObserver((entries) => {
-      if (!entries || !entries.length) return;
-      const { width } = entries[0].contentRect;
-      
+    const updateWidth = () => {
+      const width = el.clientWidth;
       if (width > 0) {
-        // Defer the state update to the next frame to prevent ResizeObserver loop limit exceeded errors
-        cancelAnimationFrame(frameId);
-        frameId = window.requestAnimationFrame(() => {
-          setContainerWidth(prev => Math.abs(prev - width) > 1 ? width : prev);
-        });
+        setContainerWidth(width);
+      }
+    };
+
+    // Initial check
+    updateWidth();
+
+    // Handle window resizes and orientation changes
+    window.addEventListener('resize', updateWidth);
+
+    // Handle visibility toggles (e.g., switching to Preview tab on mobile)
+    const io = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        // Small delay to ensure layout is complete when unhiding
+        setTimeout(updateWidth, 10);
       }
     });
+    
+    io.observe(el);
 
-    observer.observe(el);
     return () => {
-      observer.disconnect();
-      cancelAnimationFrame(frameId);
+      window.removeEventListener('resize', updateWidth);
+      io.disconnect();
     };
   }, []);
 
