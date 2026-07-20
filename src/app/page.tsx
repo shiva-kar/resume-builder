@@ -47,7 +47,7 @@ import {
   Zap,
   Github,
   ExternalLink,
-  Circle, Droplets, Save, Upload, Undo2, Redo2 } from "lucide-react";
+  Circle, Droplets, Save, Upload, Undo2, Redo2, Target, Heart, Trophy, BookText } from "lucide-react";
 import {
   useResumeStore,
   useSections,
@@ -76,6 +76,11 @@ import {
   ExperienceForm,
   EducationForm,
   SkillsForm,
+  ProjectsForm,
+  CertificationsForm,
+  VolunteerForm,
+  AwardsForm,
+  PublicationsForm,
   CustomSectionForm,
   PersonalInfoForm,
   AutoGenerateForm,
@@ -83,7 +88,16 @@ import {
 import { exportToPDF, downloadPDF } from '@/components/pdf';
 import { LivePreview } from '@/components/pdf/LivePreview';
 import { Modal } from '@/components/ui/Modal';
+import { AtsScoreModal } from '@/components/ui/AtsScoreModal';
+import { ImportResumeModal } from '@/components/editor/ImportResumeModal';
 import { cn } from '@/lib/utils';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/Select";
 
 // SECTION CONFIGURATION
 
@@ -93,6 +107,9 @@ const SECTION_CONFIG: Record<SectionType, { label: string; icon: React.ReactNode
   skills: { label: 'Skills', icon: <Code className="w-4 h-4" />, color: 'bg-violet-50 text-violet-700 hover:bg-violet-100 dark:bg-violet-950 dark:text-violet-300' },
   projects: { label: 'Projects', icon: <FolderKanban className="w-4 h-4" />, color: 'bg-orange-50 text-orange-700 hover:bg-orange-100 dark:bg-orange-950 dark:text-orange-300' },
   certifications: { label: 'Certifications', icon: <BadgeCheck className="w-4 h-4" />, color: 'bg-pink-50 text-pink-700 hover:bg-pink-100 dark:bg-pink-950 dark:text-pink-300' },
+  volunteer: { label: 'Volunteer', icon: <Heart className="w-4 h-4" />, color: 'bg-teal-50 text-teal-700 hover:bg-teal-100 dark:bg-teal-950 dark:text-teal-300' },
+  awards: { label: 'Awards', icon: <Trophy className="w-4 h-4" />, color: 'bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-950 dark:text-amber-300' },
+  publications: { label: 'Publications', icon: <BookText className="w-4 h-4" />, color: 'bg-cyan-50 text-cyan-700 hover:bg-cyan-100 dark:bg-cyan-950 dark:text-cyan-300' },
   custom: { label: 'Custom', icon: <Award className="w-4 h-4" />, color: 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300' },
 };
 
@@ -109,8 +126,15 @@ const getSectionForm = (section: ReturnType<typeof useSections>[number]) => {
     case 'skills':
       return <SkillsForm section={section} />;
     case 'projects':
+      return <ProjectsForm section={section} />;
     case 'certifications':
-      return <CustomSectionForm section={section} showLink />;
+      return <CertificationsForm section={section} />;
+    case 'volunteer':
+      return <VolunteerForm section={section} />;
+    case 'awards':
+      return <AwardsForm section={section} />;
+    case 'publications':
+      return <PublicationsForm section={section} />;
     default:
       return <CustomSectionForm section={section} />;
   }
@@ -360,18 +384,21 @@ const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPrevie
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">
               Page Format
             </p>
-            <select
-              id="page-format-select"
+            <Select
               value={theme.pageSize}
-              onChange={(e) => updateTheme({ pageSize: e.target.value as PageSize })}
-              className="w-full text-sm py-2.5 px-3 rounded-lg border border-border bg-background focus-ring cursor-pointer"
+              onValueChange={(value) => updateTheme({ pageSize: value as PageSize })}
             >
-              {Object.entries(PAGE_SIZES).map(([key, { label }]) => (
-                <option key={key} value={key}>
-                  {label}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger id="page-format-select" className="w-full text-sm py-2.5 px-3 rounded-lg border border-border bg-background cursor-pointer">
+                <SelectValue placeholder="Select a page format" />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(PAGE_SIZES).map(([key, { label }]) => (
+                  <SelectItem key={key} value={key}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Accent Color */}
@@ -834,7 +861,11 @@ DesignSettingsPanel.displayName = 'DesignSettingsPanel';
 
 // SECTION MANAGER PANEL
 
-const SectionManagerPanel: React.FC = memo(() => {
+interface SectionManagerPanelProps {
+  showConfirm: (title: string, message: string, onConfirm: () => void) => void;
+}
+
+const SectionManagerPanel: React.FC<SectionManagerPanelProps> = memo(({ showConfirm }) => {
   const sections = useSections();
   const { addSection, addCustomSection, removeSection } = useResumeStore();
   const [isOpen, setIsOpen] = useState(false);
@@ -849,7 +880,7 @@ const SectionManagerPanel: React.FC = memo(() => {
 
   // Available sections that can be added (not already present or allow multiple)
   const availableSections = useMemo(() => {
-    const types: SectionType[] = ['experience', 'education', 'skills', 'projects', 'certifications'];
+    const types: SectionType[] = ['experience', 'education', 'skills', 'projects', 'certifications', 'volunteer', 'awards', 'publications'];
     return types.map(type => ({
       type,
       ...SECTION_CONFIG[type],
@@ -863,9 +894,11 @@ const SectionManagerPanel: React.FC = memo(() => {
       return;
     }
 
-    if (confirm(`Remove ${SECTION_CONFIG[type].label} section?`)) {
-      removeSection(sectionToRemove.id);
-    }
+    showConfirm(
+      `Remove Section`,
+      `Are you sure you want to remove the ${SECTION_CONFIG[type].label} section? Any data inside it will be lost.`,
+      () => removeSection(sectionToRemove.id)
+    );
   };
 
   const toggleSingleSection = (type: SectionType, exists: boolean) => {
@@ -979,6 +1012,8 @@ export default function ResumeBuilderPage() {
   const resumeExportRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [showDevMode, setShowDevMode] = useState(false);
+  const [showAtsModal, setShowAtsModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   // Color picker preview state - allows live preview without saving
   const [previewColor, setPreviewColor] = useState<string | null>(null);
 
@@ -1295,13 +1330,35 @@ export default function ResumeBuilderPage() {
                 <Sparkles className="w-[18px] h-[18px]" />
               </button>
 
+              {/* ATS Score Check */}
+              <button
+                type="button"
+                onClick={() => setShowAtsModal(true)}
+                className="p-2.5 hover:bg-muted rounded-lg transition-all duration-200 text-muted-foreground hover:text-foreground btn-press"
+                title="Check ATS Score"
+                aria-label="Check ATS Score"
+              >
+                <Target className="w-[18px] h-[18px]" />
+              </button>
+
+              {/* Import Resume / LinkedIn Button */}
+              <button
+                type="button"
+                onClick={() => setShowImportModal(true)}
+                className="p-2.5 hover:bg-muted rounded-lg transition-all duration-200 text-muted-foreground hover:text-foreground btn-press"
+                title="Import PDF / LinkedIn"
+                aria-label="Import PDF / LinkedIn"
+              >
+                <FileText className="w-[18px] h-[18px]" />
+              </button>
+
               {/* Load Button */}
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 className="p-2.5 hover:bg-muted rounded-lg transition-all duration-200 text-muted-foreground hover:text-foreground btn-press"
                 title="Load Backup (.sk)"
-                aria-label="Load Resume"
+                aria-label="Load Backup"
               >
                 <Upload className="w-[18px] h-[18px]" />
               </button>
@@ -1388,13 +1445,6 @@ export default function ResumeBuilderPage() {
                   {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                   Export PDF
                 </button>
-                <button
-                  onClick={() => setMobilePreview(!isMobilePreview)}
-                  className="px-4 py-2.5 border border-border rounded-lg flex items-center gap-2 hover:bg-muted transition-colors"
-                >
-                  {isMobilePreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  {isMobilePreview ? 'Edit' : 'Preview'}
-                </button>
               </div>
             </div>
           )}
@@ -1402,7 +1452,7 @@ export default function ResumeBuilderPage() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-[1800px] mx-auto p-4">
+      <main className="max-w-[1800px] mx-auto p-4 pb-24 lg:pb-4">
         <div className="grid lg:grid-cols-2 gap-6 h-[calc(100vh-8rem)]">
           {/* Left Pane - Editor */}
           <div className={cn(
@@ -1416,7 +1466,7 @@ export default function ResumeBuilderPage() {
             {showDevMode && <AutoGenerateForm />}
 
             {/* Section Manager */}
-            <SectionManagerPanel />
+            <SectionManagerPanel showConfirm={showConfirm} />
 
             {/* Personal Info */}
             <PersonalInfoForm />
@@ -1443,18 +1493,6 @@ export default function ResumeBuilderPage() {
               </SortableContext>
             </DndContext>
 
-            {/* Mobile Preview Button */}
-            <button
-              onClick={() => setMobilePreview(true)}
-              className={cn(
-                'lg:hidden w-full py-3.5 rounded-lg font-medium',
-                'bg-primary text-primary-foreground shadow-sm',
-                'flex items-center justify-center gap-2 btn-press'
-              )}
-            >
-              <Eye className="w-5 h-5" />
-              View Preview
-            </button>
 
             {/* Footer - Personal Branding */}
             <footer className="mt-8 pt-6 border-t border-border/50">
@@ -1497,13 +1535,6 @@ export default function ResumeBuilderPage() {
                   <span className="text-muted-foreground text-xs bg-muted px-2 py-1 rounded">
                     {PAGE_SIZES[theme.pageSize].label}
                   </span>
-                  <button
-                    onClick={() => setMobilePreview(false)}
-                    className="lg:hidden p-1.5 hover:bg-background rounded-md text-foreground transition-colors"
-                    aria-label="Close preview"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
                 </div>
               </div>
               <div className="h-[calc(100%-48px)]">
@@ -1518,6 +1549,31 @@ export default function ResumeBuilderPage() {
         </div>
       </main>
 
+      {/* Mobile Bottom Navigation Bar */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-[0_-4px_12px_rgba(0,0,0,0.05)] z-50 flex p-2 gap-2">
+        <button
+          onClick={() => setMobilePreview(false)}
+          className={cn(
+            'flex-1 flex flex-col items-center justify-center gap-1 py-2 rounded-lg transition-colors',
+            !isMobilePreview ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted'
+          )}
+        >
+          <Pen className="w-5 h-5" />
+          <span className="text-xs font-medium">Editor</span>
+        </button>
+        <button
+          onClick={() => setMobilePreview(true)}
+          className={cn(
+            'flex-1 flex flex-col items-center justify-center gap-1 py-2 rounded-lg transition-colors',
+            isMobilePreview ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted'
+          )}
+        >
+          <Eye className="w-5 h-5" />
+          <span className="text-xs font-medium">Preview</span>
+        </button>
+      </div>
+
+
       <input
         type="file"
         accept=".sk"
@@ -1526,6 +1582,8 @@ export default function ResumeBuilderPage() {
         onChange={handleLoadFile}
       />
       <Modal {...modalConfig} />
+      <AtsScoreModal isOpen={showAtsModal} onClose={() => setShowAtsModal(false)} />
+      <ImportResumeModal isOpen={showImportModal} onClose={() => setShowImportModal(false)} />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { Sparkles, Loader2, Key, Info } from 'lucide-react';
 import { FormTextarea } from './FormInput';
 import { useResumeStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
+import { callAI } from '@/lib/ai';
 
 export const AutoGenerateForm: React.FC = () => {
   const [jobReq, setJobReq] = useState('');
@@ -11,7 +12,16 @@ export const AutoGenerateForm: React.FC = () => {
   const [provider, setProvider] = useState('openai');
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState('');
+  const [webllmProgress, setWebllmProgress] = useState<{ progress: number, text: string } | null>(null);
   const { autoGenerateResume } = useResumeStore();
+
+  useEffect(() => {
+    const handleProgress = (e: any) => setWebllmProgress(e.detail);
+    if (typeof window !== 'undefined') {
+      window.addEventListener('webllm-progress', handleProgress);
+      return () => window.removeEventListener('webllm-progress', handleProgress);
+    }
+  }, []);
 
   useEffect(() => {
     const storedProvider = localStorage.getItem('ai_provider') || 'openai';
@@ -35,24 +45,35 @@ export const AutoGenerateForm: React.FC = () => {
   };
 
   const generatePrompt = () => {
-    return `You are a professional resume writer assisting a user. Write a well-structured, realistic resume tailored to the given job description. Incorporate the provided optional context where appropriate. Output ONLY valid JSON matching this schema:
+    return `You are a professional resume writer assisting a user. Write a well-structured, realistic resume tailored to the given job description. Incorporate the provided optional context where appropriate. Output ONLY valid JSON matching this schema exactly:
     {
-      "personalInfo": { "name": "", "email": "", "phone": "", "location": "", "summary": "", "links": [] },
+      "personalInfo": { "fullName": "Name", "title": "Job Title", "email": "", "phone": "", "location": "", "summary": "Short professional headline", "website": "", "linkedin": "", "github": "", "links": [] },
       "sections": [
         {
-          "id": "", "type": "experience", "title": "", "visible": true,
+          "id": "exp", "type": "experience", "title": "Experience", "isVisible": true,
           "items": [
-            { "id": "", "title": "", "subtitle": "", "startDate": "", "endDate": "", "description": "", "location": "", "link": "", "customFields": {}, "skills": [] }
-          ],
-          "customFields": []
+            { "id": "1", "position": "Job Title", "company": "Company", "startDate": "YYYY-MM", "endDate": "YYYY-MM", "description": "Bullet points", "location": "", "skills": [] }
+          ]
+        },
+        {
+          "id": "edu", "type": "education", "title": "Education", "isVisible": true,
+          "items": [
+            { "id": "2", "degree": "Degree", "institution": "School", "startDate": "YYYY-MM", "endDate": "YYYY-MM", "description": "" }
+          ]
+        },
+        {
+          "id": "skills", "type": "skills", "title": "Skills", "isVisible": true,
+          "items": [
+            { "id": "4", "skills": ["Skill 1", "Skill 2"] }
+          ]
         }
       ],
-      "theme": { "template": "modern", "accentColor": "#000000", "fontSize": "medium", "pageSize": "A4", "typography": { "heading": "large", "body": "medium", "caption": "small" } }
+      "theme": { "template": "modern", "accentColor": "#000000", "fontSize": "medium", "pageSize": "A4", "typography": { "name": "lg", "headers": "md", "body": "sm", "experience": "sm", "skills": "sm" } }
     }`;
   };
 
   const handleGenerate = async () => {
-    if (!apiKey.trim()) {
+    if (!apiKey.trim() && provider !== 'ollama' && provider !== 'webllm') {
       setError(`Please provide your ${provider.toUpperCase()} API key.`);
       return;
     }
@@ -67,71 +88,20 @@ export const AutoGenerateForm: React.FC = () => {
     const systemPrompt = generatePrompt();
     const userPrompt = `Job Description: ${jobReq}\n\nOptional Context: ${context || 'None'}`;
     
-    let endpoint = '';
-    let headers: any = { 'Content-Type': 'application/json' };
-    let body: any = {};
-    
-    if (provider === 'openai' || provider === 'grok' || provider === 'openrouter') {
-      if (provider === 'openai') {
-        endpoint = 'https://api.openai.com/v1/chat/completions';
-        body.model = 'gpt-4o';
-      } else if (provider === 'grok') {
-        endpoint = 'https://api.x.ai/v1/chat/completions';
-        body.model = 'grok-2-latest';
-      } else if (provider === 'openrouter') {
-        endpoint = 'https://openrouter.ai/api/v1/chat/completions';
-        body.model = 'anthropic/claude-3.5-sonnet'; // Default openrouter model
-      }
-      
-      headers['Authorization'] = `Bearer ${apiKey.trim()}`;
-      body.messages = [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
-      ];
-      body.temperature = 0.7;
-    } else if (provider === 'google') {
-      endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey.trim()}`;
-      body.contents = [
-        { role: "user", parts: [{ text: systemPrompt + "\n\n" + userPrompt }] }
-      ];
-      body.generationConfig = { responseMimeType: "application/json" };
-    } else if (provider === 'anthropic') {
-      endpoint = 'https://api.anthropic.com/v1/messages';
-      headers['x-api-key'] = apiKey.trim();
-      headers['anthropic-version'] = '2023-06-01';
-      headers['anthropic-dangerously-allow-browser'] = 'true';
-      body.model = 'claude-3-5-sonnet-20241022';
-      body.max_tokens = 4000;
-      body.system = systemPrompt;
-      body.messages = [{ role: 'user', content: userPrompt }];
-    }
-
     try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(body),
-      });
-
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        throw new Error(errData.error?.message || `API Error: Status ${response.status}`);
-      }
-
-      const data = await response.json();
-      let content = '';
-      
-      if (provider === 'google') {
-        content = data.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
-      } else if (provider === 'anthropic') {
-        content = data.content?.[0]?.text || '{}';
-      } else {
-        content = data.choices?.[0]?.message?.content || '{}';
-      }
+      const content = await callAI(systemPrompt, userPrompt, provider, apiKey);
 
       let jsonStr = content;
       const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
-      if (jsonMatch) jsonStr = jsonMatch[1].trim();
+      if (jsonMatch) {
+        jsonStr = jsonMatch[1].trim();
+      } else {
+        const firstBrace = content.indexOf('{');
+        const lastBrace = content.lastIndexOf('}');
+        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+          jsonStr = content.slice(firstBrace, lastBrace + 1);
+        }
+      }
 
       const parsedResume = JSON.parse(jsonStr);
       if (!parsedResume.personalInfo || !parsedResume.sections) {
@@ -181,26 +151,63 @@ export const AutoGenerateForm: React.FC = () => {
                 <option value="google">Google (Gemini 1.5 Pro)</option>
                 <option value="anthropic">Claude (Anthropic) *May require CORS proxy</option>
                 <option value="openrouter">OpenRouter</option>
+                <option value="ollama">Ollama (Local LLM)</option>
+                <option value="webllm">WebLLM (In-Browser Free)</option>
               </select>
             </div>
             
-            <div>
-              <label htmlFor="api-key-input" className="text-sm font-medium text-muted-foreground mb-1 block">
-                {provider === 'openai' && 'OpenAI API Key'}
-                {provider === 'grok' && 'xAI API Key'}
-                {provider === 'google' && 'Google Studio API Key'}
-                {provider === 'anthropic' && 'Anthropic API Key'}
-                {provider === 'openrouter' && 'OpenRouter API Key'}
-              </label>
-              <input
-                id="api-key-input"
-                type="password"
-                placeholder={provider === 'google' ? "AIza..." : "sk-..."}
-                value={apiKey}
-                onChange={handleKeyChange}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              />
-            </div>
+            {provider === 'ollama' ? (
+              <div className="space-y-3">
+                <div>
+                  <label htmlFor="ollama-endpoint" className="text-sm font-medium text-muted-foreground mb-1 block">Ollama Endpoint</label>
+                  <input
+                    id="ollama-endpoint"
+                    type="text"
+                    placeholder="http://localhost:11434/v1/chat/completions"
+                    defaultValue={localStorage.getItem('ollama_endpoint') || 'http://localhost:11434/v1/chat/completions'}
+                    onChange={(e) => localStorage.setItem('ollama_endpoint', e.target.value)}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="ollama-model" className="text-sm font-medium text-muted-foreground mb-1 block">Ollama Model</label>
+                  <input
+                    id="ollama-model"
+                    type="text"
+                    placeholder="llama3"
+                    defaultValue={localStorage.getItem('ollama_model') || 'llama3'}
+                    onChange={(e) => localStorage.setItem('ollama_model', e.target.value)}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  />
+                </div>
+              </div>
+            ) : provider === 'webllm' ? (
+              <div className="bg-primary/5 text-primary text-xs p-3 rounded flex gap-2 items-start border border-primary/20">
+                <Info className="w-4 h-4 shrink-0 mt-0.5" />
+                <p>
+                  <strong>WebLLM</strong> downloads an AI model directly into your browser cache (requires ~2GB download on first use). 
+                  It runs entirely offline on your GPU!
+                </p>
+              </div>
+            ) : (
+              <div>
+                <label htmlFor="api-key-input" className="text-sm font-medium text-muted-foreground mb-1 block">
+                  {provider === 'openai' && 'OpenAI API Key'}
+                  {provider === 'grok' && 'xAI API Key'}
+                  {provider === 'google' && 'Google Studio API Key'}
+                  {provider === 'anthropic' && 'Anthropic API Key'}
+                  {provider === 'openrouter' && 'OpenRouter API Key'}
+                </label>
+                <input
+                  id="api-key-input"
+                  type="password"
+                  placeholder={provider === 'google' ? "AIza..." : "sk-..."}
+                  value={apiKey}
+                  onChange={handleKeyChange}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                />
+              </div>
+            )}
             
             {provider === 'anthropic' && (
               <div className="bg-orange-500/10 text-orange-600 dark:text-orange-400 text-[11px] p-2 rounded flex gap-1.5 items-start">
@@ -250,16 +257,26 @@ export const AutoGenerateForm: React.FC = () => {
         <button
           type="button"
           onClick={handleGenerate}
-          disabled={isGenerating || !apiKey.trim() || !jobReq.trim()}
+          disabled={isGenerating || (!apiKey.trim() && provider !== 'ollama' && provider !== 'webllm') || !jobReq.trim()}
           className={cn(
             'w-full px-4 py-2 bg-primary text-primary-foreground font-medium rounded-md hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2'
           )}
         >
           {isGenerating ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Generating Resume Draft...
-            </>
+            <div className="flex flex-col items-center justify-center w-full">
+              <div className="flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Generating Resume Draft...</span>
+              </div>
+              {provider === 'webllm' && webllmProgress && (
+                <div className="w-full mt-2 text-xs opacity-90 text-center">
+                  <div className="w-full bg-primary-foreground/20 rounded-full h-1.5 mb-1">
+                    <div className="bg-primary-foreground h-1.5 rounded-full transition-all duration-300" style={{ width: `${(webllmProgress.progress * 100).toFixed(0)}%` }}></div>
+                  </div>
+                  {webllmProgress.text}
+                </div>
+              )}
+            </div>
           ) : (
             'Generate Resume'
           )}

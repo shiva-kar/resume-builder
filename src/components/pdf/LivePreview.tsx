@@ -6,6 +6,13 @@ import { useResumeStore } from '@/lib/store';
 import { ResumeData } from '@/lib/schema';
 import { PAPER_SIZES, PaperSize } from '@/lib/paperSizes';
 import { PreviewCanvas } from './PreviewCanvas';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/Select";
 
 interface LivePreviewProps {
   data: ResumeData;
@@ -18,6 +25,7 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ data, className, resum
   
   // Zoom state
   const [zoom, setZoom] = useState(1);
+  const [hasAutoZoomed, setHasAutoZoomed] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const localResumeRef = useRef<HTMLDivElement | null>(null);
   const actualResumeRef = resumeRef || localResumeRef;
@@ -80,7 +88,8 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ data, className, resum
        // If element straddles a page boundary, break it to the next page
        if (pageOfBottom > pageOfTop && (bottom - (pageOfBottom * pageHeightPx)) > 0) {
           const nextPageStart = (pageOfTop + 1) * pageHeightPx;
-          const spacerHeight = nextPageStart - top;
+          // Add a 40px buffer so the element isn't sliced exactly at the page boundary
+          const spacerHeight = nextPageStart - top + 40;
           newSpacerMap[breakableId] = spacerHeight;
           // Apply it immediately to the measurement canvas so subsequent elements measure correctly
           spacer.style.height = `${spacerHeight}px`;
@@ -115,6 +124,19 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ data, className, resum
       }
     }
   });
+
+  // Auto-zoom for mobile screens
+  useEffect(() => {
+    if (!hasAutoZoomed && containerRef.current) {
+      const containerWidth = containerRef.current.clientWidth;
+      // 64 is for the p-8 padding (32px each side) or similar safe margin
+      if (containerWidth > 0 && containerWidth < pageWidthPx + 64) {
+        const newZoom = (containerWidth - 32) / pageWidthPx;
+        setZoom(Number(newZoom.toFixed(2)));
+      }
+      setHasAutoZoomed(true);
+    }
+  }, [hasAutoZoomed, pageWidthPx]);
 
   // Scroll to current page
   useEffect(() => {
@@ -162,18 +184,18 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ data, className, resum
   return (
     <div className={`flex flex-col h-full ${className || ''}`}>
       {/* Toolbar */}
-      <div className="flex items-center gap-3 px-4 py-2 bg-card border-b border-border shrink-0 flex-wrap">
+      <div className="flex items-center gap-3 px-4 py-2 bg-card border-b border-border shrink-0 overflow-x-auto no-scrollbar" style={{ flexWrap: 'nowrap', WebkitOverflowScrolling: 'touch' }}>
         {/* Hand Tool */}
         <button 
           onClick={() => setIsPanMode(!isPanMode)}
-          className={`p-1.5 rounded-none transition-colors ${isPanMode ? 'bg-primary/20 text-primary' : 'hover:bg-muted text-muted-foreground'}`}
+          className={`shrink-0 p-1.5 rounded-none transition-colors ${isPanMode ? 'bg-primary/20 text-primary' : 'hover:bg-muted text-muted-foreground'}`}
           title="Hand Tool (Pan)"
         >
           <Hand className="w-4 h-4" />
         </button>
 
         {/* Zoom Controls */}
-        <div className="flex items-center gap-1.5 border-l border-border pl-3">
+        <div className="shrink-0 flex items-center gap-1.5 border-l border-border pl-3">
           <button onClick={handleZoomOut} className="p-1 hover:bg-muted rounded-none transition-colors">
             <ZoomOut className="w-4 h-4 text-muted-foreground" />
           </button>
@@ -189,23 +211,27 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ data, className, resum
         </div>
 
         {/* Paper Size Selector */}
-        <div className="flex items-center gap-2 border-l border-border pl-3">
-          <select 
+        <div className="shrink-0 flex items-center gap-2 border-l border-border pl-3">
+          <Select 
             value={paperSize}
-            onChange={handlePaperSizeChange}
-            className="text-xs bg-muted text-muted-foreground rounded px-2 py-1 border border-border cursor-pointer"
+            onValueChange={(value) => handlePaperSizeChange({ target: { value } } as any)}
           >
-            {Object.keys(PAPER_SIZES).map(size => (
-              <option key={size} value={size}>
-                {PAPER_SIZES[size as PaperSize].label}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className="text-xs bg-muted text-muted-foreground rounded px-2 py-1 h-7 border border-border cursor-pointer min-w-[140px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.keys(PAPER_SIZES).map(size => (
+                <SelectItem key={size} value={size}>
+                  {PAPER_SIZES[size as PaperSize].label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Page Navigation */}
         {pageCount > 1 && (
-          <div className="flex items-center gap-2 border-l border-border pl-4">
+          <div className="shrink-0 flex items-center gap-2 border-l border-border pl-3">
             <button
               onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
               disabled={currentPage === 0}
@@ -213,7 +239,7 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ data, className, resum
             >
               <ChevronLeft className="w-4 h-4 text-muted-foreground" />
             </button>
-            <span className="text-xs font-medium text-muted-foreground">
+            <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">
               Page {currentPage + 1} of {pageCount}
             </span>
             <button
@@ -226,9 +252,9 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ data, className, resum
           </div>
         )}
 
-        <div className="flex items-center gap-1 text-muted-foreground">
+        <div className="shrink-0 hidden sm:flex items-center gap-1 text-muted-foreground ml-auto border-l border-border pl-3">
           <Move className="w-3 h-3" />
-          <span className="text-[10px]">1:1 render lock</span>
+          <span className="text-[10px] whitespace-nowrap">1:1 render lock</span>
         </div>
       </div>
 
@@ -244,7 +270,7 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ data, className, resum
       {/* Preview Area */}
       <div
         ref={containerRef}
-        className="flex-1 overflow-auto p-8 w-full bg-slate-50 relative"
+        className="flex-1 overflow-auto p-4 md:p-8 w-full bg-slate-50 relative"
         style={{ 
           cursor: isPanMode ? (isDragging ? 'grabbing' : 'grab') : 'auto',
           userSelect: isPanMode ? 'none' : 'auto',
@@ -255,9 +281,10 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ data, className, resum
         onMouseUp={onMouseUp}
         onMouseMove={onMouseMove}
       >
-        {/* Inner wrapper for centering */}
-        <div className="flex flex-col items-center gap-8 min-w-full w-max mx-auto">
-          {/* Visual Pages — each renders its own PreviewCanvas with spacerMap prop */}
+        {/* Inner wrapper for centering without left-clipping */}
+        <div className="w-max min-w-full min-h-full flex flex-col gap-8" style={{ alignItems: 'safe center' as any }}>
+          <div className="flex flex-col gap-8 mx-auto">
+            {/* Visual Pages — each renders its own PreviewCanvas with spacerMap prop */}
           {Array.from({ length: pageCount }).map((_, i) => (
             <div 
               key={i}

@@ -107,7 +107,7 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
         </div>
 
         <div className="flex items-center gap-1">
-          {section.type !== 'custom' && (
+          {section.type !== 'custom' && !section.fieldDefinitions && (
             <button
               onClick={() => setShowConvertPrompt(true)}
               className="p-2 rounded-none transition-colors hover:bg-muted text-muted-foreground"
@@ -161,9 +161,9 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
         </div>
       </div>
 
-      {/* Conversion Prompt Modal */}
+      {/* Form Content */}
       {isExpanded && section.isVisible && (
-        <div className="p-4">{children}</div>
+        <div className="p-3 sm:p-4">{children}</div>
       )}
 
       {/* Collapsed State Indicator */}

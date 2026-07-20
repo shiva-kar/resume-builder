@@ -6,6 +6,7 @@ import { Section } from '@/lib/schema';
 import { useResumeStore } from '@/lib/store';
 import { FormInput, FormTextarea, FormCheckbox } from './FormInput';
 import { MonthPicker } from '@/components/ui/MonthPicker';
+import { AIRewriteButton } from '@/components/ui/AIRewriteButton';
 
 interface ExperienceFormProps {
   section: Section;
@@ -82,19 +83,29 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ section }) => {
                 />
               </div>
 
-              <FormTextarea
-                placeholder="• Led development of feature X that improved Y by Z%
+              <div className="space-y-1.5">
+                <div className="flex justify-between items-center">
+                  <label className="text-sm font-medium text-muted-foreground">Description</label>
+                  <AIRewriteButton 
+                    text={item.description || ''} 
+                    context={`${item.position || 'Role'} at ${item.company || 'Company'}`}
+                    onRewrite={(newText) => updateSectionItem(section.id, item.id, { description: newText })}
+                  />
+                </div>
+                <FormTextarea
+                  placeholder="• Led development of feature X that improved Y by Z%
 • Collaborated with cross-functional teams to...
 • Built and deployed scalable solutions..."
-                value={item.description || ''}
-                onChange={(e) =>
-                  updateSectionItem(section.id, item.id, {
-                    description: e.target.value,
-                  })
-                }
-                rows={3}
-                showBulletHelper
-              />
+                  value={item.description || ''}
+                  onChange={(e) =>
+                    updateSectionItem(section.id, item.id, {
+                      description: e.target.value,
+                    })
+                  }
+                  rows={3}
+                  showBulletHelper
+                />
+              </div>
             </div>
 
             <button
@@ -110,7 +121,7 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ section }) => {
 
       <button
         onClick={() => addSectionItem(section.id)}
-        className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-2 transition-colors"
+        className="w-full py-2 flex items-center justify-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-md transition-colors border border-dashed border-border"
       >
         <Plus className="w-4 h-4" />
         Add Experience

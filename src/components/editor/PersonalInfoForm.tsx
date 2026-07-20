@@ -23,6 +23,13 @@ import { useResumeStore, usePersonalInfo } from '@/lib/store';
 import { FormInput } from './FormInput';
 import { LINK_ICONS, LinkIconType, detectLinkIcon } from '@/lib/schema';
 import { cn } from '@/lib/utils';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/Select";
 
 // Icon component mapping
 const IconComponents: Record<LinkIconType, React.FC<{ className?: string }>> = {
@@ -77,7 +84,7 @@ export const PersonalInfoForm: React.FC = () => {
 
       {/* Content */}
       {isOpen && (
-        <div className="p-4 space-y-4">
+        <div className="p-3 sm:p-4 space-y-4">
           {/* Name and Title */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormInput
@@ -195,29 +202,23 @@ export const PersonalInfoForm: React.FC = () => {
               return (
                 <div key={link.id} className="space-y-2 p-3 border border-border rounded-none bg-muted">
                   <div className="flex items-center gap-2">
-                    {/* Icon Selector */}
-                    <div className="relative flex-shrink-0">
-                      <select
+                    <div className="flex-shrink-0 w-36">
+                      <Select
                         value={link.icon || 'website'}
-                        onChange={(e) => updateLink(link.id, { icon: e.target.value })}
-                        className={cn(
-                          'appearance-none w-10 h-10 rounded-none',
-                          'border border-border bg-background',
-                          'focus:outline-none focus:ring-2 focus:ring-primary/20',
-                          'cursor-pointer text-transparent'
-                        )}
-                        title="Select icon"
-                        aria-label="Select link icon type"
+                        onValueChange={(value) => updateLink(link.id, { icon: value })}
                       >
-                        {Object.entries(LINK_ICONS).map(([key, { label }]) => (
-                          <option key={key} value={key} className="text-foreground bg-background">
-                            {label}
-                          </option>
-                        ))}
-                      </select>
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none" aria-hidden="true">
-                        <IconComponent className="w-5 h-5 text-muted-foreground" />
-                      </div>
+                        <SelectTrigger className="w-full rounded-none border border-border bg-background h-10 px-3 flex gap-2">
+                          <IconComponent className="w-4 h-4 text-muted-foreground shrink-0" />
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(LINK_ICONS).map(([key, { label }]) => (
+                            <SelectItem key={key} value={key}>
+                              {label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
 
                     {/* URL Input */}
