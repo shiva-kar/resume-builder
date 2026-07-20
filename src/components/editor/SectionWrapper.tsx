@@ -15,6 +15,7 @@ import {
 import { Section, TextSize, SectionTypeFontSize } from '@/lib/schema';
 import { cn } from '@/lib/utils';
 import { useResumeStore } from '@/lib/store';
+import { Modal } from '@/components/ui/Modal';
 
 interface SectionWrapperProps {
   section: Section;
@@ -36,10 +37,28 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
   icon,
 }) => {
   const [isExpanded, setIsExpanded] = React.useState(true);
-  const [showSettings, setShowSettings] = React.useState(false);
+  
+  // Custom section conversion prompt
+  const [showConvertPrompt, setShowConvertPrompt] = React.useState(false);
+  const [hasPromptedConversion, setHasPromptedConversion] = React.useState(false);
 
-  const { toggleSectionVisibility, removeSection, updateSection, updateSectionFontSize } =
+  const { toggleSectionVisibility, removeSection, updateSection, convertToCustomSection } =
     useResumeStore();
+
+  const handleTitleFocus = () => {
+    // Disabled onFocus prompt as per user request
+  };
+
+  const handleConvertConfirm = () => {
+    convertToCustomSection(section.id);
+    setHasPromptedConversion(true);
+    setShowConvertPrompt(false);
+  };
+
+  const handleConvertCancel = () => {
+    setHasPromptedConversion(true);
+    setShowConvertPrompt(false);
+  };
 
   const {
     attributes,
@@ -88,20 +107,16 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
         </div>
 
         <div className="flex items-center gap-1">
-          <button
-            onClick={() => setShowSettings(!showSettings)}
-            className={cn(
-              'p-2 rounded-none transition-colors',
-              showSettings
-                ? 'bg-primary/10 text-primary'
-                : 'hover:bg-muted text-muted-foreground'
-            )}
-            title="Font size settings"
-            aria-label="Toggle font size settings"
-            aria-expanded={showSettings}
-          >
-            <Settings2 className="w-4 h-4" />
-          </button>
+          {section.type !== 'custom' && !section.fieldDefinitions && (
+            <button
+              onClick={() => setShowConvertPrompt(true)}
+              className="p-2 rounded-none transition-colors hover:bg-muted text-muted-foreground"
+              title="Convert to Custom Section"
+              aria-label="Convert to Custom Section"
+            >
+              <Settings2 className="w-4 h-4" />
+            </button>
+          )}
 
           <button
             onClick={() => toggleSectionVisibility(section.id)}
@@ -146,40 +161,9 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
         </div>
       </div>
 
-      {/* Font Size Settings Panel */}
-      {showSettings && (
-        <div className="px-4 py-3 bg-muted border-b border-border/50">
-          <p className="text-xs font-medium text-muted-foreground mb-2">
-            Section Font Sizes
-          </p>
-          <div className="grid grid-cols-3 gap-3">
-            {(['heading', 'subheading', 'body'] as const).map((type) => (
-              <div key={type} className="space-y-1">
-                <label className="text-xs text-muted-foreground capitalize">
-                  {type}
-                </label>
-                <select
-                  value={section.fontSize?.[type] || 'base'}
-                  onChange={(e) =>
-                    updateSectionFontSize(section.id, type, e.target.value as TextSize)
-                  }
-                  className="w-full px-2 py-1.5 text-xs border border-border rounded-none bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
-                >
-                  {FONT_SIZE_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Section Content */}
+      {/* Form Content */}
       {isExpanded && section.isVisible && (
-        <div className="p-4">{children}</div>
+        <div className="p-3 sm:p-4">{children}</div>
       )}
 
       {/* Collapsed State Indicator */}
@@ -190,6 +174,15 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
             : `${section.items.length} item${section.items.length !== 1 ? 's' : ''}`}
         </div>
       )}
+      {/* Conversion Prompt Modal */}
+      <Modal
+        isOpen={showConvertPrompt}
+        title="Convert to Custom Section?"
+        message={`You are editing a default preset section ("${section.title}").\n\nWould you like to convert it into a Custom Section? This allows you to add flexible data fields and completely customize its structure.\n\nYour existing typed data will be preserved.`}
+        type="confirm"
+        onConfirm={handleConvertConfirm}
+        onCancel={handleConvertCancel}
+      />
     </div>
   );
 };

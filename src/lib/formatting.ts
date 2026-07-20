@@ -9,10 +9,20 @@
  * Format a month string (YYYY-MM) to display format (e.g., "Jan 2024")
  */
 export const formatMonth = (dateStr: string): string => {
-  const [year, month] = dateStr.split('-');
+  const parts = dateStr.split('-');
+  const year = parts[0];
+  const month = parts[1];
+  const day = parts[2];
+  
   if (!year || !month) return dateStr;
-  const date = new Date(Number.parseInt(year, 10), Number.parseInt(month, 10) - 1);
-  return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  
+  if (day && day !== 'Present') {
+    const date = new Date(Number.parseInt(year, 10), Number.parseInt(month, 10) - 1, Number.parseInt(day, 10));
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  } else {
+    const date = new Date(Number.parseInt(year, 10), Number.parseInt(month, 10) - 1);
+    return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  }
 };
 
 /**

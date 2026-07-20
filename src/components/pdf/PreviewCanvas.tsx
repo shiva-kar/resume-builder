@@ -335,6 +335,77 @@ const DUMMY_DATA = {
       description: 'Relevant coursework: Data Structures, Algorithms, Software Engineering',
     },
   ],
+  projects: [
+    {
+      id: 'dummy-proj-1',
+      title: 'E-Commerce Platform',
+      subtitle: 'https://github.com/example/ecommerce',
+      startDate: '2022-01',
+      endDate: '2022-06',
+      current: false,
+      skills: ['React', 'Node.js', 'MongoDB', 'Stripe'],
+      description: '• Developed a full-stack e-commerce platform serving 10k+ monthly users\n• Implemented secure payment processing and real-time inventory management',
+    } as SectionItem
+  ],
+  certifications: [
+    {
+      id: 'dummy-cert-1',
+      title: 'AWS Certified Solutions Architect',
+      institution: 'Amazon Web Services',
+      subtitle: 'https://aws.amazon.com/verification',
+      startDate: '2023-08',
+      endDate: '',
+      current: false,
+      description: '• Validates expertise in designing distributed systems on AWS',
+    } as SectionItem
+  ],
+  volunteer: [
+    {
+      id: 'dummy-vol-1',
+      position: 'Community Outreach Lead',
+      company: 'Habitat for Humanity',
+      location: 'Austin, TX',
+      startDate: '2020-03',
+      endDate: '2022-12',
+      current: false,
+      description: '• Organized weekly building events with 50+ volunteers\n• Coordinated logistics for 12 housing projects',
+    } as SectionItem
+  ],
+  awards: [
+    {
+      id: 'dummy-award-1',
+      title: 'Dean\'s List',
+      institution: 'State University',
+      startDate: '2017-05',
+      description: '• Recognized for maintaining a 3.9+ GPA across 4 consecutive semesters',
+    } as SectionItem
+  ],
+  publications: [
+    {
+      id: 'dummy-pub-1',
+      title: 'Scalable Microservice Architectures',
+      institution: 'IEEE Software Journal',
+      subtitle: 'https://doi.org/example',
+      startDate: '2023-03',
+      description: '• Published peer-reviewed paper on event-driven microservice patterns',
+    } as SectionItem
+  ],
+  custom: [
+    {
+      id: 'dummy-custom-1',
+      customFields: [
+        { fieldId: 'field-1', value: 'English' },
+        { fieldId: 'field-2', value: 'Native/Bilingual' }
+      ]
+    } as SectionItem,
+    {
+      id: 'dummy-custom-2',
+      customFields: [
+        { fieldId: 'field-1', value: 'Spanish' },
+        { fieldId: 'field-2', value: 'Professional Working' }
+      ]
+    } as SectionItem
+  ],
   skills: ['JavaScript', 'TypeScript', 'React', 'Node.js', 'Python', 'SQL', 'Git', 'AWS', 'Docker', 'Agile'],
 };
 
@@ -722,7 +793,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
   };
 
   const getItemTitleContent = (sectionType: Section['type'], item: SectionItem): React.ReactNode => {
-    if (sectionType === 'experience') {
+    if (sectionType === 'experience' || sectionType === 'volunteer') {
       return item.position || <span className="resume-opacity-subheaders italic font-normal">Position</span>;
     }
     if (sectionType === 'education') {
@@ -732,8 +803,8 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
   };
 
   const getItemSubtitleContent = (sectionType: Section['type'], item: SectionItem): React.ReactNode => {
-    if (sectionType === 'experience') {
-      return item.company || <span className="resume-opacity-subheaders">Company</span>;
+    if (sectionType === 'experience' || sectionType === 'volunteer') {
+      return item.company || <span className="resume-opacity-subheaders">Organization</span>;
     }
     if (sectionType === 'education') {
       return item.institution || <span className="resume-opacity-subheaders">Institution</span>;
@@ -741,24 +812,46 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
     return item.subtitle || '';
   };
 
-  const getDummyItemsBySectionType = (sectionType: Section['type']) => {
+  const getDummyItemsBySectionType = (sectionType: Section['type']): SectionItem[] => {
     if (sectionType === 'experience') {
-      return DUMMY_DATA.experience;
+      return DUMMY_DATA.experience as SectionItem[];
     }
     if (sectionType === 'education') {
-      return DUMMY_DATA.education;
+      return DUMMY_DATA.education as SectionItem[];
+    }
+    if (sectionType === 'projects') {
+      return DUMMY_DATA.projects as SectionItem[];
+    }
+    if (sectionType === 'certifications') {
+      return DUMMY_DATA.certifications as SectionItem[];
+    }
+    if (sectionType === 'volunteer') {
+      return DUMMY_DATA.volunteer as SectionItem[];
+    }
+    if (sectionType === 'awards') {
+      return DUMMY_DATA.awards as SectionItem[];
+    }
+    if (sectionType === 'publications') {
+      return DUMMY_DATA.publications as SectionItem[];
+    }
+    if (sectionType === 'custom') {
+      return DUMMY_DATA.custom as SectionItem[];
     }
     return [];
   };
 
   const renderCustomSection = (section: Section, sectionTitle?: string) => {
-    if (!section.items.length) {
-      return <p className="resume-opacity-body italic" style={{ fontSize: fontSize.itemBody }}>Add items to this section</p>;
+    const isDummy = !section.items.length;
+    const dummyItems = getDummyItemsBySectionType(section.type);
+    const itemsToRender = isDummy && dummyItems.length ? dummyItems : section.items;
+
+    if (!itemsToRender.length) {
+      return null;
     }
 
     const fieldDefs = section.fieldDefinitions || [];
 
-    return section.items.map((item, index) => {
+    return itemsToRender.map((item, index) => {
       const titleField = fieldDefs.find((f) => f.type === 'text');
       const dateField = fieldDefs.find((f) => f.type === 'date' || f.type === 'dateRange');
       const linkField = fieldDefs.find((f) => f.type === 'link');
@@ -782,7 +875,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
       }
 
       return (
-        <PageBreakable key={item.id} id={item.id} className="mb-2.5">
+        <PageBreakable key={item.id} id={item.id} className={cn('mb-2.5', isDummy && 'opacity-60')}>
           {index === 0 && sectionTitle && renderSectionTitle(sectionTitle)}
           <div className="flex justify-between items-baseline mb-0.5">
             <div className="flex items-center gap-2">
@@ -925,12 +1018,16 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
   };
 
   const renderProjectsCertifications = (section: Section, sectionTitle?: string) => {
-    if (!section.items.length) {
-      return <p className="resume-opacity-body italic" style={{ fontSize: fontSize.itemBody }}>Add items to this section</p>;
+    const isDummy = !section.items.length;
+    const dummyItems = getDummyItemsBySectionType(section.type);
+    const itemsToRender = isDummy && dummyItems.length ? dummyItems : section.items;
+
+    if (!itemsToRender.length) {
+      return null;
     }
 
-    return section.items.map((item, index) => (
-      <PageBreakable key={item.id} id={item.id} className="mb-2.5">
+    return itemsToRender.map((item, index) => (
+      <PageBreakable key={item.id} id={item.id} className={cn('mb-2.5', isDummy && 'opacity-60')}>
         {index === 0 && sectionTitle && renderSectionTitle(sectionTitle)}
         <div className="flex justify-between items-baseline mb-0.5">
           <div className="flex items-center gap-2">
@@ -942,11 +1039,11 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                 className="font-bold text-blue-600 hover:underline"
                 style={{ fontSize: fontSize.itemTitle, color: theme.color }}
               >
-                {item.title}
+                {item.title || 'Link'}
               </a>
             ) : (
               <h3 className="font-bold resume-opacity-headers" style={{ fontSize: fontSize.itemTitle }}>
-                {item.title}
+                {item.title || <span className="resume-opacity-body italic font-normal">Title</span>}
               </h3>
             )}
           </div>
@@ -957,6 +1054,19 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
         {item.subtitle && !isUrl(item.subtitle) && (
           <div className="resume-opacity-subheaders" style={{ fontSize: fontSize.itemSubtitle }}>
             {item.subtitle}
+          </div>
+        )}
+        {item.skills && item.skills.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-1">
+            {toKeyedItems(item.skills, (tag) => tag, 'project-tag').map(({ key, item: tag }) => (
+              <span
+                key={key}
+                className={cn('px-1.5 py-0.5 text-[9px]', isNeo ? 'rounded-none' : 'rounded')}
+                style={{ backgroundColor: theme.color + '20', color: theme.color }}
+              >
+                {tag}
+              </span>
+            ))}
           </div>
         )}
         {item.description && (
@@ -983,7 +1093,11 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
       case 'custom':
       case 'projects':
       case 'certifications':
+      case 'awards':
+      case 'publications':
         return section.fieldDefinitions?.length ? renderCustomSection(section, sectionTitle) : renderProjectsCertifications(section, sectionTitle);
+      case 'volunteer':
+        return renderExperienceEducation(section, sectionTitle);
       default:
         return renderExperienceEducation(section, sectionTitle);
     }

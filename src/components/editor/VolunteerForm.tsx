@@ -7,11 +7,11 @@ import { useResumeStore } from '@/lib/store';
 import { FormInput, FormTextarea, FormCheckbox } from './FormInput';
 import { MonthPicker } from '@/components/ui/MonthPicker';
 
-interface ExperienceFormProps {
+interface VolunteerFormProps {
   section: Section;
 }
 
-export const ExperienceForm: React.FC<ExperienceFormProps> = ({ section }) => {
+export const VolunteerForm: React.FC<VolunteerFormProps> = ({ section }) => {
   const { addSectionItem, removeSectionItem, updateSectionItem } = useResumeStore();
 
   return (
@@ -19,13 +19,13 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ section }) => {
       {section.items.map((item) => (
         <div
           key={item.id}
-          className="border-l-2 border-blue-500/30 pl-4 space-y-3 py-2"
+          className="border-l-2 border-teal-500/30 pl-4 space-y-3 py-2"
         >
           <div className="flex justify-between items-start">
             <div className="flex-1 space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <FormInput
-                  placeholder="e.g. Software Engineer, Marketing Manager"
+                  placeholder="Role (e.g. Community Outreach Lead)"
                   value={item.position || ''}
                   onChange={(e) =>
                     updateSectionItem(section.id, item.id, {
@@ -34,7 +34,7 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ section }) => {
                   }
                 />
                 <FormInput
-                  placeholder="e.g. Google, Microsoft, Startup Inc."
+                  placeholder="Organization (e.g. Red Cross)"
                   value={item.company || ''}
                   onChange={(e) =>
                     updateSectionItem(section.id, item.id, {
@@ -44,9 +44,8 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ section }) => {
                 />
               </div>
 
-              {/* Location Field */}
               <FormInput
-                placeholder="Location (e.g. New York, NY or Remote)"
+                placeholder="Location (e.g. New York, NY)"
                 value={item.location || ''}
                 onChange={(e) =>
                   updateSectionItem(section.id, item.id, {
@@ -55,7 +54,7 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ section }) => {
                 }
               />
 
-              <div className="flex gap-3 items-end flex-wrap">
+              <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-muted-foreground">Start Date</label>
                   <MonthPicker
@@ -66,13 +65,13 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ section }) => {
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-muted-foreground">End Date</label>
                   <MonthPicker
-                    value={item.current ? '' : (item.endDate || '')}
+                    value={item.endDate || ''}
                     onChange={(val) => updateSectionItem(section.id, item.id, { endDate: val })}
                     disabled={item.current}
                   />
                 </div>
                 <FormCheckbox
-                  label="Currently working here"
+                  label="Currently volunteering here"
                   checked={item.current || false}
                   onChange={(e) =>
                     updateSectionItem(section.id, item.id, {
@@ -82,46 +81,37 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ section }) => {
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <div className="flex justify-between items-center">
-                  <label className="text-sm font-medium text-muted-foreground">Description</label>
-                </div>
-                <FormTextarea
-                  placeholder="• Led development of feature X that improved Y by Z%
-• Collaborated with cross-functional teams to...
-• Built and deployed scalable solutions..."
-                  value={item.description || ''}
-                  onChange={(e) =>
-                    updateSectionItem(section.id, item.id, {
-                      description: e.target.value,
-                    })
-                  }
-                  rows={3}
-                  showBulletHelper
-                />
-              </div>
+              <FormTextarea
+                placeholder="• Organized weekly community events serving 200+ participants
+• Coordinated volunteer teams of 15+ members..."
+                value={item.description || ''}
+                onChange={(e) =>
+                  updateSectionItem(section.id, item.id, {
+                    description: e.target.value,
+                  })
+                }
+                rows={2}
+              />
             </div>
-
+            
             <button
               onClick={() => removeSectionItem(section.id, item.id)}
-              className="p-2 hover:bg-destructive/10 rounded-none transition-colors text-destructive ml-2"
-              aria-label="Remove this experience entry"
+              className="ml-4 p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors"
+              title="Remove volunteer entry"
             >
               <Trash2 className="w-4 h-4" />
             </button>
           </div>
         </div>
       ))}
-
+      
       <button
         onClick={() => addSectionItem(section.id)}
         className="w-full py-2 flex items-center justify-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-md transition-colors border border-dashed border-border"
       >
         <Plus className="w-4 h-4" />
-        Add Experience
+        Add Volunteer Experience
       </button>
     </div>
   );
 };
-
-export default ExperienceForm;

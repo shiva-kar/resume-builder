@@ -4,7 +4,8 @@ import React from 'react';
 import { Trash2, Plus } from 'lucide-react';
 import { Section } from '@/lib/schema';
 import { useResumeStore } from '@/lib/store';
-import { FormInput, FormTextarea } from './FormInput';
+import { FormInput, FormTextarea, FormCheckbox } from './FormInput';
+import { MonthPicker } from '@/components/ui/MonthPicker';
 
 interface EducationFormProps {
   section: Section;
@@ -54,29 +55,31 @@ export const EducationForm: React.FC<EducationFormProps> = ({ section }) => {
                 }
               />
 
-              <div className="flex gap-3 items-center flex-wrap">
-                <FormInput
-                  type="month"
-                  placeholder="Start Date"
-                  value={item.startDate || ''}
+              <div className="flex gap-3 items-end flex-wrap">
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Start Date</label>
+                  <MonthPicker
+                    value={item.startDate || ''}
+                    onChange={(val) => updateSectionItem(section.id, item.id, { startDate: val })}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">End Date</label>
+                  <MonthPicker
+                    value={item.endDate || ''}
+                    onChange={(val) => updateSectionItem(section.id, item.id, { endDate: val })}
+                    disabled={item.current}
+                  />
+                </div>
+                <FormCheckbox
+                  label="Currently studying here"
+                  checked={item.current || false}
                   onChange={(e) =>
                     updateSectionItem(section.id, item.id, {
-                      startDate: e.target.value,
+                      current: e.target.checked,
+                      ...(e.target.checked ? { endDate: '' } : {})
                     })
                   }
-                  className="w-auto"
-                />
-                <span className="text-muted-foreground">to</span>
-                <FormInput
-                  type="month"
-                  placeholder="End Date"
-                  value={item.endDate || ''}
-                  onChange={(e) =>
-                    updateSectionItem(section.id, item.id, {
-                      endDate: e.target.value,
-                    })
-                  }
-                  className="w-auto"
                 />
               </div>
 
@@ -107,7 +110,7 @@ export const EducationForm: React.FC<EducationFormProps> = ({ section }) => {
 
       <button
         onClick={() => addSectionItem(section.id)}
-        className="text-sm text-emerald-600 hover:text-emerald-700 flex items-center gap-2 transition-colors"
+        className="w-full py-2 flex items-center justify-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-md transition-colors border border-dashed border-border"
       >
         <Plus className="w-4 h-4" />
         Add Education

@@ -26,6 +26,14 @@ import {
 import { useResumeStore } from '@/lib/store';
 import { FormInput, FormTextarea } from './FormInput';
 import { cn } from '@/lib/utils';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/Select';
+import { MonthPicker } from '@/components/ui/MonthPicker';
 
 interface CustomSectionFormProps {
   section: Section;
@@ -73,18 +81,21 @@ const FieldEditor: React.FC<{
         placeholder="Field label"
         aria-label="Field label"
       />
-      <select
+      <Select
         value={field.type}
-        onChange={(e) => updateFieldDefinition(sectionId, field.id, { type: e.target.value as CustomFieldType })}
-        className="text-xs bg-background border border-border rounded-none px-2 py-1 flex-shrink-0 max-w-[100px] focus:outline-none focus:ring-2 focus:ring-primary/20"
-        aria-label="Field type"
+        onValueChange={(value) => updateFieldDefinition(sectionId, field.id, { type: value as CustomFieldType })}
       >
-        {CUSTOM_FIELD_TYPES.map((type) => (
-          <option key={type} value={type}>
-            {FIELD_TYPE_INFO[type].label}
-          </option>
-        ))}
-      </select>
+        <SelectTrigger className="text-xs bg-background border border-border rounded-none px-2 py-1 flex-shrink-0 h-7 w-[100px]">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {CUSTOM_FIELD_TYPES.map((type) => (
+            <SelectItem key={type} value={type}>
+              {FIELD_TYPE_INFO[type].label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
       <button
         onClick={onRemove}
         className="p-1 hover:bg-destructive/10 rounded-none text-destructive transition-colors flex-shrink-0"
@@ -181,36 +192,44 @@ const CustomFieldRenderer: React.FC<{
 
     case 'date':
       return (
-        <FormInput
-          type="month"
-          label={field.label}
-          value={(value as string) || ''}
-          onChange={(e) => onChange(e.target.value)}
-        />
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-muted-foreground">{field.label}</label>
+          <MonthPicker
+            value={(value as string) || ''}
+            onChange={(val) => onChange(val)}
+          />
+        </div>
       );
 
     case 'dateRange':
       const [start, end] = ((value as string) || '|').split('|');
+      const isPresent = end === 'Present';
       return (
-        <div className="space-y-1">
+        <div className="space-y-2">
           <label className="text-xs font-medium text-muted-foreground">{field.label}</label>
           <div className="flex items-center gap-2">
-            <FormInput
-              type="month"
-              placeholder="Start"
+            <MonthPicker
               value={start || ''}
-              onChange={(e) => onChange(`${e.target.value}|${end || ''}`)}
+              onChange={(val) => onChange(`${val}|${end || ''}`)}
               className="flex-1"
             />
             <span className="text-muted-foreground text-sm">to</span>
-            <FormInput
-              type="month"
-              placeholder="End"
-              value={end || ''}
-              onChange={(e) => onChange(`${start || ''}|${e.target.value}`)}
+            <MonthPicker
+              value={isPresent ? '' : (end || '')}
+              onChange={(val) => onChange(`${start || ''}|${val}`)}
               className="flex-1"
+              disabled={isPresent}
             />
           </div>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={isPresent}
+              onChange={(e) => onChange(`${start || ''}|${e.target.checked ? 'Present' : ''}`)}
+              className="rounded border-border text-primary focus:ring-primary/20 bg-background/50 cursor-pointer"
+            />
+            <span className="text-xs text-muted-foreground">Present / Currently working here</span>
+          </label>
         </div>
       );
 
@@ -452,10 +471,7 @@ export const CustomSectionForm: React.FC<CustomSectionFormProps> = ({ section })
       {/* Add Item Button */}
       <button
         onClick={() => addSectionItem(section.id)}
-        className={cn(
-          'text-sm flex items-center gap-2 transition-colors',
-          buttonClass
-        )}
+        className="w-full py-2 flex items-center justify-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-md transition-colors border border-dashed border-border mt-4"
       >
         <Plus className="w-4 h-4" />
         Add Item

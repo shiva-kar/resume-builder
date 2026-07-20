@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { temporal } from 'zundo';
 import {
   ResumeData,
   PersonalInfo,
@@ -43,6 +44,7 @@ interface ResumeStore {
   // Section Actions
   addSection: (type: SectionType) => void;
   addCustomSection: (template?: keyof typeof CUSTOM_FIELD_TEMPLATES) => void;
+  convertToCustomSection: (sectionId: string) => void;
   removeSection: (id: string) => void;
   updateSection: (id: string, updates: Partial<Section>) => void;
   toggleSectionVisibility: (id: string) => void;
@@ -106,6 +108,65 @@ interface ResumeStore {
 
 const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
+const mapTypoSize = (val: any, fallback: TypographySize): TypographySize => {
+  if (['sm', 'md', 'lg', 'xl'].includes(val)) return val as TypographySize;
+  if (val === 'small') return 'sm';
+  if (val === 'medium') return 'md';
+  if (val === 'large') return 'lg';
+  return fallback;
+};
+
+const sanitizeResumeData = (data: any): ResumeData => {
+  const t = data?.theme || {};
+  const typo = t.typography || {};
+  
+  let pSize = t.pageSize;
+  if (typeof pSize === 'string') {
+    pSize = pSize.toUpperCase();
+  }
+  if (!['A4', 'LETTER', 'LEGAL', 'EXECUTIVE', 'B5', 'A5'].includes(pSize)) {
+    pSize = 'A4';
+  }
+
+  return {
+    ...data,
+    theme: {
+      ...t,
+      pageSize: pSize,
+      typography: {
+        name: mapTypoSize(typo.name, DEFAULT_TYPOGRAPHY.name),
+        headers: mapTypoSize(typo.headers, DEFAULT_TYPOGRAPHY.headers),
+        body: mapTypoSize(typo.body, DEFAULT_TYPOGRAPHY.body),
+        experience: mapTypoSize(typo.experience, DEFAULT_TYPOGRAPHY.experience),
+        skills: mapTypoSize(typo.skills, DEFAULT_TYPOGRAPHY.skills),
+      },
+      opacity: {
+        ...DEFAULT_OPACITY,
+        ...(t.opacity || {}),
+      },
+    },
+    personalInfo: {
+      fullName: '', title: '', email: '', phone: '', location: '', summary: '', website: '', linkedin: '', github: '', links: [], ...(data?.personalInfo || {})
+    },
+    sections: (data?.sections || []).map((sec: any) => ({
+      ...sec,
+      id: sec.id || generateId(),
+      type: sec.type || 'custom',
+      title: sec.title || '',
+      isVisible: sec.isVisible ?? (sec.visible !== false),
+      items: (sec.items || []).map((item: any) => ({
+        ...item,
+        id: item.id || generateId(),
+        customFields: item.customFields || {},
+        skills: item.skills || [],
+        skillsWithLevels: item.skillsWithLevels || [],
+      })),
+      customFields: sec.customFields || [],
+      fieldDefinitions: sec.fieldDefinitions || [],
+    }))
+  };
+};
+
 const createSectionItem = (type: SectionType, fieldDefinitions?: CustomFieldDefinition[]): SectionItem => {
   const baseItem: SectionItem = { id: generateId() };
 
@@ -117,9 +178,15 @@ const createSectionItem = (type: SectionType, fieldDefinitions?: CustomFieldDefi
     case 'skills':
       return { ...baseItem, skills: [], skillsWithLevels: [] };
     case 'projects':
-      return { ...baseItem, title: '', subtitle: '', startDate: '', endDate: '', description: '' };
+      return { ...baseItem, title: '', subtitle: '', startDate: '', endDate: '', description: '', skills: [] };
     case 'certifications':
-      return { ...baseItem, title: '', subtitle: '', startDate: '' };
+      return { ...baseItem, title: '', institution: '', startDate: '', description: '' };
+    case 'volunteer':
+      return { ...baseItem, position: '', company: '', location: '', startDate: '', endDate: '', current: false, description: '' };
+    case 'awards':
+      return { ...baseItem, title: '', institution: '', startDate: '', description: '' };
+    case 'publications':
+      return { ...baseItem, title: '', institution: '', subtitle: '', startDate: '', description: '' };
     case 'custom':
       // Initialize custom fields based on field definitions
       const customFields: CustomFieldValue[] = fieldDefinitions?.map((fd) => ({
@@ -139,6 +206,9 @@ const createSection = (type: SectionType, template?: keyof typeof CUSTOM_FIELD_T
     skills: 'Skills',
     projects: 'Projects',
     certifications: 'Certifications',
+    volunteer: 'Volunteer Experience',
+    awards: 'Awards & Honors',
+    publications: 'Publications',
     custom: 'Custom Section',
   };
 
@@ -152,17 +222,8 @@ const createSection = (type: SectionType, template?: keyof typeof CUSTOM_FIELD_T
   };
 
   // Add field definitions for custom sections and built-in types that use CustomSectionForm
-  if (type === 'certifications') {
-    baseSection.fieldDefinitions = CUSTOM_FIELD_TEMPLATES.certification.map((f) => ({
-      ...f,
-      id: generateId(),
-    }));
-  } else if (type === 'projects') {
-    baseSection.fieldDefinitions = CUSTOM_FIELD_TEMPLATES.project.map((f) => ({
-      ...f,
-      id: generateId(),
-    }));
-  } else if (type === 'custom' && template) {
+  // Add field definitions for custom sections
+  if (type === 'custom' && template) {
     const templateFields = CUSTOM_FIELD_TEMPLATES[template];
     baseSection.fieldDefinitions = templateFields.map((f) => ({
       ...f,
@@ -183,8 +244,9 @@ const createSection = (type: SectionType, template?: keyof typeof CUSTOM_FIELD_T
 // ZUSTAND STORE WITH PERSIST
 
 export const useResumeStore = create<ResumeStore>()(
-  persist(
-    (set, get) => ({
+  temporal(
+    persist(
+      (set, get) => ({
       // Initial State
       data: createEmptyState(),
       isDarkMode: false,
@@ -259,6 +321,120 @@ export const useResumeStore = create<ResumeStore>()(
             sections: [...state.data.sections, createSection('custom', template)],
           },
         })),
+
+      convertToCustomSection: (id) =>
+        set((state) => {
+          const sectionIndex = state.data.sections.findIndex(s => s.id === id);
+          if (sectionIndex === -1) return state;
+
+          const section = state.data.sections[sectionIndex];
+          if (section.type === 'custom') return state; // Already custom
+
+          let newFieldDefinitions: CustomFieldDefinition[] = [];
+          
+          if (section.type === 'experience') {
+            newFieldDefinitions = [
+              { id: 'position', type: 'text', label: 'Position / Title', required: true },
+              { id: 'company', type: 'text', label: 'Company Name' },
+              { id: 'location', type: 'text', label: 'Location' },
+              { id: 'date', type: 'dateRange', label: 'Duration' },
+              { id: 'description', type: 'textarea', label: 'Description' }
+            ];
+          } else if (section.type === 'education') {
+            newFieldDefinitions = [
+              { id: 'degree', type: 'text', label: 'Degree / Program', required: true },
+              { id: 'institution', type: 'text', label: 'Institution' },
+              { id: 'location', type: 'text', label: 'Location' },
+              { id: 'date', type: 'dateRange', label: 'Duration' },
+              { id: 'description', type: 'textarea', label: 'Description' }
+            ];
+          } else if (section.type === 'skills') {
+            newFieldDefinitions = [
+              { id: 'category', type: 'text', label: 'Category', required: true },
+              { id: 'skills', type: 'tags', label: 'Skills' }
+            ];
+          } else if (section.type === 'projects') {
+            newFieldDefinitions = [...CUSTOM_FIELD_TEMPLATES.project];
+          } else if (section.type === 'certifications') {
+            newFieldDefinitions = [...CUSTOM_FIELD_TEMPLATES.certification];
+          } else if (section.type === 'volunteer') {
+            newFieldDefinitions = [...CUSTOM_FIELD_TEMPLATES.volunteer];
+          } else if (section.type === 'awards') {
+            newFieldDefinitions = [...CUSTOM_FIELD_TEMPLATES.award];
+          } else if (section.type === 'publications') {
+            newFieldDefinitions = [...CUSTOM_FIELD_TEMPLATES.publication];
+          }
+
+          const newItems = section.items.map(item => {
+            const customFields = [];
+            if (section.type === 'experience') {
+              customFields.push({ fieldId: 'position', value: item.position || '' });
+              customFields.push({ fieldId: 'company', value: item.company || '' });
+              customFields.push({ fieldId: 'location', value: item.location || '' });
+              customFields.push({ fieldId: 'date', value: `${item.startDate || ''}|${item.current ? 'Present' : (item.endDate || '')}` });
+              customFields.push({ fieldId: 'description', value: item.description || '' });
+            } else if (section.type === 'education') {
+              customFields.push({ fieldId: 'degree', value: item.degree || '' });
+              customFields.push({ fieldId: 'institution', value: item.institution || '' });
+              customFields.push({ fieldId: 'location', value: item.location || '' });
+              customFields.push({ fieldId: 'date', value: `${item.startDate || ''}|${item.current ? 'Present' : (item.endDate || '')}` });
+              customFields.push({ fieldId: 'description', value: item.description || '' });
+            } else if (section.type === 'skills') {
+              const combinedSkills = [
+                ...(item.skillsWithLevels || []).map(s => `${s.name}${s.level ? ` (${s.level})` : ''}`),
+                ...(item.skills || [])
+              ];
+              customFields.push({ fieldId: 'category', value: item.title || '' });
+              customFields.push({ fieldId: 'skills', value: combinedSkills });
+            } else if (section.type === 'projects') {
+              customFields.push({ fieldId: 'title', value: item.title || '' });
+              customFields.push({ fieldId: 'link', value: item.subtitle || '' });
+              customFields.push({ fieldId: 'date', value: `${item.startDate || ''}|${item.current ? 'Present' : (item.endDate || '')}` });
+              customFields.push({ fieldId: 'description', value: item.description || '' });
+            } else if (section.type === 'certifications') {
+              customFields.push({ fieldId: 'title', value: item.title || '' });
+              customFields.push({ fieldId: 'issuer', value: item.institution || '' });
+              customFields.push({ fieldId: 'date', value: item.startDate || '' });
+              customFields.push({ fieldId: 'link', value: item.subtitle || '' });
+              customFields.push({ fieldId: 'description', value: item.description || '' });
+            } else if (section.type === 'volunteer') {
+              customFields.push({ fieldId: 'role', value: item.position || '' });
+              customFields.push({ fieldId: 'org', value: item.company || '' });
+              customFields.push({ fieldId: 'date', value: `${item.startDate || ''}|${item.current ? 'Present' : (item.endDate || '')}` });
+              customFields.push({ fieldId: 'description', value: item.description || '' });
+            } else if (section.type === 'awards') {
+              customFields.push({ fieldId: 'title', value: item.title || '' });
+              customFields.push({ fieldId: 'issuer', value: item.institution || '' });
+              customFields.push({ fieldId: 'date', value: item.startDate || '' });
+              customFields.push({ fieldId: 'description', value: item.description || '' });
+            } else if (section.type === 'publications') {
+              customFields.push({ fieldId: 'title', value: item.title || '' });
+              customFields.push({ fieldId: 'publisher', value: item.institution || '' });
+              customFields.push({ fieldId: 'date', value: item.startDate || '' });
+              customFields.push({ fieldId: 'link', value: item.subtitle || '' });
+              customFields.push({ fieldId: 'description', value: item.description || '' });
+            }
+            return {
+              id: item.id,
+              customFields
+            };
+          });
+
+          const newSections = [...state.data.sections];
+          newSections[sectionIndex] = {
+            ...section,
+            type: 'custom',
+            fieldDefinitions: newFieldDefinitions,
+            items: newItems
+          };
+
+          return {
+            data: {
+              ...state.data,
+              sections: newSections
+            }
+          };
+        }),
 
       removeSection: (id) =>
         set((state) => ({
@@ -653,8 +829,8 @@ export const useResumeStore = create<ResumeStore>()(
       // Utility Actions
       resetStore: () => set({ data: createEmptyState() }),
 
-      importData: (data) => set({ data }),
-      autoGenerateResume: (data) => set({ data }),
+      importData: (data) => set({ data: sanitizeResumeData(data) }),
+      autoGenerateResume: (data) => set({ data: sanitizeResumeData(data) }),
     }),
     {
       name: 'resume-builder-storage-v2',
@@ -663,8 +839,21 @@ export const useResumeStore = create<ResumeStore>()(
         data: state.data,
         isDarkMode: state.isDarkMode,
       }),
+      merge: (persistedState: any, currentState) => {
+        if (!persistedState) return currentState;
+        return {
+          ...currentState,
+          ...persistedState,
+          data: persistedState.data ? sanitizeResumeData(persistedState.data) : currentState.data,
+        };
+      },
     }
-  )
+  ),
+  {
+    partialize: (state) => ({ data: state.data }),
+    limit: 50,
+  }
+)
 );
 
 // SELECTOR HOOKS FOR OPTIMIZED RERENDERS

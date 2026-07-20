@@ -5,6 +5,13 @@ import { X, Plus, Star } from 'lucide-react';
 import { Section, SKILL_LEVELS, SkillLevel, SkillWithLevel } from '@/lib/schema';
 import { useResumeStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/Select";
 
 interface SkillsFormProps {
   section: Section;
@@ -124,25 +131,30 @@ export const SkillsForm: React.FC<SkillsFormProps> = ({ section }) => {
                   placeholder="e.g. Python, Project Management"
                   aria-label="Skill name"
                 />
-                <select
+                <Select
                   value={skill.level}
-                  onChange={(e) =>
+                  onValueChange={(value) =>
                     updateSkillWithLevel(section.id, skillsItem.id, idx, {
-                      level: e.target.value as SkillLevel,
+                      level: value as SkillLevel,
                     })
                   }
-                  aria-label={`Proficiency level for ${skill.name}`}
-                  className={cn(
-                    'px-2 py-1 rounded-none text-xs font-medium border-none',
-                    levelColors[skill.level]
-                  )}
                 >
-                  {SKILL_LEVELS.map((level) => (
-                    <option key={level} value={level}>
-                      {level}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger
+                    className={cn(
+                      'px-2 py-1 rounded-none text-xs font-medium border-none h-7 min-w-[120px]',
+                      levelColors[skill.level]
+                    )}
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SKILL_LEVELS.map((level) => (
+                      <SelectItem key={level} value={level}>
+                        {level}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <button
                   onClick={() => removeSkillWithLevel(section.id, skillsItem.id, idx)}
                   className="p-1 hover:bg-destructive/10 rounded-none text-destructive"
@@ -206,22 +218,27 @@ export const SkillsForm: React.FC<SkillsFormProps> = ({ section }) => {
               'focus:outline-none focus:ring-2 focus:ring-primary/20'
             )}
           />
-          <select
-            value={selectedLevel}
-            onChange={(e) => setSelectedLevel(e.target.value as SkillLevel | '')}
-            aria-label="Skill proficiency level"
-            className={cn(
-              'px-3 py-2 rounded-none border border-border bg-background',
-              'text-sm focus:outline-none focus:ring-2 focus:ring-primary/20'
-            )}
+          <Select
+            value={selectedLevel || "none"}
+            onValueChange={(value) => setSelectedLevel(value === "none" ? "" : (value as SkillLevel))}
           >
-            <option value="">No Level (Quick Skill)</option>
-            {SKILL_LEVELS.map((level) => (
-              <option key={level} value={level}>
-                {level}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger
+              className={cn(
+                'px-3 py-2 rounded-none border border-border bg-background',
+                'text-sm min-w-[200px]'
+              )}
+            >
+              <SelectValue placeholder="No Level (Quick Skill)" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">No Level (Quick Skill)</SelectItem>
+              {SKILL_LEVELS.map((level) => (
+                <SelectItem key={level} value={level}>
+                  {level}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <button
             onClick={handleAdd}
             disabled={!inputValue.trim()}
