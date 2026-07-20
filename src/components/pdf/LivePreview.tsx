@@ -129,39 +129,28 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ data, className, resum
   const baseScale = isMobileScale ? (containerWidth - 32) / pageWidthPx : 1;
   const effectiveZoom = baseScale * zoom;
 
-  // Track container width for responsive scaling using safe APIs (avoids ResizeObserver loops)
+  // 1. Update width on window resize / orientation change
   useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
+    const handleResize = () => {
+      if (containerRef.current && containerRef.current.clientWidth > 0) {
+        setContainerWidth(containerRef.current.clientWidth);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    // Initial check in case it's already visible
+    handleResize();
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
-    const updateWidth = () => {
-      const width = el.clientWidth;
-      if (width > 0) {
+  // 2. Update width when it becomes visible (e.g. switching tabs on mobile triggers a re-render)
+  useEffect(() => {
+    if (containerRef.current) {
+      const width = containerRef.current.clientWidth;
+      if (width > 0 && width !== containerWidth) {
         setContainerWidth(width);
       }
-    };
-
-    // Initial check
-    updateWidth();
-
-    // Handle window resizes and orientation changes
-    window.addEventListener('resize', updateWidth);
-
-    // Handle visibility toggles (e.g., switching to Preview tab on mobile)
-    const io = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting) {
-        // Small delay to ensure layout is complete when unhiding
-        setTimeout(updateWidth, 10);
-      }
-    });
-    
-    io.observe(el);
-
-    return () => {
-      window.removeEventListener('resize', updateWidth);
-      io.disconnect();
-    };
-  }, []);
+    }
+  });
 
   // Scroll to current page
   useEffect(() => {
