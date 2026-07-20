@@ -149,6 +149,7 @@ export const CUSTOM_FIELD_TEMPLATES = {
     { id: 'issuer', type: 'text' as const, label: 'Issuing Organization' },
     { id: 'date', type: 'date' as const, label: 'Date Obtained' },
     { id: 'link', type: 'link' as const, label: 'Credential URL' },
+    { id: 'description', type: 'textarea' as const, label: 'Description' },
   ],
   publication: [
     { id: 'title', type: 'text' as const, label: 'Title', required: true },
@@ -267,7 +268,7 @@ export const SectionTypeFontSizeSchema = z.object({
 
 export const SectionSchema = z.object({
   id: z.string(),
-  type: z.enum(['experience', 'education', 'skills', 'custom', 'projects', 'certifications']),
+  type: z.enum(['experience', 'education', 'skills', 'custom', 'projects', 'certifications', 'volunteer', 'awards', 'publications']),
   title: z.string(),
   isVisible: z.boolean(),
   items: z.array(SectionItemSchema),
@@ -541,7 +542,124 @@ export const createDummyState = (currentTheme?: Theme): ResumeData => ({
           { name: 'React', level: 'Advanced' }
         ]
       }]
-    }
+    },
+    {
+      id: 'projects-dummy',
+      type: 'projects',
+      title: 'Projects',
+      isVisible: true,
+      fontSize: { ...DEFAULT_SECTION_FONT_SIZE },
+      items: [
+        {
+          id: 'proj-1',
+          title: 'E-Commerce Platform',
+          subtitle: 'https://github.com/example/ecommerce',
+          startDate: '2022-01',
+          endDate: '2022-06',
+          current: false,
+          skills: ['React', 'Node.js', 'MongoDB', 'Stripe'],
+          description: '• Developed a full-stack e-commerce platform serving 10k+ monthly users\n• Implemented secure payment processing and real-time inventory management',
+        }
+      ]
+    },
+    {
+      id: 'certifications-dummy',
+      type: 'certifications',
+      title: 'Certifications',
+      isVisible: true,
+      fontSize: { ...DEFAULT_SECTION_FONT_SIZE },
+      items: [
+        {
+          id: 'cert-1',
+          title: 'AWS Certified Solutions Architect',
+          institution: 'Amazon Web Services',
+          subtitle: 'https://aws.amazon.com/verification',
+          startDate: '2023-08',
+          endDate: '',
+          current: false,
+          description: '• Validates expertise in designing distributed systems on AWS',
+        }
+      ]
+    },
+    {
+      id: 'volunteer-dummy',
+      type: 'volunteer',
+      title: 'Volunteer Experience',
+      isVisible: true,
+      fontSize: { ...DEFAULT_SECTION_FONT_SIZE },
+      items: [
+        {
+          id: 'vol-1',
+          position: 'Community Outreach Lead',
+          company: 'Habitat for Humanity',
+          location: 'Austin, TX',
+          startDate: '2020-03',
+          endDate: '2022-12',
+          current: false,
+          description: '• Organized weekly building events with 50+ volunteers\n• Coordinated logistics for 12 housing projects',
+        }
+      ]
+    },
+    {
+      id: 'awards-dummy',
+      type: 'awards',
+      title: 'Awards & Honors',
+      isVisible: true,
+      fontSize: { ...DEFAULT_SECTION_FONT_SIZE },
+      items: [
+        {
+          id: 'award-1',
+          title: 'Dean\'s List',
+          institution: 'State University',
+          startDate: '2017-05',
+          description: '• Recognized for maintaining a 3.9+ GPA across 4 consecutive semesters',
+        }
+      ]
+    },
+    {
+      id: 'publications-dummy',
+      type: 'publications',
+      title: 'Publications',
+      isVisible: true,
+      fontSize: { ...DEFAULT_SECTION_FONT_SIZE },
+      items: [
+        {
+          id: 'pub-1',
+          title: 'Scalable Microservice Architectures',
+          institution: 'IEEE Software Journal',
+          subtitle: 'https://doi.org/example',
+          startDate: '2023-03',
+          description: '• Published peer-reviewed paper on event-driven microservice patterns',
+        }
+      ]
+    },
+    {
+      id: 'custom-dummy',
+      type: 'custom',
+      title: 'Languages',
+      isVisible: true,
+      fontSize: { ...DEFAULT_SECTION_FONT_SIZE },
+      fieldDefinitions: [
+        { id: 'field-1', type: 'text', label: 'Language' },
+        { id: 'field-2', type: 'text', label: 'Proficiency' }
+      ],
+      items: [
+        {
+          id: 'custom-item-1',
+          customFields: [
+            { fieldId: 'field-1', value: 'English' },
+            { fieldId: 'field-2', value: 'Native/Bilingual' }
+          ]
+        },
+        {
+          id: 'custom-item-2',
+          customFields: [
+            { fieldId: 'field-1', value: 'Spanish' },
+            { fieldId: 'field-2', value: 'Professional Working' }
+          ]
+        }
+      ]
+    },
   ],
   theme: currentTheme || {
     template: 'tech',

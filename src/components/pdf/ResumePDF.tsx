@@ -2,7 +2,7 @@
 
 import { jsPDF } from "jspdf";
 
-import { PaperSize } from '@/lib/paperSizes';
+import { PaperSize, PAPER_SIZES } from '@/lib/paperSizes';
 
 /**
  * Handles the PDF document structure, taking a raw image and slicing it into pages.
@@ -26,8 +26,22 @@ export const generateResumePDF = async (imgData: string, paperSize: PaperSize = 
   const imgHeight = imgElement.height;
   const pdfWidth = pdf.internal.pageSize.getWidth();
   const pdfHeight = pdf.internal.pageSize.getHeight();
-  const ratio = pdfWidth / imgWidth;
-  const totalPdfHeight = imgHeight * ratio;
+  
+  // To prevent page break drift due to slight aspect ratio differences between DOM and jsPDF,
+  // we calculate exactly how many pages the DOM rendered based on its paper size configuration.
+  const dimensions = PAPER_SIZES[paperSize.toUpperCase() as PaperSize] || PAPER_SIZES['A4'];
+  const expectedImgWidth = dimensions.width;
+  const expectedImgHeightPerPage = dimensions.height;
+  
+  // The actual image is scaled by pixelRatio (e.g. 3x)
+  const pixelScale = imgWidth / expectedImgWidth;
+  const actualImgHeightPerPage = expectedImgHeightPerPage * pixelScale;
+  
+  // How many DOM pages are in this image?
+  const totalPages = imgHeight / actualImgHeightPerPage;
+  
+  // The PDF height should perfectly map the number of DOM pages to PDF pages
+  const totalPdfHeight = totalPages * pdfHeight;
 
   let position = 0;
   let remainingHeight = totalPdfHeight;

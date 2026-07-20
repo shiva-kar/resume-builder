@@ -25,8 +25,15 @@ import {
 } from '@/lib/schema';
 import { useResumeStore } from '@/lib/store';
 import { FormInput, FormTextarea } from './FormInput';
-import { MonthPicker } from '@/components/ui/MonthPicker';
 import { cn } from '@/lib/utils';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/Select';
+import { MonthPicker } from '@/components/ui/MonthPicker';
 
 interface CustomSectionFormProps {
   section: Section;
@@ -74,18 +81,21 @@ const FieldEditor: React.FC<{
         placeholder="Field label"
         aria-label="Field label"
       />
-      <select
+      <Select
         value={field.type}
-        onChange={(e) => updateFieldDefinition(sectionId, field.id, { type: e.target.value as CustomFieldType })}
-        className="text-xs bg-background border border-border rounded-none px-2 py-1 flex-shrink-0 max-w-[100px] focus:outline-none focus:ring-2 focus:ring-primary/20"
-        aria-label="Field type"
+        onValueChange={(value) => updateFieldDefinition(sectionId, field.id, { type: value as CustomFieldType })}
       >
-        {CUSTOM_FIELD_TYPES.map((type) => (
-          <option key={type} value={type}>
-            {FIELD_TYPE_INFO[type].label}
-          </option>
-        ))}
-      </select>
+        <SelectTrigger className="text-xs bg-background border border-border rounded-none px-2 py-1 flex-shrink-0 h-7 w-[100px]">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {CUSTOM_FIELD_TYPES.map((type) => (
+            <SelectItem key={type} value={type}>
+              {FIELD_TYPE_INFO[type].label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
       <button
         onClick={onRemove}
         className="p-1 hover:bg-destructive/10 rounded-none text-destructive transition-colors flex-shrink-0"
@@ -461,10 +471,7 @@ export const CustomSectionForm: React.FC<CustomSectionFormProps> = ({ section })
       {/* Add Item Button */}
       <button
         onClick={() => addSectionItem(section.id)}
-        className={cn(
-          'text-sm flex items-center gap-2 transition-colors',
-          buttonClass
-        )}
+        className="w-full py-2 flex items-center justify-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-md transition-colors border border-dashed border-border mt-4"
       >
         <Plus className="w-4 h-4" />
         Add Item
