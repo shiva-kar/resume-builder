@@ -129,20 +129,30 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ data, className, resum
   const baseScale = isMobileScale ? (containerWidth - 32) / pageWidthPx : 1;
   const effectiveZoom = baseScale * zoom;
 
-  // Track container width for responsive scaling
+  // Track container width for responsive scaling without triggering ResizeObserver loop errors
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
 
+    let frameId: number;
     const observer = new ResizeObserver((entries) => {
+      if (!entries || !entries.length) return;
       const { width } = entries[0].contentRect;
+      
       if (width > 0) {
-        setContainerWidth(width);
+        // Defer the state update to the next frame to prevent ResizeObserver loop limit exceeded errors
+        cancelAnimationFrame(frameId);
+        frameId = window.requestAnimationFrame(() => {
+          setContainerWidth(prev => Math.abs(prev - width) > 1 ? width : prev);
+        });
       }
     });
 
     observer.observe(el);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(frameId);
+    };
   }, []);
 
   // Scroll to current page
