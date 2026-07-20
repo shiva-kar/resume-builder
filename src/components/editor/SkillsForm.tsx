@@ -203,7 +203,7 @@ export const SkillsForm: React.FC<SkillsFormProps> = ({ section }) => {
         <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
           Add New Skill
         </label>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <input
             type="text"
             value={inputValue}
@@ -218,41 +218,43 @@ export const SkillsForm: React.FC<SkillsFormProps> = ({ section }) => {
               'focus:outline-none focus:ring-2 focus:ring-primary/20'
             )}
           />
-          <Select
-            value={selectedLevel || "none"}
-            onValueChange={(value) => setSelectedLevel(value === "none" ? "" : (value as SkillLevel))}
-          >
-            <SelectTrigger
+          <div className="flex gap-2 sm:w-auto">
+            <Select
+              value={selectedLevel || "none"}
+              onValueChange={(value) => setSelectedLevel(value === "none" ? "" : (value as SkillLevel))}
+            >
+              <SelectTrigger
+                className={cn(
+                  'px-3 py-2 rounded-none border border-border bg-background flex-1 sm:flex-none',
+                  'text-sm sm:min-w-[180px] w-full sm:w-auto'
+                )}
+              >
+                <SelectValue placeholder="No Level" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No Level (Quick Skill)</SelectItem>
+                {SKILL_LEVELS.map((level) => (
+                  <SelectItem key={level} value={level}>
+                    {level}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <button
+              onClick={handleAdd}
+              disabled={!inputValue.trim()}
               className={cn(
-                'px-3 py-2 rounded-none border border-border bg-background',
-                'text-sm min-w-[200px] w-auto'
+                'px-4 py-2 rounded-none font-medium text-sm shrink-0',
+                'bg-primary text-primary-foreground',
+                'hover:bg-primary/90 transition-colors',
+                'disabled:opacity-50 disabled:cursor-not-allowed',
+                'flex items-center justify-center gap-1'
               )}
             >
-              <SelectValue placeholder="No Level (Quick Skill)" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">No Level (Quick Skill)</SelectItem>
-              {SKILL_LEVELS.map((level) => (
-                <SelectItem key={level} value={level}>
-                  {level}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <button
-            onClick={handleAdd}
-            disabled={!inputValue.trim()}
-            className={cn(
-              'px-4 py-2 rounded-none font-medium text-sm',
-              'bg-primary text-primary-foreground',
-              'hover:bg-primary/90 transition-colors',
-              'disabled:opacity-50 disabled:cursor-not-allowed',
-              'flex items-center gap-1'
-            )}
-          >
-            <Plus className="w-4 h-4" />
-            Add
-          </button>
+              <Plus className="w-4 h-4" />
+              <span className="hidden sm:inline">Add</span>
+            </button>
+          </div>
         </div>
       </div>
 
