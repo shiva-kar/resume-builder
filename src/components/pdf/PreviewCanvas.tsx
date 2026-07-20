@@ -516,7 +516,19 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
   }, [typography, scale]);
 
   // Visible sections
-  const visibleSections = useMemo(() => sections.filter((s) => s.isVisible), [sections]);
+  const visibleSections = useMemo(() => {
+    const visible = sections.filter((s) => s.isVisible);
+    if (!isExportMode) return visible;
+    
+    // Completely remove empty sections from the DOM during export
+    return visible.filter(s => {
+      if (s.type === 'skills') {
+        const item = s.items[0];
+        return item?.skills?.length || item?.skillsWithLevels?.length;
+      }
+      return s.items.length > 0;
+    });
+  }, [sections, isExportMode]);
 
   const setResumeExportNode = (node: HTMLDivElement | null): void => {
     if (resumeRef) {
