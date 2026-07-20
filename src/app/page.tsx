@@ -1129,6 +1129,9 @@ export default function ResumeBuilderPage() {
     console.info('[PDF Export] Export button clicked');
     setIsExporting(true);
 
+    // Yield execution so React can re-render LivePreview in export mode (hiding dummy data)
+    await new Promise(resolve => setTimeout(resolve, 50));
+
     try {
       const exportNode = resumeExportRef.current ?? document.getElementById('resume-pdf-export-container');
       
@@ -1506,6 +1509,7 @@ export default function ResumeBuilderPage() {
                   data={previewColor ? { ...data, theme: { ...data.theme, color: previewColor } } : data}
                   resumeRef={resumeExportRef}
                   className="h-full"
+                  isExportMode={isExporting}
                 />
               </div>
             </div>

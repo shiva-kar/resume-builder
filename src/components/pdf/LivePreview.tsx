@@ -18,9 +18,10 @@ interface LivePreviewProps {
   data: ResumeData;
   className?: string;
   resumeRef?: React.MutableRefObject<HTMLDivElement | null>;
+  isExportMode?: boolean;
 }
 
-export const LivePreview: React.FC<LivePreviewProps> = ({ data, className, resumeRef }) => {
+export const LivePreview: React.FC<LivePreviewProps> = ({ data, className, resumeRef, isExportMode = false }) => {
   const updateTheme = useResumeStore(state => state.updateTheme);
   
   // Zoom state
@@ -283,8 +284,8 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ data, className, resum
       <div 
         style={{ position: 'fixed', top: 0, left: '-9999px', pointerEvents: 'none', zIndex: -100 }}
       >
-        <div ref={measureRef}>
-          <PreviewCanvas data={data} resumeRef={actualResumeRef} />
+        <div className="absolute top-0 left-0" style={{ opacity: 0, pointerEvents: 'none', zIndex: -1 }}>
+          <PreviewCanvas data={data} spacerMap={spacerMap} resumeRef={measureRef} isExportMode={isExportMode} />
         </div>
       </div>
 
@@ -331,7 +332,11 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ data, className, resum
                   className="absolute top-0 left-0 w-full" 
                   style={{ transform: `translateY(-${i * pageHeightPx}px)` }}
                 >
-                <PreviewCanvas data={data} spacerMap={spacerMap} minHeight={pageCount * pageHeightPx} />
+                <PreviewCanvas 
+                data={data} 
+                spacerMap={spacerMap} 
+                isExportMode={isExportMode}
+              />
                 </div>
               </div>
             </div>
