@@ -125,17 +125,24 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ data, className, resum
     }
   });
 
-  // Auto-zoom for mobile screens
+  // Auto-zoom for mobile screens using ResizeObserver to catch when it becomes visible
   useEffect(() => {
-    if (!hasAutoZoomed && containerRef.current) {
-      const containerWidth = containerRef.current.clientWidth;
-      // 64 is for the p-8 padding (32px each side) or similar safe margin
-      if (containerWidth > 0 && containerWidth < pageWidthPx + 64) {
-        const newZoom = (containerWidth - 32) / pageWidthPx;
-        setZoom(Number(newZoom.toFixed(2)));
+    const el = containerRef.current;
+    if (!el || hasAutoZoomed) return;
+
+    const observer = new ResizeObserver((entries) => {
+      const { width } = entries[0].contentRect;
+      if (width > 0 && !hasAutoZoomed) {
+        if (width < pageWidthPx + 64) {
+          const newZoom = (width - 32) / pageWidthPx; // 32px to account for p-4 (16px) on both sides
+          setZoom(Number(newZoom.toFixed(2)));
+        }
+        setHasAutoZoomed(true);
       }
-      setHasAutoZoomed(true);
-    }
+    });
+
+    observer.observe(el);
+    return () => observer.disconnect();
   }, [hasAutoZoomed, pageWidthPx]);
 
   // Scroll to current page
