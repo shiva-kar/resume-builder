@@ -141,7 +141,7 @@ export const SkillsForm: React.FC<SkillsFormProps> = ({ section }) => {
                 >
                   <SelectTrigger
                     className={cn(
-                      'px-2 py-1 rounded-none text-xs font-medium border-none h-7 min-w-[120px]',
+                      'px-2 py-1 rounded-none text-xs font-medium border-none h-7 min-w-[120px] w-auto',
                       levelColors[skill.level]
                     )}
                   >
@@ -225,7 +225,7 @@ export const SkillsForm: React.FC<SkillsFormProps> = ({ section }) => {
             <SelectTrigger
               className={cn(
                 'px-3 py-2 rounded-none border border-border bg-background',
-                'text-sm min-w-[200px]'
+                'text-sm min-w-[200px] w-auto'
               )}
             >
               <SelectValue placeholder="No Level (Quick Skill)" />
