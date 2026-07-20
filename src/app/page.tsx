@@ -463,6 +463,12 @@ const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPrevie
                     {(isPresetThemeColor || isRecentThemeColor) && !isPickingColor && (
                       <Plus className="w-3.5 h-3.5 text-muted-foreground" />
                     )}
+                    {isCustomThemeColor && !isPickingColor && (
+                      <div className="w-5 h-5 rounded overflow-hidden shadow-sm border border-border/50" style={{ backgroundColor: theme.color }} />
+                    )}
+                    {isPickingColor && (
+                      <div className="w-5 h-5 rounded bg-gradient-to-tr from-violet-500 to-pink-500 animate-pulse" />
+                    )}
                   </button>
                 </Popover.Trigger>
 
@@ -571,6 +577,12 @@ const DesignSettingsPanel: React.FC<DesignSettingsPanelProps> = memo(({ onPrevie
                   >
                     {(isPresetBgColor || isRecentBgColor) && !isPickingBgColor && (
                       <Plus className="w-3.5 h-3.5 text-muted-foreground" />
+                    )}
+                    {isCustomBgColor && !isPickingBgColor && (
+                      <div className="w-5 h-5 rounded overflow-hidden shadow-sm border border-border/50" style={{ backgroundColor: currentBgColor }} />
+                    )}
+                    {isPickingBgColor && (
+                      <div className="w-5 h-5 rounded bg-gradient-to-tr from-violet-500 to-pink-500 animate-pulse" />
                     )}
                   </button>
                 </Popover.Trigger>

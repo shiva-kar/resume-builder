@@ -25,7 +25,7 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ data, className, resum
   
   // Zoom state
   const [zoom, setZoom] = useState(1);
-  const [hasAutoZoomed, setHasAutoZoomed] = useState(false);
+  const [containerWidth, setContainerWidth] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const localResumeRef = useRef<HTMLDivElement | null>(null);
   const actualResumeRef = resumeRef || localResumeRef;
@@ -125,28 +125,42 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ data, className, resum
     }
   });
 
-  // Auto-zoom for mobile screens
+  const isMobileScale = containerWidth > 0 && containerWidth < pageWidthPx + 64;
+  const baseScale = isMobileScale ? (containerWidth - 32) / pageWidthPx : 1;
+  const effectiveZoom = baseScale * zoom;
+
+  // 1. Update width on window resize / orientation change
   useEffect(() => {
-    if (!hasAutoZoomed && containerRef.current) {
-      const containerWidth = containerRef.current.clientWidth;
-      // 64 is for the p-8 padding (32px each side) or similar safe margin
-      if (containerWidth > 0 && containerWidth < pageWidthPx + 64) {
-        const newZoom = (containerWidth - 32) / pageWidthPx;
-        setZoom(Number(newZoom.toFixed(2)));
+    const handleResize = () => {
+      if (containerRef.current && containerRef.current.clientWidth > 0) {
+        setContainerWidth(containerRef.current.clientWidth);
       }
-      setHasAutoZoomed(true);
+    };
+    window.addEventListener('resize', handleResize);
+    // Initial check in case it's already visible
+    handleResize();
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // 2. Update width when it becomes visible (e.g. switching tabs on mobile triggers a re-render)
+  useEffect(() => {
+    if (containerRef.current) {
+      const width = containerRef.current.clientWidth;
+      if (width > 0 && width !== containerWidth) {
+        setContainerWidth(width);
+      }
     }
-  }, [hasAutoZoomed, pageWidthPx]);
+  });
 
   // Scroll to current page
   useEffect(() => {
     if (containerRef.current) {
       containerRef.current.scrollTo({
-        top: currentPage * pageHeightPx * zoom,
+        top: currentPage * pageHeightPx * effectiveZoom,
         behavior: 'smooth'
       });
     }
-  }, [currentPage, zoom, pageHeightPx]);
+  }, [currentPage, effectiveZoom, pageHeightPx]);
 
   const handleZoomIn = () => setZoom(prev => Math.min(prev + 0.1, 2));
   const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.1, 0.5));
@@ -290,8 +304,8 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ data, className, resum
               key={i}
               className="bg-white relative shadow-[0_4px_12px_rgba(0,0,0,0.1)] border border-gray-300"
               style={{ 
-                width: pageWidthPx * zoom,
-                height: pageHeightPx * zoom,
+                width: pageWidthPx * effectiveZoom,
+                height: pageHeightPx * effectiveZoom,
                 transition: 'width 0.2s ease-out, height 0.2s ease-out',
                 pointerEvents: isPanMode ? 'none' : 'auto',
                 flexShrink: 0, // Prevents flexbox from squishing the pages
@@ -302,7 +316,7 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ data, className, resum
                 style={{ 
                   width: pageWidthPx,
                   height: pageHeightPx,
-                  transform: `scale(${zoom})`,
+                  transform: `scale(${effectiveZoom})`,
                   transformOrigin: 'top left',
                 }}
               >
