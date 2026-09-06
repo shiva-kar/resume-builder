@@ -1,4 +1,8 @@
 # Resume Builder
+#### Video Demo:  <URL HERE>
+#### Description:
+
+Resume Builder is a comprehensive, web-based professional resume creation tool built using Next.js, React, Tailwind CSS, and Electron. It allows users to build, preview, and export high-quality resumes with real-time feedback. The application supports 10 unique professional templates, custom sections, drag-and-drop reordering, and fine-grained typography and opacity controls, ensuring users can craft a resume tailored perfectly to their industry. This project serves as my final project for CS50, demonstrating full-stack web development concepts, complex state management, and cross-platform desktop application packaging.
 
 [![Version](https://img.shields.io/badge/Version-0.6.1-blue?style=for-the-badge)](https://github.com/shiva-kar/resume-builder/releases)
 [![Status](https://img.shields.io/badge/Status-Beta-orange?style=for-the-badge)](https://github.com/shiva-kar/resume-builder/releases)
@@ -8,8 +12,6 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
 [![Electron](https://img.shields.io/badge/Electron-39-47848F?style=for-the-badge&logo=electron)](https://www.electronjs.org/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
-
-A resume builder with real-time preview, 10 templates, drag-and-drop sections, and desktop support.
 
 ---
 
@@ -157,52 +159,38 @@ npm run release:major
 
 ---
 
-## 📁 Project Structure
+## 📁 File Descriptions
 
-```
-resume-builder/
-├── .github/
-│   └── workflows/
-│       └── release.yml          # CI/CD automation
-├── electron/
-│   └── main.js                  # Electron main process
-├── public/
-│   └── icon.png                 # App icon
-├── scripts/
-│   └── release.js               # Release automation script
-├── src/
-│   ├── app/
-│   │   ├── globals.css          # Global styles + dark mode
-│   │   ├── layout.tsx           # Root layout
-│   │   └── page.tsx             # Main application
-│   ├── components/
-│   │   ├── editor/
-│   │   │   ├── CustomSectionForm.tsx
-│   │   │   ├── EducationForm.tsx
-│   │   │   ├── ExperienceForm.tsx
-│   │   │   ├── FormInput.tsx
-│   │   │   ├── PersonalInfoForm.tsx
-│   │   │   ├── SectionWrapper.tsx
-│   │   │   ├── SkillsForm.tsx
-│   │   │   └── index.ts
-│   │   └── pdf/
-│   │       ├── LivePreview.tsx   # DOM-based preview
-│   │       ├── PDFViewer.tsx     # PDF generation
-│   │       ├── PreviewCanvas.tsx # Template renderers
-│   │       ├── ResumePDF.tsx     # PDF document structure
-│   │       └── index.ts
-│   └── lib/
-│       ├── ai.ts                # AI enhancement (OpenAI ready)
-│       ├── schema.ts            # Zod schemas + types
-│       ├── store.ts             # Zustand state management
-│       └── utils.ts             # Utility functions
-├── CHANGELOG.md                 # Version history
-├── LICENSE                      # MIT License
-├── package.json
-├── release.bat                  # Windows release helper
-├── tailwind.config.ts
-└── tsconfig.json
-```
+The project is structured into several key directories and files to separate concerns between the UI, state management, and document generation.
+
+- `src/app/page.tsx`: The main entry point of the Next.js application. It orchestrates the layout, dividing the screen into the left-hand editor panel and the right-hand live preview/PDF generation panel.
+- `src/app/globals.css`: Contains global styling rules, CSS variables for dark/light themes, and specific Tailwind CSS directives used throughout the app.
+- `src/components/editor/`: This directory houses all the form components for user input. Files like `PersonalInfoForm.tsx`, `ExperienceForm.tsx`, and `SkillsForm.tsx` encapsulate the complex validation and local state needed for each resume section before committing to the global store. 
+- `src/components/editor/SectionWrapper.tsx`: A higher-order component that wraps all form sections. It integrates `@dnd-kit` to allow drag-and-drop reordering of sections.
+- `src/components/pdf/`: Contains the core engine for rendering the resume. `LivePreview.tsx` handles the interactive DOM preview, while `PreviewCanvas.tsx` maps the user data into the selected template. 
+- `src/components/pdf/ResumePDF.tsx`: The orchestrator that takes the generated DOM elements and converts them into a downloadable PDF format, managing pagination and scaling.
+- `src/lib/store.ts`: The Zustand global state store. It defines the schema of the resume data, actions to update specific fields, and handles persisting the user's progress to `localStorage`.
+- `src/lib/templates.ts`: Defines the configuration and structural layouts for the 10 unique resume templates (Harvard, Tech, Minimal, etc.), dictating how data maps to the visual grid.
+- `src/lib/formatting.ts` & `src/lib/utils.ts`: Helper functions for manipulating dates, parsing markdown, merging Tailwind classes, and extracting data.
+- `electron/main.js`: The entry point for the desktop application. It creates a native window and loads the static Next.js export, allowing the app to run entirely offline.
+
+---
+
+## 🏛️ Architecture & Design Choices
+
+During the development of Resume Builder, several key design decisions were debated and finalized to improve user experience and maintainability:
+
+**1. Next.js vs. Vanilla React**
+I chose Next.js (App Router) over a standard React SPA because of its robust build system, easy configuration for static HTML exports (which was crucial for GitHub pages deployment), and built-in API route capabilities for future backend integrations.
+
+**2. Zustand for State Management**
+A resume builder inherently has deep, complex state (arrays of experiences, nested fields, custom sections). While Redux is a popular choice, it requires significant boilerplate. I debated using React Context, but it often leads to unnecessary re-renders. Zustand provided a perfect middle ground: a lean, hook-based API that made it incredibly easy to persist the resume data to `localStorage` so users never lose their progress on refresh.
+
+**3. DOM-to-PDF vs. Native PDF Generation**
+Initially, exporting to PDF was a challenge. I debated using `@react-pdf/renderer` to build the PDFs natively. However, this required maintaining two separate codebases for templates: one for the web preview (HTML/CSS) and one for the PDF generation. To solve this, I opted for a DOM-to-image approach using `html-to-image` and `jspdf`. This guaranteed that what the user sees in the Live Preview is a 1:1 exact match with the exported PDF.
+
+**4. Offline-First Desktop App (Electron)**
+Resumes contain highly sensitive personal data. I wanted to ensure users had an option to build their resumes with absolute privacy. By wrapping the Next.js static export in Electron, I provided a fully offline desktop version (installer and portable) that never sends data to a server.
 
 ---
 
