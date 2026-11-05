@@ -1,5 +1,8 @@
 # Resume Builder
-#### Video Demo:  <URL HERE>
+
+
+<img width="1672" height="941" alt="resume builder thumbnail" src="https://github.com/user-attachments/assets/e2dfab98-6704-424e-8f01-593d328cb18f" />
+
 #### Description:
 
 Resume Builder is a comprehensive, web-based professional resume creation tool built using Next.js, React, Tailwind CSS, and Electron. It allows users to build, preview, and export high-quality resumes with real-time feedback. The application supports 10 unique professional templates, custom sections, drag-and-drop reordering, and fine-grained typography and opacity controls, ensuring users can craft a resume tailored perfectly to their industry. This project serves as my final project for CS50, demonstrating full-stack web development concepts, complex state management, and cross-platform desktop application packaging.
@@ -301,18 +304,9 @@ See [CHANGELOG.md](CHANGELOG.md) for full version history.
 
 ---
 
-## 🖼️ Screenshots
-<img width="1932" height="1221" alt="Screenshot 2026-01-10 014416" src="https://github.com/user-attachments/assets/01a5a361-7ff5-42e4-85b4-652de4283540" />
-<img width="989" height="1067" alt="Screenshot 2026-01-10 014921" src="https://github.com/user-attachments/assets/02015fd5-bec5-4ddb-8f3d-ef9123b6e081" />
-<img width="1490" height="733" alt="Screenshot 2026-01-10 014946" src="https://github.com/user-attachments/assets/048fae29-7e7f-4648-b035-a87545778353" />
-<img width="1034" height="623" alt="Screenshot 2026-01-10 014938" src="https://github.com/user-attachments/assets/4df718f7-0601-4e03-900f-f37f8b6d2961" />
-<img width="882" height="297" alt="Screenshot 2026-01-10 014930" src="https://github.com/user-attachments/assets/3e8e33e0-d023-4997-bf2c-c8303381b7bc" />
-<img width="1744" height="985" alt="Screenshot 2026-01-10 015052" src="https://github.com/user-attachments/assets/9dde9437-39e8-46a3-9b62-29131cdd289e" />
-<img width="896" height="436" alt="Screenshot 2026-01-10 015044" src="https://github.com/user-attachments/assets/1eca8a89-e3b8-400a-8c47-7b691259b07c" />
-<img width="917" height="668" alt="Screenshot 2026-01-10 015026" src="https://github.com/user-attachments/assets/82e71cba-8f51-457e-a60c-9802d9454fb4" />
-<img width="521" height="511" alt="Screenshot 2026-01-10 015021" src="https://github.com/user-attachments/assets/c864878d-074c-402b-8ba4-2352563af899" />
-<img width="1118" height="1080" alt="Screenshot 2026-01-10 015004" src="https://github.com/user-attachments/assets/0b38cb8a-fb79-4e5b-be2d-2725ae2b38f2" />
+## 🖼️ Screenshot
 
+<img width="2255" height="1184" alt="image" src="https://github.com/user-attachments/assets/65668744-d1b9-41b7-a45b-c776311b18cc" />
 
 ---
 
